@@ -6,6 +6,24 @@
   <title>Baby Loading.. | Player 3 has entered the game!</title>
   <meta name="description" content="Achievement unlocked: Parenthood! Join Fahad &amp; Oyshe for a retro game–themed baby shower on Saturday, October 17, 2026 at 2:00 PM in Etobicoke. Press start to RSVP.">
   <meta name="theme-color" content="#2b2f27">
+  <meta name="build" content="20260928224329">
+  <script>
+    // If this page came from a stale cache, jump to the latest build.
+    (function () {
+      try {
+        var build = document.querySelector('meta[name="build"]').content;
+        fetch("version.txt?t=" + Date.now(), { cache: "no-store" })
+          .then(function (r) { return r.ok ? r.text() : ""; })
+          .then(function (latest) {
+            latest = latest.trim();
+            if (!/^\d+$/.test(latest) || latest === build) return;
+            if (new URLSearchParams(location.search).get("v") === latest) return; // avoid loops
+            location.replace(location.pathname + "?" + "v=" + latest + location.hash);
+          })
+          .catch(function () {});
+      } catch (e) {}
+    })();
+  </script>
 
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Baby Loading..">
@@ -26,7 +44,7 @@
   <link rel="apple-touch-icon" href="assets/favicon-180.png">
 
   <link rel="preload" href="assets/fonts/press-start-2p-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="styles.css?v=202609282235">
+  <link rel="stylesheet" href="styles.css?v=20260928224329">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -283,7 +301,7 @@
 
   <noscript><p class="noscript">This invitation needs JavaScript to RSVP. Please reach out to the hosts directly.</p></noscript>
 
-  <script src="config.js?v=202609282235"></script>
-  <script src="app.js?v=202609282235"></script>
+  <script src="config.js?v=20260928224329"></script>
+  <script src="app.js?v=20260928224329"></script>
 </body>
 </html>

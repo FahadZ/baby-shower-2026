@@ -115,7 +115,12 @@ Link previews (WhatsApp/iMessage) use `assets/og-image.png`. Some apps cache pre
 
 ## Cache busting
 
-`index.html` loads `styles.css`, `config.js` and `app.js` with a `?v=` version tag. **Bump it whenever you change those files** (any new value works, e.g. the date) so phones that visited before don't mix new HTML with an old cached stylesheet.
+GitHub Pages lets browsers cache files for about 10 minutes. To stop phones from mixing old and new files:
+
+- `index.html` loads `styles.css`, `config.js` and `app.js` with a `?v=` build tag.
+- A tiny script at the top of `index.html` compares its build number with `version.txt` (fetched uncached). If the page is stale, it reloads the latest one automatically.
+
+**Before every deploy, run `scripts/bump-version.sh`**. It stamps a new build number into both places.
 
 ## Local preview
 
