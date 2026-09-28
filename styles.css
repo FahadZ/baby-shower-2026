@@ -166,7 +166,7 @@ strong { font-weight: 400; color: var(--cream-2); }
 .ledge-left { width: calc(205 * var(--s)); }
 .ledge-row {
   position: relative; align-self: stretch; display: flex; align-items: flex-end; gap: 10px;
-  margin: calc(190 * var(--s)) calc(-1 * var(--pad)) 14px;
+  margin: calc(110 * var(--s)) calc(-1 * var(--pad)) 14px;
 }
 .tap-hint {
   position: relative; margin: 0 0 calc(40 * var(--s)); padding: 8px 10px;

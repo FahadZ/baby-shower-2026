@@ -583,7 +583,7 @@
         art.appendChild(img);
         tallest = Math.max(tallest, FRAMES.stage[1] - p[1]);
       });
-      stage.style.paddingTop = "calc(" + (tallest + 30) + " * var(--s))";
+      stage.style.paddingTop = "calc(" + (tallest - 70) + " * var(--s))";
       stage.appendChild(art);
       // Keep the floor going: bricks below the scene (the side-quest scroll sits on them).
       var floor = document.createElement("div");
