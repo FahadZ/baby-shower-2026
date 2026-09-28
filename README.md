@@ -34,7 +34,7 @@ Open `config.js`:
 - `address`, `hosts`, `hostsShort`
 - `registryUrl`: shown as an optional "secret bonus level". Set it to `""` to hide it everywhere
 - `rsvpEndpoint`: the Apps Script web-app URL (see below)
-- `maxPlayers`: max party size in the guest picker (kids are counted within this total)
+- `maxPlayers`: max number in the players and kids pickers
 
 The guest confirmation email text is in `apps-script/Code.gs` (the `EVENT` object at the top). If you change the date or address, update it there too and redeploy the script.
 
@@ -42,9 +42,9 @@ The guest confirmation email text is in `apps-script/Code.gs` (the `EVENT` objec
 
 Each RSVP is a row in the **"Baby Shower 2026 RSVPs"** Google Sheet:
 
-`Timestamp | Name | Email | Attending | Guests | Kids | Message | Last Updated`
+`Timestamp | Name | Email | Attending | Adults | Kids | Message | Last Updated`
 
-A **Summary** tab shows total RSVPs, attending RSVPs, total attending guests, kids attending (for toys and food), declines, and the last response time.
+A **Summary** tab shows total RSVPs, attending RSVPs, adults attending, kids attending (for toys and food), total headcount, declines, and the last response time.
 
 `doPost` does the following:
 
@@ -52,7 +52,7 @@ A **Summary** tab shows total RSVPs, attending RSVPs, total attending guests, ki
 2. Rejects submissions after `RSVP_DEADLINE`.
 3. Validates the input and strips spreadsheet-formula characters.
 4. **Upserts by email**: resubmitting with the same email updates that row, keeps the original timestamp and refreshes *Last Updated*.
-5. Emails the host ("🎮 New RSVP: Name — 3 players (1 kid)" / "Name can't make it" / "🔁 Updated RSVP…").
+5. Emails the host ("🎮 New RSVP: Name — 3 players + 1 kid" / "Name can't make it" / "🔁 Updated RSVP…").
 6. Emails the guest a short confirmation with date, time, address and a map link.
 7. Returns `{ ok: true, updated }` or `{ ok: false, error }`.
 

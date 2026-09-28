@@ -373,25 +373,13 @@
         "<span><b>" + (i === to && name === "kids" ? i + "+" : i) + "</b>" + labelFor(i) + "</span>";
       wrap.appendChild(label);
     }
-    wrap.addEventListener("change", function () { sfx("blip"); syncKids(); });
+    wrap.addEventListener("change", function () { sfx("blip"); });
   }
 
   function buildPlayerOptions() {
     var n = P.maxPlayers || 5;
     buildOptions($("#playerOptions"), "guests", 1, n, function (i) { return i === 1 ? "PLAYER" : "PLAYERS"; });
-    buildOptions($("#kidOptions"), "kids", 0, n - 1, function (i) { return i === 0 ? "NO KIDS" : (i === 1 ? "KID" : "KIDS"); });
-    syncKids();
-  }
-
-  // Kids are part of the party total, so there can be at most (players - 1) of them.
-  function syncKids() {
-    var guests = Number(($('input[name="guests"]:checked') || {}).value || 1);
-    $$('input[name="kids"]').forEach(function (r) {
-      var over = Number(r.value) > guests - 1;
-      r.disabled = over;
-      r.parentNode.classList.toggle("is-disabled", over);
-      if (over && r.checked) { r.checked = false; $('input[name="kids"][value="0"]').checked = true; }
-    });
+    buildOptions($("#kidOptions"), "kids", 0, n, function (i) { return i === 0 ? "NO KIDS" : (i === 1 ? "KID" : "KIDS"); });
   }
 
   function setMode(m) {
@@ -498,7 +486,7 @@
             var n = payload.guests;
             $("#thanksSub").textContent = (res.updated ? "Save file updated" : "Save file created") +
               " for " + payload.name.split(" ")[0] + " — party of " + n + (n === 1 ? " player" : " players") +
-              (payload.kids ? " (incl. " + payload.kids + (payload.kids === 1 ? " mini player" : " mini players") + ")" : "") + ".";
+              (payload.kids ? " + " + payload.kids + (payload.kids === 1 ? " kid" : " kids") : "") + ".";
             sfx("win");
             go("thanks");
           } else {

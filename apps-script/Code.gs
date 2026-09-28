@@ -22,7 +22,7 @@ var EVENT = {
 
 var SHEET_NAME = "RSVPs";
 var SUMMARY_NAME = "Summary";
-var HEADERS = ["Timestamp", "Name", "Email", "Attending", "Guests", "Kids", "Message", "Last Updated"];
+var HEADERS = ["Timestamp", "Name", "Email", "Attending", "Adults", "Kids", "Message", "Last Updated"];
 
 // ------------------------------------------------------------------
 //  One-time setup: run this from the Apps Script editor (▶ Run).
@@ -49,17 +49,18 @@ function setup() {
 
   var summary = ss.getSheetByName(SUMMARY_NAME) || ss.insertSheet(SUMMARY_NAME);
   summary.clear();
-  summary.getRange("A1:B7").setValues([
+  summary.getRange("A1:B8").setValues([
     ["Stat", "Value"],
     ["Total RSVPs", "=COUNTA(RSVPs!C2:C)"],
     ["Attending RSVPs", '=COUNTIF(RSVPs!D2:D,"Yes")'],
-    ["Total attending guests", '=SUMIF(RSVPs!D2:D,"Yes",RSVPs!E2:E)'],
+    ["Adults attending", '=SUMIF(RSVPs!D2:D,"Yes",RSVPs!E2:E)'],
     ["Kids attending (toys & food)", '=SUMIF(RSVPs!D2:D,"Yes",RSVPs!F2:F)'],
+    ["Total headcount", "=B4+B5"],
     ["Declines", '=COUNTIF(RSVPs!D2:D,"No")'],
     ["Last response", '=IF(COUNTA(RSVPs!H2:H)=0,"—",MAX(RSVPs!H2:H))']
   ]);
   summary.getRange("A1:B1").setFontWeight("bold").setBackground("#ead7b8");
-  summary.getRange("B7").setNumberFormat("yyyy-mm-dd hh:mm");
+  summary.getRange("B8").setNumberFormat("yyyy-mm-dd hh:mm");
   summary.setColumnWidth(1, 200);
 
   if (!props.getProperty("NOTIFY_EMAIL")) {
@@ -133,7 +134,7 @@ function validate(d) {
     if (!(guests >= 1 && guests <= EVENT.maxGuests)) guests = 1;
     kids = parseInt(d.kids, 10);
     if (!(kids >= 0)) kids = 0;
-    kids = Math.min(kids, guests - 1);
+    kids = Math.min(kids, EVENT.maxGuests);
   }
   return {
     name: name,
@@ -195,11 +196,11 @@ function notifyHosts(r, updated) {
   if (!to) return;
   var yes = r.attending === "Yes";
   var subject = (updated ? "🔁 Updated RSVP: " : "🎮 New RSVP: ") + r.name.replace(/^'/, "") +
-    (yes ? " — " + r.guests + (r.guests === 1 ? " player" : " players") + (r.kids ? " (" + r.kids + (r.kids === 1 ? " kid)" : " kids)") : "") : " can't make it");
+    (yes ? " — " + r.guests + (r.guests === 1 ? " player" : " players") + (r.kids ? " + " + r.kids + (r.kids === 1 ? " kid" : " kids") : "") : " can't make it");
   var sheetUrl = "https://docs.google.com/spreadsheets/d/" + PropertiesService.getScriptProperties().getProperty("SHEET_ID");
   var rows = [
     ["Name", r.name], ["Email", r.email], ["Attending", r.attending],
-    ["Guests", yes ? r.guests : "—"], ["Kids", yes ? r.kids : "—"], ["Message", r.message || "—"]
+    ["Adults", yes ? r.guests : "—"], ["Kids", yes ? r.kids : "—"], ["Message", r.message || "—"]
   ];
   var html = '<div style="font-family:Arial,sans-serif;font-size:15px">' +
     "<p><b>" + (updated ? "An RSVP was updated." : "A new RSVP just came in!") + "</b></p>" +
@@ -227,7 +228,7 @@ function confirmGuest(r, updated) {
     : "💛 Thanks for letting us know — Baby Loading..";
   var intro = yes
     ? "Your RSVP is saved" + (updated ? " (updated)" : "") + " for <b>" + r.guests + (r.guests === 1 ? " player" : " players") +
-      (r.kids ? " (incl. " + r.kids + (r.kids === 1 ? " kid" : " kids") + ")" : "") + "</b>. Player 3 can't wait to meet you!"
+      (r.kids ? " + " + r.kids + (r.kids === 1 ? " kid" : " kids") : "") + "</b>. Player 3 can't wait to meet you!"
     : "Sorry you can't make it" + (updated ? " (we've updated your RSVP)" : "") + " — thank you for the love. Your message has been saved to the high score board. 💛";
   var details = yes
     ? "<p style=\"background:#ead7b8;border:3px solid #1d1b18;padding:12px\">" +
