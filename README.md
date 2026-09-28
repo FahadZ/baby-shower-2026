@@ -112,6 +112,10 @@ After a minute the site is live at https://fahadz.github.io/baby-shower-2026/. E
 
 Link previews (WhatsApp/iMessage) use `assets/og-image.png`. Some apps cache previews, so test with a fresh chat.
 
+## Cache busting
+
+`index.html` loads `styles.css`, `config.js` and `app.js` with a `?v=` version tag. **Bump it whenever you change those files** (any new value works, e.g. the date) so phones that visited before don't mix new HTML with an old cached stylesheet.
+
 ## Local preview
 
 ```sh
