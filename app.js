@@ -34,11 +34,11 @@
     addrEl.appendChild(document.createElement("br"));
     addrEl.appendChild(document.createTextNode(parts.slice(1).join(",").trim().toUpperCase()));
     $("#dMap").href = mapUrl();
-    $("#dHosts").textContent = P.hosts.join(" & ");
-    $("#closedHosts").textContent = P.hostsShort;
+    $("#dHosts").textContent = P.hosts.join(" & ").toUpperCase();
+    $("#closedHosts").textContent = P.hostsShort.toUpperCase();
     var dl = fmt(DEADLINE, { weekday: "short", month: "short", day: "numeric" }).replace(/\./g, "");
-    $("#dDeadline").textContent = dl;
-    $("#closedDate").textContent = fmt(DEADLINE, { month: "long", day: "numeric" });
+    $("#dDeadline").textContent = dl.toUpperCase();
+    $("#closedDate").textContent = fmt(DEADLINE, { month: "long", day: "numeric" }).toUpperCase();
 
     if (P.registryUrl) {
       $$("[data-registry-link]").forEach(function (a) { a.href = P.registryUrl; });
@@ -133,7 +133,7 @@
   function sfx(name) {
     if (!soundOn) return;
     try {
-      ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
+      audio();
       var t = ctx.currentTime;
       SFX[name].forEach(function (n) {
         var o = ctx.createOscillator(), g = ctx.createGain();
@@ -146,16 +146,90 @@
       });
     } catch (e) { /* audio unsupported */ }
   }
+  // Original 8-bar chiptune loop (square lead, triangle bass, soft hi-hat).
+  var N = { A2: 110, B2: 123.47, C3: 130.81, D3: 146.83, E3: 164.81, F2: 87.31, G2: 98, A3: 220,
+    C5: 523.25, D5: 587.33, E5: 659.25, F5: 698.46, G5: 783.99, A5: 880, B5: 987.77, C6: 1046.5, D6: 1174.66 };
+  var LEAD = [
+    "C5 E5 G5 E5 C6 - B5 A5", "G5 - E5 - C5 - . .",
+    "D5 F5 A5 F5 D6 - C6 B5", "A5 - G5 - . . G5 A5",
+    "C6 - G5 - E5 - C5 E5", "F5 - A5 - C6 - A5 F5",
+    "G5 - B5 - D6 - C6 B5", "C6 - - - . . . ."
+  ].join(" ").split(" ");
+  var BASS = [
+    "C3 G2 C3 G2", "C3 G2 C3 G2", "D3 A2 D3 A2", "G2 D3 G2 B2",
+    "C3 G2 C3 E3", "F2 C3 F2 A2", "G2 D3 G2 B2", "C3 G2 C3 ."
+  ].join(" ").split(" ");
+  var music = { on: false, step: 0, next: 0, timer: null, gain: null, noise: null };
+  var EIGHTH = 60 / 138 / 2;
+
+  function audio() {
+    ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
+    if (ctx.state === "suspended") ctx.resume();
+    return ctx;
+  }
+  function tone(type, freq, t, dur, vol, dest) {
+    var o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = type; o.frequency.value = freq;
+    g.gain.setValueAtTime(vol, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); g.connect(dest); o.start(t); o.stop(t + dur + 0.02);
+  }
+  function hat(t) {
+    if (!music.noise) {
+      var len = ctx.sampleRate * 0.05, buf = ctx.createBuffer(1, len, ctx.sampleRate), d = buf.getChannelData(0);
+      for (var i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+      music.noise = buf;
+    }
+    var src = ctx.createBufferSource(), g = ctx.createGain(), f = ctx.createBiquadFilter();
+    f.type = "highpass"; f.frequency.value = 6000;
+    src.buffer = music.noise; g.gain.setValueAtTime(0.25, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
+    src.connect(f); f.connect(g); g.connect(music.gain); src.start(t);
+  }
+  function holdLength(i) { var n = 1; while (LEAD[(i + n) % LEAD.length] === "-") n++; return n; }
+  function schedule() {
+    while (music.next < ctx.currentTime + 0.12) {
+      var i = music.step % LEAD.length, t = music.next;
+      var note = LEAD[i];
+      if (N[note]) tone("square", N[note], t, EIGHTH * holdLength(i) * 0.9, 0.18, music.gain);
+      if (i % 2 === 0) {
+        var b = BASS[i / 2];
+        if (N[b]) tone("triangle", N[b], t, EIGHTH * 1.8, 0.5, music.gain);
+      } else {
+        hat(t);
+      }
+      music.step++; music.next += EIGHTH;
+    }
+  }
+  function startMusic() {
+    try {
+      audio();
+      if (!music.gain) { music.gain = ctx.createGain(); music.gain.gain.value = 0.22; music.gain.connect(ctx.destination); }
+      music.gain.gain.setValueAtTime(0.22, ctx.currentTime);
+      music.step = 0; music.next = ctx.currentTime + 0.05;
+      clearInterval(music.timer);
+      music.timer = setInterval(schedule, 25);
+      music.on = true;
+    } catch (e) { /* audio unsupported */ }
+  }
+  function stopMusic() {
+    clearInterval(music.timer); music.on = false;
+    if (music.gain && ctx) music.gain.gain.setValueAtTime(0, ctx.currentTime);
+  }
+  document.addEventListener("visibilitychange", function () {
+    if (!soundOn) return;
+    if (document.hidden) stopMusic(); else startMusic();
+  });
+
   function initSound() {
     var btn = $("#soundToggle");
-    soundOn = store("sound") === "on";
     var sync = function () {
       btn.setAttribute("aria-pressed", String(soundOn));
       $("#soundState").textContent = soundOn ? "ON" : "OFF";
     };
     sync();
     btn.addEventListener("click", function () {
-      soundOn = !soundOn; store("sound", soundOn ? "on" : "off"); sync(); sfx("coin");
+      soundOn = !soundOn; sync();
+      if (soundOn) { sfx("coin"); startMusic(); } else stopMusic();
     });
   }
 
@@ -175,6 +249,7 @@
     });
     if (!reduceMotion) { void next.offsetWidth; next.classList.add("is-entering"); }
     current = name;
+    $(".frame").setAttribute("data-screen", name);
     hideBubble();
     window.scrollTo(0, 0);
     if (!opts.silent) {
@@ -252,7 +327,7 @@
     var ms = START - Date.now();
     var el = $("#countdown");
     if (ms <= 0) {
-      el.querySelector(".countdown-title").textContent = Date.now() < END ? "LEVEL 17: IN PROGRESS!" : "LEVEL 17: CLEARED! ♥";
+      el.querySelector(".countdown-title").textContent = Date.now() < END ? "LEVEL 17: IN PROGRESS!" : "LEVEL 17: CLEARED!";
       ["#cdD", "#cdH", "#cdM", "#cdS"].forEach(function (s) { $(s).textContent = "00"; });
       return;
     }
@@ -326,8 +401,8 @@
     $$("[data-yes-only]").forEach(function (el) { el.hidden = !yes; });
     $("#formTitle").textContent = yes ? "PLAYER SELECT" : "LEAVE A MESSAGE";
     $("#formSub").textContent = yes
-      ? "Quick save — takes 20 seconds."
-      : "We'll miss you! Let us know who you are, and leave a note if you like.";
+      ? "QUICK SAVE. TAKES 20 SECONDS."
+      : "WE'LL MISS YOU! TELL US WHO YOU ARE AND LEAVE A NOTE IF YOU LIKE.";
     $("#btnSaveText").textContent = yes ? "SAVE GAME" : "SEND & QUIT";
     $("#lMessage").firstChild.nodeValue = yes ? "MESSAGE FOR " + P.hostsShort.toUpperCase() + " " : "A NOTE FOR THE HIGH SCORE BOARD ";
     setStatus("");
@@ -447,12 +522,12 @@
   // ---------------------------------------------------------------
   var LINES = {
     pikachu: ["Pika pika! ⚡", "Pika-boo! Baby incoming!", "Pi-ka-CHU-per excited!"],
-    kirby: ["Poyo! ♥", "*inhales the cake*", "Poyo poyo!"],
+    kirby: ["Poyo!", "*inhales the cake*", "Poyo poyo!"],
     sonic: ["Gotta go fast… to the party!", "Way past cool! 👍", "See ya Oct 17!"],
     peach: ["The party's in THIS castle!", "Tea and cake, anyone? 🍰", "Player 3 is royalty!"],
     mario: ["Let's-a go! 🍄", "Wahoo! Level 17!", "Here we go-o!"],
     pacman: ["Waka waka… snacks?", "I'm here for the food 🍕", "Waka waka waka!"],
-    ghost: ["Boo! …I mean, congrats!", "Don't eat me, I RSVP'd!", "👻 ♥"],
+    ghost: ["Boo! …I mean, congrats!", "Don't eat me, I RSVP'd!", "Boo-tiful baby!"],
     link: ["It's dangerous to go alone — bring a +1!", "Hyaaa!", "Found: 1 baby shower invite!"],
     cloud: ["Not interested… in missing this.", "Let's mosey. To the party.", "This save point is guarded."]
   };
@@ -495,10 +570,71 @@
     var n = (Number(img.getAttribute("data-pokes")) || 0);
     img.setAttribute("data-pokes", String(n + 1));
     hop(img);
+    var hint = $("#tapHint");
+    if (hint) hint.classList.add("is-done");
     sfx(name === "pacman" ? "coin" : "jump");
     say(img, lines[n % lines.length]);
   }
+  // Where every character and brick piece sits in the invite (invite pixels).
+  var INV = {
+    pikachu: [40, 530, 222, 208], kirby: [856, 425, 129, 111], link: [40, 829, 185, 253],
+    cloud: [771, 735, 222, 351], sonic: [275, 1054, 125, 190], peach: [430, 1045, 122, 209],
+    mario: [570, 1073, 95, 173], pacman: [683, 1053, 81, 87], ghost: [698, 1156, 58, 63],
+    mushroom: [960, 1028, 38, 56]
+  };
+  var NAMES = { pikachu: "Pikachu", kirby: "Kirby", link: "Link", cloud: "Cloud", sonic: "Sonic",
+    peach: "Princess Peach", mario: "Mario", pacman: "Pac-Man", ghost: "Inky the ghost", mushroom: "A mushroom" };
+  var FRAMES = { stage: [30, 1085, 966, 196], "ledge-left": [30, 735, 205, 97], "ledge-right": [826, 537, 170, 196] };
+  var FLOOR_Y = 1246;
+
+  function place(img, name, frame, at) {
+    var f = FRAMES[frame], p = at || INV[name];
+    img.style.left = ((p[0] - f[0]) / f[2] * 100) + "%";
+    img.style.top = ((p[1] - f[1]) / f[3] * 100) + "%";
+    img.style.width = (p[2] / f[2] * 100) + "%";
+  }
+
+  function buildScenes() {
+    $$(".ledge").forEach(function (ledge) {
+      var frame = ledge.classList.contains("ledge-left") ? "ledge-left" : "ledge-right";
+      $$(".sprite[data-at]", ledge).forEach(function (img) { place(img, img.getAttribute("data-at"), frame); });
+    });
+    $$(".stage").forEach(function (stage) {
+      var cast = stage.getAttribute("data-cast").split(/\s+/);
+      var chase = stage.classList.contains("is-chase");
+      var art = document.createElement("div");
+      art.className = "stage-art";
+      art.innerHTML = '<img class="stage-bg" src="assets/scene/stage.png" alt="" width="966" height="196">';
+      var tallest = 0;
+      cast.forEach(function (name) {
+        var p = INV[name].slice();
+        if (chase) { p[1] = FLOOR_Y - p[3]; p[0] = name === "ghost" ? 420 : 290; }
+        var img = document.createElement("img");
+        img.className = "sprite";
+        img.src = "assets/sprites/" + name + ".png";
+        img.alt = NAMES[name];
+        img.width = INV[name][2]; img.height = INV[name][3];
+        place(img, name, "stage", p);
+        art.appendChild(img);
+        tallest = Math.max(tallest, FRAMES.stage[1] - p[1]);
+      });
+      stage.style.paddingTop = "calc(" + (tallest + 30) + " * var(--s))";
+      stage.appendChild(art);
+      // Keep the floor going: bricks below the scene (the side-quest scroll sits on them).
+      var floor = document.createElement("div");
+      var quest = stage.nextElementSibling;
+      if (quest && quest.classList.contains("quest")) {
+        floor.className = "quest-floor";
+        floor.appendChild(quest);
+      } else {
+        floor.className = "stage-floor";
+      }
+      stage.appendChild(floor);
+    });
+  }
+
   function initSprites() {
+    buildScenes();
     $$(".sprite").forEach(function (img) {
       if (!spriteName(img)) return;
       img.setAttribute("tabindex", "0");
