@@ -3,6 +3,12 @@
    One font (Press Start 2P). All art is cropped from the invite
    and drawn at one shared scale (--s) so everything lines up.
    ============================================================ */
+@font-face {
+  font-family: "Press Start 2P";
+  src: url("assets/fonts/press-start-2p-latin.woff2") format("woff2");
+  font-weight: 400; font-style: normal; font-display: block;
+}
+
 :root {
   --bg: #3f443a;
   --bg-dark: #2b2f27;
