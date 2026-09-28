@@ -16,7 +16,7 @@ Plain HTML/CSS/JS. There's no framework and no build step.
 |---|---|
 | `index.html` | All screens: title → select mode → RSVP form → thanks / game over (plus a "closed" screen after the deadline) |
 | `styles.css` | Pixel styling, animations (all disabled under `prefers-reduced-motion`) |
-| `app.js` | Screen flow, countdown, loading bar, scene builder, living sprites (tap one!), original chiptune music + 8-bit sound effects (off until the MUSIC button is pressed), form + submit, calendar/.ics/share |
+| `app.js` | Screen flow, countdown, loading bar, scene builder, living sprites (tap one!), original chiptune music + 8-bit sound effects (on by default, starting on the first tap since browsers block autoplay; turning it off is remembered), form + submit, calendar/.ics/share |
 | `config.js` | **Event details + backend URL. Edit this file to change anything.** |
 | `assets/sprites/` | Characters cropped from the invite (`assets/invite-page1.png`) as transparent PNGs |
 | `assets/scene/` | The invite's own logo, brick-and-vine stage, ledges and brick tile (characters erased) |

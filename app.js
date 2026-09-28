@@ -216,22 +216,32 @@
     if (music.gain && ctx) music.gain.gain.setValueAtTime(0, ctx.currentTime);
   }
   document.addEventListener("visibilitychange", function () {
-    if (!soundOn) return;
+    if (!soundOn || !ctx) return;
     if (document.hidden) stopMusic(); else startMusic();
   });
 
   function initSound() {
     var btn = $("#soundToggle");
+    // Music is on by default; a guest who turns it off stays off next visit.
+    soundOn = store("music") !== "off";
     var sync = function () {
       btn.setAttribute("aria-pressed", String(soundOn));
       $("#soundState").textContent = soundOn ? "ON" : "OFF";
     };
     sync();
     btn.addEventListener("click", function () {
-      soundOn = !soundOn; sync();
+      soundOn = !soundOn; sync(); store("music", soundOn ? "on" : "off");
       if (soundOn) { sfx("coin"); startMusic(); } else stopMusic();
     });
+    // Browsers only allow audio after a tap/click/key, so start on the first one.
+    var unlock = function (e) {
+      if (btn.contains(e.target)) return; // the toggle handles itself
+      ["pointerdown", "keydown", "touchstart"].forEach(function (t) { document.removeEventListener(t, unlock, true); });
+      if (soundOn && !music.on) startMusic();
+    };
+    ["pointerdown", "keydown", "touchstart"].forEach(function (t) { document.addEventListener(t, unlock, true); });
   }
+
 
   // ---------------------------------------------------------------
   //  Screens
