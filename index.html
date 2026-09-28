@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Baby Loading.. | Player 3 has entered the game!</title>
+  <meta name="description" content="Achievement unlocked: Parenthood! Join Fahad &amp; Oyshe for a retro game–themed baby shower on Saturday, October 17, 2026 at 2:00 PM in Etobicoke. Press start to RSVP.">
+  <meta name="theme-color" content="#2b2f27">
+
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Baby Loading..">
+  <meta property="og:title" content="Baby Loading.. Player 3 has entered the game!">
+  <meta property="og:description" content="Baby shower for Fahad &amp; Oyshe · Sat, Oct 17, 2026 · 2:00 PM · Etobicoke. Press start to RSVP!">
+  <meta property="og:url" content="https://fahadz.github.io/baby-shower-2026/">
+  <meta property="og:image" content="https://fahadz.github.io/baby-shower-2026/assets/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Pixel-art invitation reading Baby Loading.. with a green loading bar and three red hearts">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Baby Loading.. Player 3 has entered the game!">
+  <meta name="twitter:description" content="Baby shower · Sat, Oct 17, 2026 · 2:00 PM · Etobicoke. Press start to RSVP!">
+  <meta name="twitter:image" content="https://fahadz.github.io/baby-shower-2026/assets/og-image.png">
+
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+  <link rel="apple-touch-icon" href="assets/favicon-180.png">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <!-- Background scenery (decorative) -->
+  <div class="scenery" aria-hidden="true">
+    <img class="deco cloud cloud-a" src="assets/deco/cloud1.png" alt="">
+    <img class="deco cloud cloud-b" src="assets/deco/cloud3.png" alt="">
+    <img class="deco cloud cloud-c" src="assets/deco/cloud2.png" alt="">
+    <img class="deco sparkle sparkle-a" src="assets/deco/sparkle.png" alt="">
+    <img class="deco sparkle sparkle-b" src="assets/deco/sparkle.png" alt="">
+    <div class="falling" id="falling"></div>
+    <div class="vines vines-left"></div>
+    <div class="vines vines-right"></div>
+  </div>
+
+  <header class="hud">
+    <ul class="player-select" aria-label="Player select">
+      <li>1 PLAYER</li>
+      <li>2 PLAYERS</li>
+      <li class="is-current"><span aria-hidden="true">▶</span> 3 PLAYERS</li>
+    </ul>
+    <div class="hud-right">
+      <p class="score" aria-hidden="true">SCORE <span id="score">30216202</span></p>
+      <button class="sound-toggle" id="soundToggle" type="button" aria-pressed="false">
+        <span class="sound-icon" aria-hidden="true">♪</span> SOUND: <span id="soundState">OFF</span>
+      </button>
+    </div>
+  </header>
+
+  <main id="main" class="console" tabindex="-1">
+    <p class="sr-only" id="liveRegion" aria-live="polite"></p>
+
+    <!-- ============ 1. TITLE SCREEN ============ -->
+    <section class="screen is-active" id="screen-title" data-screen="title" aria-labelledby="title-heading">
+      <p class="achievement">Achievement Unlocked:<br>Parenthood</p>
+      <img class="hearts" src="assets/deco/hearts.png" alt="Three full hearts" width="151" height="54">
+
+      <div class="title-wrap">
+        <h1 id="title-heading" class="logo">
+          <span class="logo-line logo-baby">BABY</span>
+          <span class="logo-line logo-loading">LOADING<span class="dots">..</span></span>
+        </h1>
+        <img class="sprite sprite-kirby bounce" src="assets/sprites/kirby.png" alt="Kirby peeking over the title" width="129" height="111">
+      </div>
+
+      <div class="loadbar" role="progressbar" aria-label="Baby loading" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="loadbar">
+        <div class="loadbar-fill" id="loadbarFill"></div>
+      </div>
+      <p class="loadbar-label" id="loadbarLabel" aria-hidden="true">LOADING... 0%</p>
+
+      <p class="tagline">Player 3 has entered<br>the game!</p>
+
+      <div class="stage-row">
+        <img class="sprite sprite-pikachu bounce delay-1" src="assets/sprites/pikachu.png" alt="Pikachu cheering" width="222" height="208">
+
+        <div class="panel details" aria-label="Event details">
+          <dl>
+            <div class="detail">
+              <dt><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 3h12v11H2zM2 6h12M5 1v4M11 1v4M4 8h2v2H4zm3 0h2v2H7zm3 0h2v2h-2zM4 11h2v2H4zm3 0h2v2H7z" /></svg><span class="sr-only">Date</span></dt>
+              <dd id="dDate">SAT, OCT 17, 2026</dd>
+            </div>
+            <div class="detail">
+              <dt><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13zM8 4v4l3 2" /></svg><span class="sr-only">Time</span></dt>
+              <dd id="dTime">2:00 PM</dd>
+            </div>
+            <div class="detail">
+              <dt><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 15s5-5 5-9A5 5 0 0 0 3 6c0 4 5 9 5 9zM8 4.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3z" /></svg><span class="sr-only">Location</span></dt>
+              <dd><a id="dMap" href="https://www.google.com/maps/search/?api=1&amp;query=36%20Park%20Lawn%20Rd%2C%20Etobicoke%2C%20ON%20M8V%200E5" target="_blank" rel="noopener"><span id="dAddr">36 PARK LAWN RD<br>ETOBICOKE, ON M8V 0E5</span></a></dd>
+            </div>
+          </dl>
+          <p class="hosted">Hosted by Player 1 &amp; Player 2<br><strong id="dHosts">Fahad Al Zaman &amp; Fatema Tuz Zahra Oyshe</strong></p>
+        </div>
+      </div>
+
+      <div class="countdown" id="countdown" aria-label="Countdown to the party">
+        <p class="countdown-title">TIME UNTIL LEVEL 17</p>
+        <div class="countdown-grid" aria-hidden="true">
+          <div><span id="cdD">--</span><small>DAYS</small></div>
+          <div><span id="cdH">--</span><small>HRS</small></div>
+          <div><span id="cdM">--</span><small>MIN</small></div>
+          <div><span id="cdS">--</span><small>SEC</small></div>
+        </div>
+        <p class="sr-only" id="countdownText"></p>
+      </div>
+
+      <button class="btn btn-start" type="button" id="btnStart" data-go="mode">
+        <span class="btn-arrow" aria-hidden="true">▶</span>
+        <span>PRESS START<br>TO RSVP</span>
+      </button>
+      <p class="deadline-note">Save your game by <strong id="dDeadline">Wed, Oct 7</strong></p>
+      <p class="deadline-note small">Already RSVP'd by text? You're all set — no need to do it again!</p>
+
+      <p class="poke-hint" aria-hidden="true">psst… tap a character ☝</p>
+
+      <div class="scroll-quest panel-scroll">
+        <p class="quest-title">Optional Side Quest:</p>
+        <p class="quest-sub">Choose your character!</p>
+        <p>Come dressed as any character you love — from games, movies, TV, anime, cartoons &amp; beyond.</p>
+      </div>
+
+      <details class="bonus" data-registry>
+        <summary><span aria-hidden="true">?</span> Secret bonus level</summary>
+        <div class="bonus-body">
+          <p>Found a hidden block! If you'd like to send Player 3 a power-up, our registry lives here. It's <strong>100% optional</strong> — your presence is the only item we actually need. ♥</p>
+          <a class="btn btn-small" data-registry-link href="#" target="_blank" rel="noopener">OPEN LOOT TABLE ↗</a>
+        </div>
+      </details>
+
+      <div class="ground-row" aria-hidden="false">
+        <img class="sprite sprite-sonic bounce delay-2" src="assets/sprites/sonic.png" alt="Sonic giving a thumbs up" width="125" height="190">
+        <img class="sprite sprite-peach bounce delay-3" src="assets/sprites/peach.png" alt="Princess Peach" width="122" height="209">
+        <img class="sprite sprite-mario bounce delay-1" src="assets/sprites/mario.png" alt="Mario" width="95" height="173">
+        <div class="pac-stack">
+          <img class="sprite sprite-pacman chomp" src="assets/sprites/pacman.png" alt="Pac-Man" width="81" height="87">
+          <img class="sprite sprite-ghost wander" src="assets/sprites/ghost.png" alt="Inky the ghost" width="58" height="63">
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 2. SELECT MODE ============ -->
+    <section class="screen" id="screen-mode" data-screen="mode" aria-labelledby="mode-heading" hidden>
+      <h2 id="mode-heading" class="screen-title">SELECT MODE</h2>
+      <p class="screen-sub">Will you join the party on October 17?</p>
+      <div class="menu" role="group" aria-labelledby="mode-heading">
+        <button class="menu-item" type="button" data-mode="yes">
+          <span class="cursor" aria-hidden="true">▶</span>
+          <span class="menu-main">I'M IN!</span>
+          <span class="menu-hint">(CONTINUE)</span>
+        </button>
+        <button class="menu-item" type="button" data-mode="no">
+          <span class="cursor" aria-hidden="true">▶</span>
+          <span class="menu-main">CAN'T MAKE IT</span>
+          <span class="menu-hint">(GAME OVER)</span>
+        </button>
+      </div>
+      <p class="hint-keys" aria-hidden="true">↑↓ to choose · ENTER to select</p>
+      <div class="mode-hero">
+        <img class="sprite sprite-link bounce" src="assets/sprites/link.png" alt="Link holding his shield, ready for adventure" width="185" height="253">
+      </div>
+      <button class="btn-back" type="button" data-go="title">◀ BACK</button>
+    </section>
+
+    <!-- ============ 3. RSVP FORM ============ -->
+    <section class="screen" id="screen-form" data-screen="form" aria-labelledby="form-heading" hidden>
+      <h2 id="form-heading" class="screen-title"><span id="formTitle">ENTER YOUR NAME</span></h2>
+      <p class="screen-sub" id="formSub">Quick save — takes 20 seconds.</p>
+
+      <form class="panel form" id="rsvpForm" novalidate>
+        <input type="hidden" name="attending" id="fAttending" value="yes">
+
+        <div class="field">
+          <label for="fName">FULL NAME <span class="req" aria-hidden="true">*</span></label>
+          <input id="fName" name="name" type="text" autocomplete="name" required maxlength="100" aria-describedby="eName">
+          <p class="error" id="eName" role="alert"></p>
+        </div>
+
+        <div class="field">
+          <label for="fEmail">EMAIL <span class="req" aria-hidden="true">*</span></label>
+          <input id="fEmail" name="email" type="email" autocomplete="email" inputmode="email" required maxlength="200" aria-describedby="hEmail eEmail">
+          <p class="help" id="hEmail">We'll send your confirmation here. Use the same email later to change your answer.</p>
+          <p class="error" id="eEmail" role="alert"></p>
+        </div>
+
+        <fieldset class="field players" data-yes-only>
+          <legend>HOW MANY PLAYERS? <small>(including you)</small></legend>
+          <div class="player-options" id="playerOptions"></div>
+        </fieldset>
+
+        <fieldset class="field players" data-yes-only aria-describedby="hKids">
+          <legend>ANY MINI PLAYERS? <small>(kids, out of that total)</small></legend>
+          <div class="player-options" id="kidOptions"></div>
+          <p class="help" id="hKids">🧸🍕 Just so we can plan enough toys and food for the little ones!</p>
+        </fieldset>
+
+
+        <div class="field">
+          <label for="fMessage" id="lMessage">MESSAGE FOR FAHAD &amp; OYSHE <small>(optional)</small></label>
+          <textarea id="fMessage" name="message" rows="3" maxlength="1000"></textarea>
+        </div>
+
+        <!-- Honeypot: humans never see or fill this. -->
+        <div class="hp" aria-hidden="true">
+          <label for="fWebsite">Leave this empty</label>
+          <input id="fWebsite" name="website" type="text" tabindex="-1" autocomplete="off">
+        </div>
+
+        <p class="form-status" id="formStatus" role="status" aria-live="polite"></p>
+
+        <button class="btn btn-save" type="submit" id="btnSave">
+          <span class="btn-arrow" aria-hidden="true">▶</span> <span id="btnSaveText">SAVE GAME</span>
+        </button>
+      </form>
+
+      <div class="form-hero" aria-hidden="false">
+        <img class="sprite sprite-cloud bounce delay-2" src="assets/sprites/cloud.png" alt="Cloud Strife standing guard over the save point" width="222" height="351">
+      </div>
+      <button class="btn-back" type="button" data-go="mode">◀ BACK</button>
+    </section>
+
+    <!-- ============ 4a. THANKS (ATTENDING) ============ -->
+    <section class="screen" id="screen-thanks" data-screen="thanks" aria-labelledby="thanks-heading" hidden>
+      <img class="hearts" src="assets/deco/hearts.png" alt="" width="151" height="54">
+      <h2 id="thanks-heading" class="screen-title big">THANKS FOR<br>PLAYING!</h2>
+      <p class="screen-sub" id="thanksSub">Your save file is locked in.</p>
+      <p class="level-callout">See you on <strong>Level 17</strong><br><span>(Oct 17 · 2:00 PM)</span></p>
+
+      <div class="victory-row">
+        <img class="sprite victory jump delay-1" src="assets/sprites/pikachu.png" alt="Pikachu celebrating" width="222" height="208">
+        <img class="sprite victory jump delay-2" src="assets/sprites/mario.png" alt="Mario celebrating" width="95" height="173">
+        <img class="sprite victory jump delay-3" src="assets/sprites/peach.png" alt="Princess Peach celebrating" width="122" height="209">
+        <img class="sprite victory jump" src="assets/sprites/sonic.png" alt="Sonic celebrating" width="125" height="190">
+        <img class="sprite victory jump delay-2" src="assets/sprites/kirby.png" alt="Kirby celebrating" width="129" height="111">
+      </div>
+
+      <div class="actions">
+        <a class="btn btn-small" id="gcalLink" href="#" target="_blank" rel="noopener">＋ GOOGLE CALENDAR</a>
+        <button class="btn btn-small" type="button" id="icsBtn">⬇ DOWNLOAD .ICS</button>
+        <a class="btn btn-small" id="mapLink" href="#" target="_blank" rel="noopener">⌖ OPEN MAP</a>
+        <button class="btn btn-small" type="button" id="shareBtn">⇪ SHARE</button>
+      </div>
+
+      <div class="panel bonus-card" data-registry>
+        <p class="quest-title">★ Bonus stage (optional!)</p>
+        <p>Want to drop a power-up for Player 3? Here's our <a data-registry-link href="#" target="_blank" rel="noopener">registry</a>. Truly no pressure — you showing up is the high score. ♥</p>
+      </div>
+
+      <p class="change-note">Need to change your answer? Just submit again with the same email.</p>
+      <button class="btn-back" type="button" data-go="title">◀ TITLE SCREEN</button>
+    </section>
+
+    <!-- ============ 4b. GAME OVER (DECLINED) ============ -->
+    <section class="screen" id="screen-gameover" data-screen="gameover" aria-labelledby="gameover-heading" hidden>
+      <h2 id="gameover-heading" class="screen-title big gameover">GAME OVER…</h2>
+      <p class="screen-sub">…but thanks for the love <span class="red">♥</span></p>
+      <div class="chase" aria-hidden="false">
+        <img class="sprite sprite-pacman chase-pac" src="assets/sprites/pacman.png" alt="Pac-Man chasing a ghost" width="81" height="87">
+        <img class="sprite sprite-ghost chase-ghost" src="assets/sprites/ghost.png" alt="" width="58" height="63">
+      </div>
+      <div class="panel">
+        <p>We'll miss you at the party! Your message has been saved to the <strong>high score board</strong>.</p>
+        <p class="continue">CONTINUE? <span class="blink">▮</span></p>
+      </div>
+
+      <div class="panel bonus-card" data-registry>
+        <p class="quest-title">★ Bonus stage (optional!)</p>
+        <p>If you'd still like to send Player 3 a little something, the <a data-registry-link href="#" target="_blank" rel="noopener">registry is here</a>. Absolutely optional — your good vibes count double.</p>
+      </div>
+
+      <p class="change-note">Need to change your answer? Just submit again with the same email.</p>
+      <button class="btn-back" type="button" data-go="title">◀ TITLE SCREEN</button>
+    </section>
+
+    <!-- ============ CLOSED ============ -->
+    <section class="screen" id="screen-closed" data-screen="closed" aria-labelledby="closed-heading" hidden>
+      <h2 id="closed-heading" class="screen-title big">SAVE POINT<br>CLOSED</h2>
+      <div class="panel">
+        <p>RSVPs closed on <strong id="closedDate">October 7</strong>. Still want to join the party or change your answer? Reach out to <strong id="closedHosts">Fahad &amp; Oyshe</strong> directly and they'll sort you out.</p>
+      </div>
+      <img class="sprite sprite-link bounce" src="assets/sprites/link.png" alt="Link guarding the closed save point" width="185" height="253">
+      <button class="btn-back" type="button" data-go="title">◀ TITLE SCREEN</button>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>© 2026 Player 1 &amp; Player 2 · Made with ♥ for Player 3</p>
+  </footer>
+
+  <noscript><p class="noscript">This invitation needs JavaScript to RSVP. Please reach out to the hosts directly.</p></noscript>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
