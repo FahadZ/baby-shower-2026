@@ -146,102 +146,69 @@
       });
     } catch (e) { /* audio unsupported */ }
   }
-  // Original 8-bar chiptune loop (square lead, triangle bass, soft hi-hat).
-  var N = { A2: 110, B2: 123.47, C3: 130.81, D3: 146.83, E3: 164.81, F2: 87.31, G2: 98, A3: 220,
-    C5: 523.25, D5: 587.33, E5: 659.25, F5: 698.46, G5: 783.99, A5: 880, B5: 987.77, C6: 1046.5, D6: 1174.66 };
-  var LEAD = [
-    "C5 E5 G5 E5 C6 - B5 A5", "G5 - E5 - C5 - . .",
-    "D5 F5 A5 F5 D6 - C6 B5", "A5 - G5 - . . G5 A5",
-    "C6 - G5 - E5 - C5 E5", "F5 - A5 - C6 - A5 F5",
-    "G5 - B5 - D6 - C6 B5", "C6 - - - . . . ."
-  ].join(" ").split(" ");
-  var BASS = [
-    "C3 G2 C3 G2", "C3 G2 C3 G2", "D3 A2 D3 A2", "G2 D3 G2 B2",
-    "C3 G2 C3 E3", "F2 C3 F2 A2", "G2 D3 G2 B2", "C3 G2 C3 ."
-  ].join(" ").split(" ");
-  var music = { on: false, step: 0, next: 0, timer: null, gain: null, noise: null };
-  var EIGHTH = 60 / 138 / 2;
-
   function audio() {
     ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
     if (ctx.state === "suspended") ctx.resume();
     return ctx;
   }
-  function tone(type, freq, t, dur, vol, dest) {
-    var o = ctx.createOscillator(), g = ctx.createGain();
-    o.type = type; o.frequency.value = freq;
-    g.gain.setValueAtTime(vol, t);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-    o.connect(g); g.connect(dest); o.start(t); o.stop(t + dur + 0.02);
-  }
-  function hat(t) {
-    if (!music.noise) {
-      var len = ctx.sampleRate * 0.05, buf = ctx.createBuffer(1, len, ctx.sampleRate), d = buf.getChannelData(0);
-      for (var i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
-      music.noise = buf;
-    }
-    var src = ctx.createBufferSource(), g = ctx.createGain(), f = ctx.createBiquadFilter();
-    f.type = "highpass"; f.frequency.value = 6000;
-    src.buffer = music.noise; g.gain.setValueAtTime(0.25, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
-    src.connect(f); f.connect(g); g.connect(music.gain); src.start(t);
-  }
-  function holdLength(i) { var n = 1; while (LEAD[(i + n) % LEAD.length] === "-") n++; return n; }
-  function schedule() {
-    while (music.next < ctx.currentTime + 0.12) {
-      var i = music.step % LEAD.length, t = music.next;
-      var note = LEAD[i];
-      if (N[note]) tone("square", N[note], t, EIGHTH * holdLength(i) * 0.9, 0.18, music.gain);
-      if (i % 2 === 0) {
-        var b = BASS[i / 2];
-        if (N[b]) tone("triangle", N[b], t, EIGHTH * 1.8, 0.5, music.gain);
-      } else {
-        hat(t);
-      }
-      music.step++; music.next += EIGHTH;
-    }
-  }
+
+  // Theme song: an original 8-bar chiptune loop, pre-rendered to a file so it
+  // plays through <audio> (which iPhones don't mute with the silent switch).
+  var bgm = null;
   function startMusic() {
     try {
-      audio();
-      if (!music.gain) { music.gain = ctx.createGain(); music.gain.gain.value = 0.22; music.gain.connect(ctx.destination); }
-      music.gain.gain.setValueAtTime(0.22, ctx.currentTime);
-      music.step = 0; music.next = ctx.currentTime + 0.05;
-      clearInterval(music.timer);
-      music.timer = setInterval(schedule, 25);
-      music.on = true;
+      // Safari 16.4+: treat page audio like media so the silent switch doesn't mute it.
+      if (navigator.audioSession) navigator.audioSession.type = "playback";
+      if (!bgm) {
+        bgm = new Audio("assets/audio/theme.wav");
+        bgm.loop = true;
+        bgm.volume = 0.6;
+      }
+      var p = bgm.play();
+      if (p && p.catch) p.catch(function () { setSound(false); });
     } catch (e) { /* audio unsupported */ }
   }
-  function stopMusic() {
-    clearInterval(music.timer); music.on = false;
-    if (music.gain && ctx) music.gain.gain.setValueAtTime(0, ctx.currentTime);
-  }
+  function stopMusic() { if (bgm) bgm.pause(); }
   document.addEventListener("visibilitychange", function () {
-    if (!soundOn || !ctx) return;
+    if (!soundOn || !bgm) return;
     if (document.hidden) stopMusic(); else startMusic();
   });
 
-  function initSound() {
+  function setSound(on) {
+    soundOn = on;
     var btn = $("#soundToggle");
-    // Music is on by default; a guest who turns it off stays off next visit.
-    soundOn = store("music") !== "off";
-    var sync = function () {
-      btn.setAttribute("aria-pressed", String(soundOn));
-      $("#soundState").textContent = soundOn ? "ON" : "OFF";
-    };
-    sync();
-    btn.addEventListener("click", function () {
-      soundOn = !soundOn; sync(); store("music", soundOn ? "on" : "off");
-      if (soundOn) { sfx("coin"); startMusic(); } else stopMusic();
-    });
-    // Browsers only allow audio after a tap/click/key, so start on the first one.
-    var unlock = function (e) {
-      if (btn.contains(e.target)) return; // the toggle handles itself
-      ["pointerdown", "keydown", "touchstart"].forEach(function (t) { document.removeEventListener(t, unlock, true); });
-      if (soundOn && !music.on) startMusic();
-    };
-    ["pointerdown", "keydown", "touchstart"].forEach(function (t) { document.addEventListener(t, unlock, true); });
+    btn.setAttribute("aria-pressed", String(on));
+    $("#soundState").textContent = on ? "ON" : "OFF";
   }
 
+  function initSound() {
+    setSound(false);
+    $("#soundToggle").addEventListener("click", function () {
+      setSound(!soundOn);
+      store("music", soundOn ? "on" : "off");
+      if (soundOn) { startMusic(); sfx("coin"); } else stopMusic();
+    });
+
+    // Ask once per visit (unless they said no before). Tapping YES is a real
+    // tap, which is what phones require before any sound can play.
+    var dlg = $("#soundPrompt");
+    if (store("music") === "off") return;
+    var close = function (on) {
+      dlg.hidden = true;
+      document.removeEventListener("keydown", onKey);
+      store("music", on ? "on" : "off");
+      if (on) { setSound(true); startMusic(); sfx("coin"); }
+      var start = $("#btnStart"); if (start) start.focus();
+    };
+    var onKey = function (e) { if (e.key === "Escape") close(false); };
+    $("#soundYes").addEventListener("click", function () { close(true); });
+    $("#soundNo").addEventListener("click", function () { close(false); });
+    setTimeout(function () {
+      dlg.hidden = false;
+      document.addEventListener("keydown", onKey);
+      $("#soundYes").focus();
+    }, 700);
+  }
 
   // ---------------------------------------------------------------
   //  Screens

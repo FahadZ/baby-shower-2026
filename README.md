@@ -16,7 +16,7 @@ Plain HTML/CSS/JS. There's no framework and no build step.
 |---|---|
 | `index.html` | All screens: title → select mode → RSVP form → thanks / game over (plus a "closed" screen after the deadline) |
 | `styles.css` | Pixel styling, animations (all disabled under `prefers-reduced-motion`) |
-| `app.js` | Screen flow, countdown, loading bar, scene builder, living sprites (tap one!), original chiptune music + 8-bit sound effects (on by default, starting on the first tap since browsers block autoplay; turning it off is remembered), form + submit, calendar/.ics/share |
+| `app.js` | Screen flow, countdown, loading bar, scene builder, living sprites (tap one!), original chiptune theme (`assets/audio/theme.wav`) offered in a "Sound on?" pop-up, plus 8-bit sound effects; saying no is remembered, form + submit, calendar/.ics/share |
 | `config.js` | **Event details + backend URL. Edit this file to change anything.** |
 | `assets/fonts/` | Press Start 2P, self-hosted so the pixel font always loads (SIL Open Font License) |
 | `assets/sprites/` | Characters cropped from the invite (`assets/invite-page1.png`) as transparent PNGs |

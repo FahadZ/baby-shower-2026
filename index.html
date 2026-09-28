@@ -26,7 +26,7 @@
   <link rel="apple-touch-icon" href="assets/favicon-180.png">
 
   <link rel="preload" href="assets/fonts/press-start-2p-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="styles.css?v=202609282227">
+  <link rel="stylesheet" href="styles.css?v=202609282232">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -269,9 +269,21 @@
   </footer>
   </div>
 
+  <div class="sound-prompt" id="soundPrompt" role="dialog" aria-modal="true" aria-labelledby="soundTitle" aria-describedby="soundDesc" hidden>
+    <div class="panel sound-card">
+      <img class="sound-kirby" src="assets/sprites/kirby.png" alt="" width="129" height="111">
+      <p class="sound-title" id="soundTitle">SOUND ON?</p>
+      <p id="soundDesc">THIS INVITE HAS ITS OWN 8-BIT THEME SONG.</p>
+      <div class="sound-actions">
+        <button class="btn btn-small" type="button" id="soundYes"><i class="tri btn-arrow" aria-hidden="true"></i> YES, PLAY IT</button>
+        <button class="btn-back" type="button" id="soundNo">NO THANKS</button>
+      </div>
+    </div>
+  </div>
+
   <noscript><p class="noscript">This invitation needs JavaScript to RSVP. Please reach out to the hosts directly.</p></noscript>
 
-  <script src="config.js?v=202609282227"></script>
-  <script src="app.js?v=202609282227"></script>
+  <script src="config.js?v=202609282232"></script>
+  <script src="app.js?v=202609282232"></script>
 </body>
 </html>
