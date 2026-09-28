@@ -10,7 +10,7 @@ You are my creative director, copywriter, designer and developer. Build and depl
 retro video-game–themed RSVP website for a baby shower in this repo
 (FahadZ/baby-shower-2026). Make routine creative and technical decisions yourself.
 Only stop to ask me if an account login/permission blocks you or an action would cost
-money. Do not buy or sign up for anything paid.
+money. Do not buy or sign up for anything paid. I have approvals for all characters included. Bring everything to life
 
 ## Event details (from the printed invitation)
 - Title: "Baby Loading.." — tagline "Player 3 has entered the game!"
