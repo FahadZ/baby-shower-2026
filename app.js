@@ -198,7 +198,7 @@
       document.removeEventListener("keydown", onKey);
       store("music", on ? "on" : "off");
       if (on) { setSound(true); startMusic(); sfx("coin"); }
-      var start = $("#btnStart"); if (start) start.focus();
+      $("#main").focus({ preventScroll: true });
     };
     var onKey = function (e) { if (e.key === "Escape") close(false); };
     $("#soundYes").addEventListener("click", function () { close(true); });
