@@ -11,10 +11,12 @@ const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 const CSS = `
 .ord-wrap { margin: 4px 0 12px; }
 html[data-screen="tv"] .ord-wrap { max-width: 1100px; margin: 0 auto 12px; }
-.ord-end { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: .8em; margin: 6px 2px; }
+.ord-end { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: .75em; margin: 4px 2px; line-height: 1.4; }
 .ord-end::before, .ord-end::after { content: ""; flex: 1; border-top: 3px dashed #1a1c17; }
 .ord-list { position: relative; }
-.ord-tile { position: absolute; top: 0; left: 0; right: 0; display: flex; align-items: center; gap: 8px; padding: 8px 8px 8px 10px; min-height: 68px; margin: 0;
+.ord-title { font-size: 1.15em; margin: 6px 0 2px; }
+.ord-prompt { margin-bottom: 6px; font-size: .85em; }
+.ord-tile { position: absolute; top: 0; left: 0; right: 0; display: flex; align-items: center; gap: 7px; padding: 5px 6px 5px 8px; min-height: 60px; margin: 0;
   background: var(--cream); color: var(--ink); border: 4px solid var(--ink);
   box-shadow: inset -4px -4px 0 var(--cream-shadow), inset 4px 4px 0 var(--cream-2), 4px 4px 0 #000;
   touch-action: none; cursor: grab; will-change: transform; }
@@ -29,8 +31,9 @@ html[data-screen="tv"] .ord-wrap { max-width: 1100px; margin: 0 auto 12px; }
 .ord-hint { font-size: .7em; color: var(--link); margin-top: 3px; }
 .ord-hint:empty { display: none; }
 .ord-hide { visibility: hidden; }
-.ord-arrows { flex: none; display: flex; flex-direction: column; gap: 5px; }
-.ord-arrows button { width: 46px; height: 32px; padding: 0; font-size: 12px; line-height: 1; background: var(--btn); color: var(--cream-2); border: 3px solid var(--ink); box-shadow: 2px 2px 0 #000; }
+.ord-arrows { flex: none; display: flex; flex-direction: column; gap: 4px; }
+.ord-arrows button { width: 46px; height: 27px; padding: 0; font-size: 11px; line-height: 1; background: var(--btn); color: var(--cream-2); border: 3px solid var(--ink); box-shadow: 2px 2px 0 #000; }
+.ord-lock { position: sticky; bottom: 8px; z-index: 3; margin-top: 4px; }
 .ord-arrows button:active:not(:disabled) { transform: translate(1px, 1px); box-shadow: 1px 1px 0 #000; }
 .ord-arrows button:disabled { opacity: .35; cursor: default; }
 .ord-grip { flex: none; color: var(--link); font-size: 1.5em; line-height: 1; opacity: .8; padding: 0 2px; }
@@ -45,8 +48,12 @@ html[data-screen="tv"] .ord-wrap { max-width: 1100px; margin: 0 auto 12px; }
 .ord-stage-card { flex: 1 1 150px; max-width: 290px; min-width: 140px; text-align: center; padding: 14px 10px; margin: 0; }
 .ord-stage-card .ord-emoji { display: block; font-size: 3em; width: auto; margin-bottom: 10px; }
 .ord-stage-card .ord-lbl { font-size: .75em; }
-html[data-screen="tv"] .ord-tile { min-height: 3.6em; padding: .4em .8em; }
-html[data-screen="tv"] .ord-lbl { font-size: .9em; }
+html[data-screen="tv"] .ord-tile { min-height: 2.6em; padding: .25em .8em; }
+html[data-screen="tv"] .ord-lbl { font-size: .85em; line-height: 1.25; }
+html[data-screen="tv"] .ord-hint { margin-top: 0; }
+html[data-screen="tv"] .ord-emoji { font-size: 1.6em; }
+.ord-callouts.big { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+.ord-callouts.big .callout { margin-top: 0; }
 .ord-demo .ord-tile { min-height: 46px; padding: 4px 8px; gap: 6px; cursor: default; }
 .ord-demo .ord-lbl { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: .7em; }
 .ord-demo .ord-emoji { font-size: 1.4em; }
@@ -255,14 +262,14 @@ export default {
     const startItems = (prev || correctKeys).map((k) => byKey[k]);
 
     const root = h("div", { class: "game-surface ord-wrap" });
-    const btn = h("button", { class: "btn primary", type: "button" }, h("i", { class: "tri" }), prev ? "UPDATE ORDER" : "LOCK IN");
-    const prompt = h("p", { class: "sub" }, content.prompt || "");
+    const btn = h("button", { class: "btn primary ord-lock", type: "button" }, h("i", { class: "tri" }), prev ? "UPDATE ORDER" : "LOCK IN");
+    const prompt = h("p", { class: "sub ord-prompt" }, content.prompt || "");
     let touched = !!prev;
-    appendTo(el, h("h2", { class: "title" }, content.title || ""), prompt);
+    appendTo(el, h("h2", { class: "title ord-title" }, content.title || ""), prompt);
     appendTo(root, endLabel(content.topLabel || "FIRST"));
     const ctl = makeList(root, startItems, { arrows: true, grip: true, onChange: (user) => { if (user) { touched = true; api.sfx("thunk"); api.vibrate(12); } } });
     appendTo(root, endLabel(content.bottomLabel || "LAST"));
-    appendTo(el, root, h("p", { class: "ord-tip" }, "DRAG A TILE, OR TAP ▲ ▼"), btn);
+    appendTo(el, root, btn);
 
     const inst = { ctl, cleanups: [] };
     inst.lockIn = () => {
@@ -352,7 +359,8 @@ export default {
         h("span", { class: "tiny" }, right === correct.length ? "PERFECT ORDER!" : right === 0 ? "EVERY SINGLE ONE WAS OFF. BOLD." : "SO CLOSE.")));
     }
     const n = reveal.perfect || 0;
-    el.appendChild(h("div", { class: "callout" + (n ? " green" : "") }, "PERFECT ORDER: " + n + (n === 1 ? " PLAYER" : " PLAYERS"),
+    const callouts = h("div", { class: "ord-callouts" + (api.big ? " big" : "") });
+    callouts.appendChild(h("div", { class: "callout" + (n ? " green" : "") }, "PERFECT ORDER: " + n + (n === 1 ? " PLAYER" : " PLAYERS"),
       h("small", null, n ? "NAILED ALL " + correct.length : "NOBODY GOT THEM ALL")));
     const pos = reveal.positions || {};
     const answered = reveal.answered || 0;
@@ -360,8 +368,9 @@ export default {
       let hard = correct[0];
       correct.forEach((k) => { if ((pos[k] ? pos[k].right : 0) < (pos[hard] ? pos[hard].right : 0)) hard = k; });
       const pct = Math.round(100 * ((pos[hard] && pos[hard].right) || 0) / answered);
-      el.appendChild(h("div", { class: "callout red" }, "HARDEST STEP: " + ((byKey[hard] && byKey[hard].label) || hard), h("small", null, "ONLY " + pct + "% GOT IT")));
+      callouts.appendChild(h("div", { class: "callout red" }, "HARDEST STEP: " + ((byKey[hard] && byKey[hard].label) || hard), h("small", null, "ONLY " + pct + "% GOT IT")));
     }
+    el.appendChild(callouts);
     const best = (reveal.best || []).map((id) => byId[id]).filter(Boolean);
     if (best.length) {
       const row = h("div", { class: "row", style: { justifyContent: "center", gap: "14px", marginTop: "10px" } });

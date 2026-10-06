@@ -70,8 +70,6 @@ function ensureStyle() {
   if (!document.getElementById("bag-css")) document.head.appendChild(h("style", { id: "bag-css" }, CSS));
 }
 
-const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
-
 // ------------------------------------------------------------ drawing
 // The bag: an SVG silhouette (4 px ink outline around the interior, a drop
 // shadow and a pixel handle) plus an absolutely positioned grid on top of it
@@ -342,11 +340,11 @@ function mountRound(el, content, api) {
     trayRect = tray.getBoundingClientRect();
     const canPan = tray.scrollWidth > tray.clientWidth + 2;
     const rot = entry ? entry.rot : (trayRot[id] || 0);
+    // From the tray the finger holds the top-left cell (floating LIFT px above
+    // the fingertip). From the bag the grab offset is kept, measured with the
+    // same lifted coordinate, so a press that barely moves lands where it was.
     let anchor = [0, 0];
-    if (entry) {
-      const d = dims(rotate(item.shape, rot));
-      anchor = [clamp(Math.floor((e.clientX - gridRect.left) / cell) - entry.x, 0, d.w - 1), clamp(Math.floor((e.clientY - gridRect.top) / cell) - entry.y, 0, d.h - 1)];
-    }
+    if (entry) anchor = [Math.floor((e.clientX - gridRect.left) / cell) - entry.x, Math.floor((e.clientY - LIFT - gridRect.top) / cell) - entry.y];
     drag = { id, item, rot, src, entry, elm, anchor, canPan, sx: e.clientX, sy: e.clientY, pid: e.pointerId, mode: "pending", over: false, ok: false, rm: false, target: null, lastKey: "", occ: null };
     try { elm.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
   }
@@ -471,7 +469,9 @@ export default {
     const cell = Math.max(10, Math.min(16, Math.floor(200 / Math.max(1, m.w))));
     const item = (content.items || []).find((it) => it.base === "blanket") || (content.items || [])[0] || { shape: ["####", "####"], color: "#f5c6a0", emoji: "🧣" };
     const b = boardEl(mask, cell);
-    const pos = firstFit(m, [], item, 0, {}) || { x: 0, y: 0 };
+    const d = dims(item.shape);
+    const low = { x: Math.floor((m.w - d.w) / 2), y: m.h - d.h - 1 };
+    const pos = canPlace(m, [], item, low.x, low.y, 0) ? low : (firstFit(m, [], item, 0, {}) || { x: 0, y: 0 });
     const tile = tileEl(item, 0, cell);
     tile.style.left = pos.x * cell + "px";
     tile.style.top = pos.y * cell + "px";
@@ -544,7 +544,7 @@ export default {
     const mask = reveal.mask || [];
     const m = parseMask(mask);
     const big = !!api.big;
-    const cell = big ? Math.max(18, Math.min(34, Math.floor(440 / Math.max(1, m.w)))) : Math.max(16, Math.min(26, Math.floor(((el.clientWidth || 350) * 0.62) / Math.max(1, m.w))));
+    const cell = big ? Math.max(18, Math.min(40, Math.floor(520 / Math.max(1, m.w)))) : Math.max(16, Math.min(26, Math.floor(((el.clientWidth || 350) * 0.62) / Math.max(1, m.w))));
     const win = reveal.winner && byId[reveal.winner.id] ? reveal.winner : null;
     const left = h("div", { class: "center" });
     const right = h("div", null);
@@ -619,7 +619,7 @@ export default {
     ensureStyle();
     const mask = content.mask || [];
     const m = parseMask(mask);
-    const cell = api.tv ? Math.max(14, Math.min(30, Math.floor(400 / Math.max(1, m.w)))) : Math.max(12, Math.min(22, Math.floor(260 / Math.max(1, m.w))));
+    const cell = api.tv ? Math.max(20, Math.min(44, Math.floor(600 / Math.max(1, m.w)))) : Math.max(12, Math.min(22, Math.floor(260 / Math.max(1, m.w))));
     const b = boardEl(mask, cell);
     b.board.style.margin = "0 auto";
     const counter = h("div", { class: "counter center" }, "0 PACKING");
