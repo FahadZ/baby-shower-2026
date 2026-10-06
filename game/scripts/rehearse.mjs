@@ -97,7 +97,8 @@ if (GAME) {
   if ((await api()).gameIndex !== gi) throw new Error("could not jump to " + GAME);
 }
 let last = "", n = 0, guard = 0, gameIdx = null, stageShot = false;
-while (guard++ < 400) {
+const deadline = Date.now() + 45 * 60 * 1000;   // a whole evening, with margin
+while (Date.now() < deadline) {
   const s = await api();
   if (GAME) {
     if (gameIdx == null && s.game && s.game.id === GAME) gameIdx = s.gameIndex;
