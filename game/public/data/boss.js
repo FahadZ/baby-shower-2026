@@ -2,7 +2,7 @@
 // Five questions are picked per game (seeded, so every phone agrees). Edit
 // freely: `answer` is the index into `options`, `fact` shows on the reveal.
 export default {
-  boss: { name: "KING BINKY", hpPerPlayer: 4000 },
+  boss: { name: "KING BINKY", hpPerPlayer: 3400 },
 
   questions: [
     {

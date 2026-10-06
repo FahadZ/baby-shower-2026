@@ -16,7 +16,7 @@ test("data: fifteen 4-option questions with a valid answer index and a fact", ()
     assert.equal(new Set(q.options).size, 4, "options are distinct");
   }
   assert.equal(data.boss.name, "KING BINKY");
-  assert.equal(data.boss.hpPerPlayer, 4000);
+  assert.equal(data.boss.hpPerPlayer, 3400);
   assert.equal(boss.rounds, 5);
   assert.equal(boss.roundTime(1), ROUND_MS);
   assert.equal(boss.maxPoints(1), 2000);
@@ -50,17 +50,19 @@ test("content: the same five distinct questions for a seed across rounds, never 
 
 test("content: boss HP is hpPerPlayer x players (min 3) and carries over from earlier rounds", () => {
   const c1 = boss.content(1, ctx(42));
-  assert.equal(c1.bossMax, 4000 * 5);
+  assert.equal(c1.bossMax, 3400 * 5);
   assert.equal(c1.bossHp, c1.bossMax);
+  const ghosts = boss.content(1, ctx(42, { players: players(5).concat([{ id: "gone", name: "Gone", connected: false }]) }));
+  assert.equal(ghosts.bossMax, 3400 * 5, "disconnected players do not add HP");
   const small = boss.content(1, ctx(42, { players: [] }));
-  assert.equal(small.bossMax, 4000 * 3, "at least 3 players' worth of HP");
+  assert.equal(small.bossMax, 3400 * 3, "at least 3 players' worth of HP");
   const results = { "boss-1": { points: { a: 2000, b: 1200, c: 0 } } };
   const c2 = boss.content(2, ctx(42, { round: 2, results }));
-  assert.equal(c2.bossMax, 20000);
-  assert.equal(c2.bossHp, 20000 - 3200);
+  assert.equal(c2.bossMax, 17000);
+  assert.equal(c2.bossHp, 17000 - 3200);
   const results3 = { ...results, "boss-2": { points: { a: 1600, b: 0 } } };
   const c3 = boss.content(3, ctx(42, { round: 3, results: results3 }));
-  assert.equal(c3.bossHp, 20000 - 3200 - 1600);
+  assert.equal(c3.bossHp, 17000 - 3200 - 1600);
   // A recorded bossMax from round 1 wins over a changed room size.
   const withMax = { "boss-1": { points: { a: 100 }, reveal: { bossMax: 48000 } } };
   const c2b = boss.content(2, ctx(42, { round: 2, results: withMax, players: players(2) }));
@@ -97,7 +99,7 @@ test("score: correct at t=0 is 2000, correct at the buzzer is 1200, wrong is 0",
 });
 
 test("revealData: answer, fact, split, damage, HP before/after and the defeated flag", () => {
-  const c = ctx(42, { players: players(3) }); // bossMax 12000
+  const c = ctx(42, { players: players(3) }); // bossMax 10200
   const q = questionFor(1, c);
   const wrong = (q.answer + 1) % 4;
   const answers = { a: { a: q.answer, t: 500 }, b: { a: q.answer, t: 100 }, c: { a: wrong, t: 200 }, d: { a: q.answer, t: 900 }, e: { a: q.answer, t: 9000 } };
@@ -111,15 +113,15 @@ test("revealData: answer, fact, split, damage, HP before/after and the defeated 
   assert.equal(r.correctCount, 4);
   assert.equal(r.answered, 5);
   assert.equal(r.damage, pts.a + pts.b + pts.d + pts.e);
-  assert.equal(r.bossMax, 12000);
-  assert.equal(r.bossHpBefore, 12000);
-  assert.equal(r.bossHpAfter, Math.max(0, 12000 - r.damage));
+  assert.equal(r.bossMax, 10200);
+  assert.equal(r.bossHpBefore, 10200);
+  assert.equal(r.bossHpAfter, Math.max(0, 10200 - r.damage));
   assert.deepEqual(r.best, ["b", "a", "d"], "fastest three correct");
-  assert.equal(r.defeated, 12000 - r.damage <= 0);
+  assert.equal(r.defeated, 10200 - r.damage <= 0);
   assert.equal(r.lastRound, false);
 
   // The last round with most of the HP already gone: this hit finishes the boss.
-  const results = { "boss-1": { points: { a: 2000, b: 2000 } }, "boss-2": { points: { a: 2000, b: 2000 } }, "boss-3": { points: { a: 2000 } }, "boss-4": { points: { a: 800 } } };
+  const results = { "boss-1": { points: { a: 2000, b: 2000 } }, "boss-2": { points: { a: 2000, b: 2000 } }, "boss-3": { points: { a: 1000 } } };
   const c3 = ctx(42, { round: 5, roundId: "boss-5", players: players(3), results });
   const q3 = questionFor(5, c3);
   const a3 = { a: { a: q3.answer, t: 0 }, b: { a: (q3.answer + 2) % 4, t: 0 } };

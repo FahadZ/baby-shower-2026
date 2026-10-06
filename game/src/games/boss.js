@@ -25,8 +25,12 @@ export function questionFor(round, ctx) {
   return data.questions[picks[round - 1]];
 }
 
+// Only phones that are actually connected count towards the boss's health, so
+// people who joined earlier and left do not make the boss unbeatable.
 function playerCount(ctx) {
-  return Math.max(MIN_PLAYERS, (ctx.players || []).length);
+  const all = ctx.players || [];
+  const live = all.filter((p) => p.connected !== false).length;
+  return Math.max(MIN_PLAYERS, live || all.length);
 }
 
 function roundIdOf(r) { return "boss-" + r; }
