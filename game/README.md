@@ -32,7 +32,7 @@ game/
     data/<id>.js          Editable content (prices, questions, roster...)
     assets/               fonts, deco, scene, avatars (character + palette PNGs), babyphotos
   test/                   node --test
-  scripts/                rehearse.mjs (Playwright run-through), avatar palette generator
+  scripts/                rehearse.mjs, robustness.mjs, practice-flow.mjs (Playwright), avatar palette generator
   docs/screens/           Screenshots from the last rehearsal
 ```
 
@@ -218,6 +218,10 @@ reached, **0 browser errors, 0 server errors**.
 | Answer submitted before the outage | preserved, shown on the reveal |
 | Phone reloaded mid-game | same player, same points, leaderboard rebuilt with their row |
 | Host phone closed mid-round | round ended and scored on the server clock |
+
+`node scripts/practice-flow.mjs` checks the practice round on Put It In Order: the host
+toggle, the graded overlay after LOCK IN, TRY AGAIN, toggling off, and START ROUND
+clearing it, with nothing reaching the server. Last run: all checks pass.
 
 ## Deploying (one command once the secrets exist)
 
