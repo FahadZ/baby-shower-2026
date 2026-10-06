@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en" data-screen="tv">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Baby Loading.. Stage</title>
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#2b2f27">
+  <link rel="icon" href="assets/favicon.ico" sizes="any">
+  <link rel="stylesheet" href="game.css">
+  <style>
+    .hud-tv { position: fixed; bottom: 10px; right: 16px; z-index: 30; display: flex; gap: 10px; align-items: center; opacity: .25; transition: opacity .3s; }
+    .hud-tv:hover { opacity: 1; }
+    .hud-tv .btn { width: auto; min-height: 40px; font-size: .5em; }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <main id="app" class="console">
+      <p class="sub" style="padding-top:30vh">CONNECTING<span class="blink">...</span></p>
+    </main>
+  </div>
+  <div class="hud-tv">
+    <i class="dot sync" id="netDot" aria-hidden="true"></i>
+    <button class="btn" id="muteBtn" type="button">MUTE</button>
+    <button class="btn" id="fsBtn" type="button">FULLSCREEN</button>
+  </div>
+  <div class="overlay" id="soundPrompt" role="dialog" aria-modal="true" aria-labelledby="soundTitle">
+    <div class="panel center">
+      <img class="px" src="assets/sprites/kirby.png" alt="" width="96">
+      <p id="soundTitle" style="font-size:1.4em;margin:10px 0">SOUND ON?</p>
+      <p>THIS IS THE BIG SCREEN. IT HAS THE THEME SONG, THE COUNTDOWN TICKS AND THE FANFARES.</p>
+      <div class="btn-grid">
+        <button class="btn primary" id="soundYes" type="button">YES, PLAY IT</button>
+        <button class="btn" id="soundNo" type="button">SILENT</button>
+      </div>
+    </div>
+  </div>
+  <script src="vendor/qrcode.js"></script>
+  <script type="module" src="tv.js"></script>
+</body>
+</html>

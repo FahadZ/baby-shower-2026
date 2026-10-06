@@ -1,0 +1,142 @@
+[
+  {
+    "slug": "luigi",
+    "name": "Luigi",
+    "franchise": "Super Mario",
+    "game": "Super Mario All-Stars + Super Mario World",
+    "pageUrl": "https://www.mariowiki.com/File:Luigi_SMAS_SMW.png",
+    "imageUrl": "https://mario.wiki.gallery/images/2/23/Luigi_SMAS_SMW.png",
+    "width": 15,
+    "height": 30
+  },
+  {
+    "slug": "toad",
+    "name": "Toad",
+    "franchise": "Super Mario",
+    "game": "Super Mario All-Stars (Super Mario Bros. 2)",
+    "pageUrl": "https://www.mariowiki.com/File:SMAS_SMB2_Toad_Sprite.png",
+    "imageUrl": "https://mario.wiki.gallery/images/5/55/SMAS_SMB2_Toad_Sprite.png",
+    "width": 16,
+    "height": 27
+  },
+  {
+    "slug": "yoshi",
+    "name": "Yoshi",
+    "franchise": "Super Mario / Yoshi",
+    "game": "Super Mario World 2: Yoshi's Island",
+    "pageUrl": "https://www.mariowiki.com/File:SMW2_Yoshi_intro_green.png",
+    "imageUrl": "https://mario.wiki.gallery/images/e/ee/SMW2_Yoshi_intro_green.png",
+    "width": 25,
+    "height": 30
+  },
+  {
+    "slug": "bowser",
+    "name": "Bowser",
+    "franchise": "Super Mario",
+    "game": "Super Mario RPG: Legend of the Seven Stars",
+    "pageUrl": "https://www.mariowiki.com/File:BowserSMRPG.png",
+    "imageUrl": "https://mario.wiki.gallery/images/6/6f/BowserSMRPG.png",
+    "width": 32,
+    "height": 38
+  },
+  {
+    "slug": "donkey-kong",
+    "name": "Donkey Kong",
+    "franchise": "Donkey Kong",
+    "game": "Donkey Kong Country (SNES)",
+    "pageUrl": "https://www.mariowiki.com/File:Donkey_Kong_DKC_idle.gif",
+    "imageUrl": "https://mario.wiki.gallery/images/c/ca/Donkey_Kong_DKC_idle.gif",
+    "width": 37,
+    "height": 39
+  },
+  {
+    "slug": "diddy-kong",
+    "name": "Diddy Kong",
+    "franchise": "Donkey Kong",
+    "game": "Donkey Kong Country (SNES)",
+    "pageUrl": "https://www.mariowiki.com/File:Diddy_DKC_sprite.png",
+    "imageUrl": "https://mario.wiki.gallery/images/2/23/Diddy_DKC_sprite.png",
+    "width": 35,
+    "height": 36
+  },
+  {
+    "slug": "wario",
+    "name": "Wario",
+    "franchise": "Wario",
+    "game": "Wario Land 4",
+    "pageUrl": "https://www.mariowiki.com/File:WL4_Wario1.png",
+    "imageUrl": "https://mario.wiki.gallery/images/e/e0/WL4_Wario1.png",
+    "width": 24,
+    "height": 34
+  },
+  {
+    "slug": "zelda",
+    "name": "Princess Zelda",
+    "franchise": "The Legend of Zelda",
+    "game": "The Legend of Zelda: A Link to the Past",
+    "pageUrl": "https://zeldawiki.wiki/wiki/File:ALttP_Princess_Zelda_Sprite.png",
+    "imageUrl": "https://cdn.wikimg.net/en/zeldawiki/images/0/03/ALttP_Princess_Zelda_Sprite.png",
+    "width": 32,
+    "height": 46
+  },
+  {
+    "slug": "samus",
+    "name": "Samus Aran",
+    "franchise": "Metroid",
+    "game": "Metroid Fusion",
+    "pageUrl": "https://www.metroidwiki.org/wiki/File:Samus_mf_Sprite.png",
+    "imageUrl": "https://cdn.wikimg.net/en/metroidwiki/images/9/93/Samus_mf_Sprite.png",
+    "width": 24,
+    "height": 40
+  },
+  {
+    "slug": "meta-knight",
+    "name": "Meta Knight",
+    "franchise": "Kirby",
+    "game": "Kirby Super Star",
+    "pageUrl": "https://wikirby.com/wiki/File:KSS_Meta_Knight_idle_sprite.png",
+    "imageUrl": "https://cdn.wikirby.com/c/c4/KSS_Meta_Knight_idle_sprite.png",
+    "width": 44,
+    "height": 31
+  },
+  {
+    "slug": "isabelle",
+    "name": "Isabelle",
+    "franchise": "Animal Crossing",
+    "game": "Super Mario Maker (Mystery Mushroom costume sprite)",
+    "pageUrl": "https://nookipedia.com/wiki/File:Isabelle_SMM_Sprite.png",
+    "imageUrl": "https://dodo.ac/np/images/7/7b/Isabelle_SMM_Sprite.png",
+    "width": 12,
+    "height": 16
+  },
+  {
+    "slug": "tom-nook",
+    "name": "Tom Nook",
+    "franchise": "Animal Crossing",
+    "game": "Super Mario Maker (Mystery Mushroom costume sprite)",
+    "pageUrl": "https://nookipedia.com/wiki/File:Tom_Nook_SMM_Costume.png",
+    "imageUrl": "https://dodo.ac/np/images/1/14/Tom_Nook_SMM_Costume.png",
+    "width": 13,
+    "height": 16
+  },
+  {
+    "slug": "shy-guy",
+    "name": "Shy Guy",
+    "franchise": "Super Mario / Yoshi",
+    "game": "Super Mario World 2: Yoshi's Island",
+    "pageUrl": "https://www.mariowiki.com/File:SMW2YI_Red_Shy_Guy.png",
+    "imageUrl": "https://mario.wiki.gallery/images/b/b4/SMW2YI_Red_Shy_Guy.png",
+    "width": 16,
+    "height": 19
+  },
+  {
+    "slug": "pikmin",
+    "name": "Red Pikmin",
+    "franchise": "Pikmin",
+    "game": "Pikmin 2 (Challenge Mode menu icon)",
+    "pageUrl": "https://www.pikminwiki.com/File:Red_Pikmin_P2_icon.png",
+    "imageUrl": "https://pikmin.wiki.gallery/images/5/58/Red_Pikmin_P2_icon.png",
+    "width": 16,
+    "height": 43
+  }
+]

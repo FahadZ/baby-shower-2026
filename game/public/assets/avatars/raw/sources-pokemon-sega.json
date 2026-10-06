@@ -1,0 +1,152 @@
+[
+  {
+    "slug": "charmander",
+    "name": "Charmander",
+    "franchise": "Pokémon",
+    "game": "Pokémon Black/White (Gen V front sprite)",
+    "pageUrl": "https://archives.bulbagarden.net/wiki/File:Spr_5b_004.png",
+    "imageUrl": "https://archives.bulbagarden.net/media/upload/0/0a/Spr_5b_004.png",
+    "width": 38,
+    "height": 42
+  },
+  {
+    "slug": "squirtle",
+    "name": "Squirtle",
+    "franchise": "Pokémon",
+    "game": "Pokémon Black/White (Gen V front sprite)",
+    "pageUrl": "https://archives.bulbagarden.net/wiki/File:Spr_5b_007.png",
+    "imageUrl": "https://archives.bulbagarden.net/media/upload/5/59/Spr_5b_007.png",
+    "width": 38,
+    "height": 39
+  },
+  {
+    "slug": "bulbasaur",
+    "name": "Bulbasaur",
+    "franchise": "Pokémon",
+    "game": "Pokémon Black/White (Gen V front sprite)",
+    "pageUrl": "https://archives.bulbagarden.net/wiki/File:Spr_5b_001.png",
+    "imageUrl": "https://archives.bulbagarden.net/media/upload/7/76/Spr_5b_001.png",
+    "width": 35,
+    "height": 33
+  },
+  {
+    "slug": "eevee",
+    "name": "Eevee",
+    "franchise": "Pokémon",
+    "game": "Pokémon Black/White (Gen V front sprite)",
+    "pageUrl": "https://archives.bulbagarden.net/wiki/File:Spr_5b_133.png",
+    "imageUrl": "https://archives.bulbagarden.net/media/upload/9/9c/Spr_5b_133.png",
+    "width": 37,
+    "height": 47
+  },
+  {
+    "slug": "jigglypuff",
+    "name": "Jigglypuff",
+    "franchise": "Pokémon",
+    "game": "Pokémon Black/White (Gen V front sprite)",
+    "pageUrl": "https://archives.bulbagarden.net/wiki/File:Spr_5b_039.png",
+    "imageUrl": "https://archives.bulbagarden.net/media/upload/b/bd/Spr_5b_039.png",
+    "width": 34,
+    "height": 34
+  },
+  {
+    "slug": "snorlax",
+    "name": "Snorlax",
+    "franchise": "Pokémon",
+    "game": "Pokémon Black/White (Gen V front sprite)",
+    "pageUrl": "https://archives.bulbagarden.net/wiki/File:Spr_5b_143.png",
+    "imageUrl": "https://archives.bulbagarden.net/media/upload/4/40/Spr_5b_143.png",
+    "width": 62,
+    "height": 67
+  },
+  {
+    "slug": "tails",
+    "name": "Tails",
+    "franchise": "Sonic the Hedgehog",
+    "game": "Sonic the Hedgehog 2 (Genesis) idle sprite",
+    "pageUrl": "https://sonic.fandom.com/wiki/File:Sonic2_Sprite_Character_Tails_Idle1.png",
+    "imageUrl": "https://static.wikia.nocookie.net/sonic/images/5/5c/Sonic2_Sprite_Character_Tails_Idle1.png/revision/latest",
+    "width": 32,
+    "height": 31
+  },
+  {
+    "slug": "knuckles",
+    "name": "Knuckles",
+    "franchise": "Sonic the Hedgehog",
+    "game": "Sonic 3 & Knuckles (Genesis) waiting/idle sprite, frame 1",
+    "pageUrl": "https://sonic.fandom.com/wiki/File:Knuckles_waiting.gif",
+    "imageUrl": "https://static.wikia.nocookie.net/sonic/images/9/94/Knuckles_waiting.gif/revision/latest",
+    "width": 27,
+    "height": 40
+  },
+  {
+    "slug": "shadow",
+    "name": "Shadow the Hedgehog",
+    "franchise": "Sonic the Hedgehog",
+    "game": "Sonic Battle (GBA) standing sprite, frame 1",
+    "pageUrl": "https://sonic.fandom.com/wiki/File:Shadow_standing.gif",
+    "imageUrl": "https://static.wikia.nocookie.net/sonic/images/b/be/Shadow_standing.gif/revision/latest",
+    "width": 24,
+    "height": 35
+  },
+  {
+    "slug": "amy",
+    "name": "Amy Rose",
+    "franchise": "Sonic the Hedgehog",
+    "game": "Sonic Advance (GBA) idle sprite, frame 1",
+    "pageUrl": "https://sonic.fandom.com/wiki/File:Amyadvance.gif",
+    "imageUrl": "https://static.wikia.nocookie.net/sonic/images/9/9d/Amyadvance.gif/revision/latest",
+    "width": 49,
+    "height": 72
+  },
+  {
+    "slug": "chocobo",
+    "name": "Chocobo",
+    "franchise": "Final Fantasy",
+    "game": "Final Fantasy Record Keeper (FFT-style Chocobo sprite)",
+    "pageUrl": "https://finalfantasy.fandom.com/wiki/File:FFRK_Chocobo_FFT.png",
+    "imageUrl": "https://static.wikia.nocookie.net/finalfantasy/images/0/01/FFRK_Chocobo_FFT.png/revision/latest",
+    "width": 40,
+    "height": 56
+  },
+  {
+    "slug": "slime",
+    "name": "Slime",
+    "franchise": "Dragon Quest",
+    "game": "Dragon Quest III (SNES) battle sprite",
+    "pageUrl": "https://dragonquest.fandom.com/wiki/File:SLIME_-_DQ3_-_SNES.png",
+    "imageUrl": "https://static.wikia.nocookie.net/dragonquest/images/7/79/SLIME_-_DQ3_-_SNES.png/revision/latest",
+    "width": 15,
+    "height": 16
+  },
+  {
+    "slug": "ryu",
+    "name": "Ryu",
+    "franchise": "Street Fighter",
+    "game": "Street Fighter II: The World Warrior (SNES) idle stance, frame 1 of sheet",
+    "pageUrl": "https://www.spriters-resource.com/snes/streetfighteriistreetfighteriiturbo/asset/148032/",
+    "imageUrl": "https://www.spriters-resource.com/media/assets/145/148032.png",
+    "width": 41,
+    "height": 82
+  },
+  {
+    "slug": "chun-li",
+    "name": "Chun-Li",
+    "franchise": "Street Fighter",
+    "game": "Street Fighter II Turbo (SNES) standing pose, blue outfit, cropped from sheet",
+    "pageUrl": "https://www.spriters-resource.com/snes/streetfighteriistreetfighteriiturbo/asset/502478/",
+    "imageUrl": "https://www.spriters-resource.com/media/assets/483/502478.png",
+    "width": 42,
+    "height": 77
+  },
+  {
+    "slug": "mega-man",
+    "name": "Mega Man",
+    "franchise": "Mega Man",
+    "game": "Mega Man / Mega Man 2 (NES) standing sprite (identical in both games)",
+    "pageUrl": "https://megaman.fandom.com/wiki/File:MM1-Normal-Sprite.png",
+    "imageUrl": "https://static.wikia.nocookie.net/megaman/images/2/2c/MM1-Normal-Sprite.png/revision/latest",
+    "width": 21,
+    "height": 24
+  }
+]

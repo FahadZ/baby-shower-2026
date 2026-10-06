@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en" data-screen="host">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+  <title>Player 1 Remote</title>
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#2b2f27">
+  <link rel="icon" href="assets/favicon.ico" sizes="any">
+  <link rel="stylesheet" href="game.css">
+  <style>body { touch-action: manipulation; }</style>
+</head>
+<body>
+  <div class="frame">
+    <header class="hud">
+      <span><i class="dot sync" id="netDot" aria-hidden="true"></i><span class="tag">PLAYER 1 REMOTE</span></span>
+      <a class="tiny" href="/tv" target="_blank" rel="noopener">OPEN TV VIEW ↗</a>
+    </header>
+    <main id="app" class="console">
+      <p class="sub" style="padding-top:30vh">CONNECTING<span class="blink">...</span></p>
+    </main>
+  </div>
+  <script src="vendor/qrcode.js"></script>
+  <script type="module" src="host.js"></script>
+</body>
+</html>

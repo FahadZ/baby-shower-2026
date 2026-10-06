@@ -1,0 +1,152 @@
+[
+  {
+    "slug": "steve",
+    "name": "Steve",
+    "franchise": "Minecraft",
+    "game": "Minecraft (fan pixel sheet 'Steve' by Tarkan809, Minecraft Customs)",
+    "pageUrl": "https://www.spriters-resource.com/custom_edited/minecraftcustoms/asset/85390/",
+    "imageUrl": "https://www.spriters-resource.com/media/assets/82/85390.png",
+    "width": 12,
+    "height": 16
+  },
+  {
+    "slug": "creeper",
+    "name": "Creeper",
+    "franchise": "Minecraft",
+    "game": "Minecraft (fan pixel sheet 'Creeper' by Tarkan809, Minecraft Customs)",
+    "pageUrl": "https://www.spriters-resource.com/custom_edited/minecraftcustoms/asset/91008/",
+    "imageUrl": "https://www.spriters-resource.com/media/assets/88/91008.png",
+    "width": 10,
+    "height": 15
+  },
+  {
+    "slug": "crewmate",
+    "name": "Crewmate (red)",
+    "franchise": "Among Us",
+    "game": "Among Us (fan pixel sheet 'Crewmate', Among Us Customs)",
+    "pageUrl": "https://www.spriters-resource.com/custom_edited/amonguscustoms/asset/140345/",
+    "imageUrl": "https://www.spriters-resource.com/media/assets/137/140345.png",
+    "width": 25,
+    "height": 27
+  },
+  {
+    "slug": "fall-guy",
+    "name": "Fall Guys Bean",
+    "franchise": "Fall Guys",
+    "game": "Fall Guys (fan pixel sheet 'Bean (Fall Guys) - Sprite Sheet' by JayHyperStarX)",
+    "pageUrl": "https://www.deviantart.com/jayhyperstarx/art/Bean-Fall-Guys-Sprite-Sheet-1039746823",
+    "imageUrl": "https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/f61734ab-7f63-46ab-b824-d44b9b4b1b53/dh71ds7-79b27233-976b-4064-a27f-b1535fcda257.png",
+    "width": 128,
+    "height": 145
+  },
+  {
+    "slug": "master-chief",
+    "name": "Master Chief",
+    "franchise": "Halo",
+    "game": "Halo (fan pixel sheet 'Master Chief' by ZRDragoon, Halo Customs, Mega Man 8-style)",
+    "pageUrl": "https://www.spriters-resource.com/custom_edited/halocustoms/asset/16640/",
+    "imageUrl": "https://www.spriters-resource.com/media/assets/16/16640.png",
+    "width": 27,
+    "height": 46
+  },
+  {
+    "slug": "lara-croft",
+    "name": "Lara Croft",
+    "franchise": "Tomb Raider",
+    "game": "Tomb Raider (Game Boy Color, 2000)",
+    "pageUrl": "https://www.spriters-resource.com/game_boy_gbc/tombraid/asset/13493/",
+    "imageUrl": "https://www.spriters-resource.com/media/assets/13/13493.png",
+    "width": 11,
+    "height": 46
+  },
+  {
+    "slug": "kratos",
+    "name": "Kratos",
+    "franchise": "God of War",
+    "game": "God of War: Betrayal (Java mobile, 2007)",
+    "pageUrl": "https://spritedatabase.net/file/7048",
+    "imageUrl": "https://spritedatabase.net/files/mobile/1292/Sprite/Kratos.png",
+    "width": 57,
+    "height": 51
+  },
+  {
+    "slug": "sackboy",
+    "name": "Sackboy",
+    "franchise": "LittleBigPlanet",
+    "game": "LittleBigPlanet (fan pixel sprite 'Sackboy Sprite' by SmashToons)",
+    "pageUrl": "https://www.deviantart.com/smashtoons/art/Sackboy-Sprite-181110050",
+    "imageUrl": "https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/26f5f850-294f-416b-99ca-6575be6c9281/d2ztteq-968b488f-6299-4657-8b99-8e2a0e728220.gif",
+    "width": 38,
+    "height": 69
+  },
+  {
+    "slug": "link-toon",
+    "name": "Toon Link",
+    "franchise": "The Legend of Zelda",
+    "game": "The Legend of Zelda: The Minish Cap (GBA)",
+    "pageUrl": "https://zeldawiki.wiki/wiki/File:TMC_Link_Sprite.png",
+    "imageUrl": "https://cdn.wikimg.net/en/zeldawiki/images/d/d6/TMC_Link_Sprite.png",
+    "width": 18,
+    "height": 23
+  },
+  {
+    "slug": "sans",
+    "name": "Sans",
+    "franchise": "Undertale",
+    "game": "Undertale",
+    "pageUrl": "https://undertale.fandom.com/wiki/File:Sans_overworld.png",
+    "imageUrl": "https://static.wikia.nocookie.net/undertale/images/a/a6/Sans_overworld.png/revision/latest",
+    "width": 23,
+    "height": 30
+  },
+  {
+    "slug": "frisk",
+    "name": "Frisk",
+    "franchise": "Undertale",
+    "game": "Undertale",
+    "pageUrl": "https://undertale.fandom.com/wiki/File:Frisk_overworld.png",
+    "imageUrl": "https://static.wikia.nocookie.net/undertale/images/f/f8/Frisk_overworld.png/revision/20260713203558",
+    "width": 19,
+    "height": 29
+  },
+  {
+    "slug": "terraria",
+    "name": "Terrarian (default male player)",
+    "franchise": "Terraria",
+    "game": "Terraria",
+    "pageUrl": "https://terraria.wiki.gg/wiki/File:Style_1_male.png",
+    "imageUrl": "https://terraria.wiki.gg/images/Style_1_male.png",
+    "width": 30,
+    "height": 48
+  },
+  {
+    "slug": "celeste-madeline",
+    "name": "Madeline",
+    "franchise": "Celeste",
+    "game": "Celeste (no-backpack idle sprite)",
+    "pageUrl": "https://celestegame.fandom.com/wiki/File:Madeline_Idle_Animation_(No_Backpack).gif",
+    "imageUrl": "https://static.wikia.nocookie.net/celestegame/images/c/c3/Madeline_Idle_Animation_%28No_Backpack%29.gif/revision/latest",
+    "width": 12,
+    "height": 17
+  },
+  {
+    "slug": "shantae",
+    "name": "Shantae",
+    "franchise": "Shantae",
+    "game": "Shantae (Game Boy Color, 2002)",
+    "pageUrl": "https://www.spriters-resource.com/game_boy_gbc/shantae/asset/13500/",
+    "imageUrl": "https://www.spriters-resource.com/media/assets/13/13500.png",
+    "width": 24,
+    "height": 38
+  },
+  {
+    "slug": "scott-pilgrim",
+    "name": "Scott Pilgrim",
+    "franchise": "Scott Pilgrim",
+    "game": "Scott Pilgrim vs. the World: The Game (Xbox 360)",
+    "pageUrl": "https://www.spriters-resource.com/xbox_360/scottpilgrimvstheworldthegame/asset/70725/",
+    "imageUrl": "https://www.spriters-resource.com/media/assets/68/70725.png",
+    "width": 36,
+    "height": 59
+  }
+]
