@@ -8,5 +8,5 @@ import binky from "./binky.js";
 import order from "./order.js";
 import boss from "./boss.js";
 
-export const GAMES = [price, bag,dash, momordad,binky, order, boss];
+export const GAMES = [price, binky, momordad, dash, order, bag, boss];
 export const GAMES_BY_ID = Object.fromEntries(GAMES.map((g) => [g.id, g]));
