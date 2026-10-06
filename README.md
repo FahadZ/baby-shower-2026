@@ -6,7 +6,7 @@ A retro 16-bit RSVP site for Fahad & Oyshe's baby shower. Player 3 has entered t
 
 - Saturday, October 17, 2026 · 2:00 PM (Toronto)
 - 36 Park Lawn Rd, Etobicoke, ON M8V 0E5
-- RSVPs close Wednesday, October 7, 2026
+- RSVPs close Saturday, October 10, 2026
 
 Plain HTML/CSS/JS. There's no framework and no build step.
 
@@ -67,7 +67,7 @@ No email address or Sheet ID is committed. They live in **Script Properties**:
 |---|---|---|
 | `SHEET_ID` | `setup()` | The RSVP spreadsheet |
 | `NOTIFY_EMAIL` | `setup()` (defaults to the Google account running it) | Where host notifications go |
-| `RSVP_DEADLINE` | `setup()` (defaults to Oct 7, 11:59 PM Toronto) | Cut-off for submissions |
+| `RSVP_DEADLINE` | `setup()` (defaults to Oct 10, 11:59 PM Toronto) | Cut-off for submissions |
 
 ### One-time setup (about 5 minutes, in the browser)
 

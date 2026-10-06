@@ -13,7 +13,7 @@ window.PARTY = {
   timeZone: "America/Toronto",
 
   // RSVPs close at the end of this moment (Toronto time).
-  rsvpDeadline: "2026-10-07T23:59:59-04:00",
+  rsvpDeadline: "2026-10-10T23:59:59-04:00",
 
   venueName: "",
   address: "36 Park Lawn Rd, Etobicoke, ON M8V 0E5",

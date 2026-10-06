@@ -16,7 +16,7 @@ var EVENT = {
   timeText: "2:00 PM",
   address: "36 Park Lawn Rd, Etobicoke, ON M8V 0E5",
   siteUrl: "https://fahadz.github.io/baby-shower-2026/",
-  deadlineDefault: "2026-10-07T23:59:59-04:00",
+  deadlineDefault: "2026-10-10T23:59:59-04:00",
   maxGuests: 5
 };
 
