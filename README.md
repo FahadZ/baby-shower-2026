@@ -21,6 +21,7 @@ Plain HTML/CSS/JS. There's no framework and no build step.
 | `assets/fonts/` | Press Start 2P, self-hosted so the pixel font always loads (SIL Open Font License) |
 | `assets/sprites/` | Characters cropped from the invite (`assets/invite-page1.png`) as transparent PNGs |
 | `assets/scene/` | The invite's own logo, brick-and-vine stage, ledges and brick tile (characters erased) |
+| `assets/kirby/`, `assets/cloud/`, `assets/link/` | Animation frames from the real games (Kirby Super Star, Final Fantasy Brave Exvius, Cadence of Hyrule), via The Spriters Resource |
 | `assets/deco/` | Clouds, falling blocks, hearts and sparkles, also cropped from the invite |
 | `assets/og-image.png` | 1200×630 link preview for WhatsApp / iMessage |
 | `apps-script/` | Google Apps Script backend (Sheet + emails) |

@@ -376,6 +376,7 @@ strong { font-weight: 400; color: var(--cream-2); }
 
 /* Signature moves */
 .fx { position: absolute; z-index: 6; pointer-events: none; overflow: visible; }
+.fx-sprite { position: absolute; z-index: 5; pointer-events: none; max-width: none; height: auto; image-rendering: pixelated; image-rendering: crisp-edges; }
 .speech-poke { background: #fffaf0; border-radius: 0; }
 
 /* Kirby's copy ability */

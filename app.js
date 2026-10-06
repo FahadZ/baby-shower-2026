@@ -129,10 +129,10 @@
     inhale: [[1046, 0.06], [880, 0.06], [740, 0.06], [622, 0.06], [523, 0.06], [440, 0.06], [370, 0.08]],
     swallow: [[196, 0.07], [392, 0.07], [784, 0.12]],
     spit: [[784, 0.04], [1175, 0.1]],
-    zap: [[1568, 0.03], [1175, 0.03], [1568, 0.03], [1175, 0.03]],
     thunder: [[98, 0.08], [1318, 0.04], [110, 0.08], [1568, 0.04], [87, 0.2]],
     charge: [[330, 0.06], [392, 0.06], [494, 0.06], [587, 0.06], [698, 0.08]],
     slash: [[1760, 0.03], [880, 0.06]],
+    whoosh: [[988, 0.03], [740, 0.03], [554, 0.05]],
     spin: [[523, 0.05], [784, 0.05], [1046, 0.05], [784, 0.05], [1318, 0.1]],
     win: [[523, 0.1], [659, 0.1], [784, 0.1], [1047, 0.12], [784, 0.08], [1047, 0.3]],
     over: [[392, 0.18], [370, 0.18], [349, 0.18], [330, 0.4]],
@@ -863,9 +863,8 @@
   }
 
   // ---------------------------------------------------------------
-  //  Signature moves: Pikachu's Thunderbolt, Cloud's sword swing and
-  //  Link's Spin Attack. The sprites are the invite's; the lightning,
-  //  slashes and sword arc are drawn effects layered on top.
+  //  Pikachu's Thunderbolt. The sprite is the invite's; the sparks,
+  //  shockwave and lightning are drawn effects layered on top.
   // ---------------------------------------------------------------
   var SVGNS = "http://www.w3.org/2000/svg";
   function fxSvg(parent, x, y, w, h, viewBox, inner) {
@@ -875,127 +874,206 @@
     svg.setAttribute("aria-hidden", "true");
     svg.style.left = x + "px"; svg.style.top = y + "px";
     svg.style.width = w + "px"; svg.style.height = h + "px";
-    svg.innerHTML = inner;
+    svg.innerHTML = inner || "";
     parent.appendChild(svg);
     return svg;
   }
   function box(img) { return { x: img.offsetLeft, y: img.offsetTop, w: img.offsetWidth, h: img.offsetHeight }; }
-  function zigzag(x0, y0, x1, y1, n, amp) {
-    var pts = [[x0, y0]];
+  // A jagged line from (x0,y0) to (x1,y1), kinked sideways at random.
+  function zig(x0, y0, x1, y1, n, amp) {
+    var dx = x1 - x0, dy = y1 - y0, len = Math.sqrt(dx * dx + dy * dy) || 1;
+    var nx = -dy / len, ny = dx / len, pts = [[x0, y0]];
     for (var i = 1; i < n; i++) {
-      var t = i / n;
-      pts.push([x0 + (x1 - x0) * t + (i % 2 ? amp : -amp) * (0.6 + Math.random() * 0.6), y0 + (y1 - y0) * t]);
+      var t = i / n, o = (i % 2 ? 1 : -1) * amp * (0.5 + Math.random() * 0.7);
+      pts.push([x0 + dx * t + nx * o, y0 + dy * t + ny * o]);
     }
     pts.push([x1, y1]);
     return pts.map(function (p) { return p[0].toFixed(1) + "," + p[1].toFixed(1); }).join(" ");
   }
+  function boltLine(pts, glow, core) {
+    return '<polyline points="' + pts + '" fill="none" stroke="#ffe94a" stroke-width="' + glow + '" stroke-linejoin="bevel" stroke-linecap="round"/>' +
+           '<polyline points="' + pts + '" fill="none" stroke="#fffbe0" stroke-width="' + core + '" stroke-linejoin="bevel" stroke-linecap="round"/>';
+  }
 
   async function thunderbolt(img) {
     var parent = img.offsetParent, b = box(img);
-    // Pikachu's cheeks sit at roughly these spots on the invite sprite.
+    // Body centre and cheeks on the invite sprite (his tail sticks out to the right).
+    var cx = b.x + b.w * 0.37, cy = b.y + b.h * 0.52;
     var cheeks = [[0.24, 0.48], [0.5, 0.5]];
-    var sparks = cheeks.map(function (c) {
-      return fxSvg(parent, b.x + b.w * c[0] - 10, b.y + b.h * c[1] - 10, 20, 20, "0 0 20 20",
-        '<polyline points="' + zigzag(2, 10, 18, 10, 4, 5) + '" fill="none" stroke="#fff36b" stroke-width="2.5"/>' +
-        '<polyline points="' + zigzag(10, 2, 10, 18, 4, 5) + '" fill="none" stroke="#fff" stroke-width="1.5"/>');
-    });
-    sparks.forEach(function (sp) { sp.animate([{ opacity: 0 }, { opacity: 1 }, { opacity: 0.2 }, { opacity: 1 }], { duration: 600, iterations: 2, easing: "steps(2)" }); });
-    sfx("zap");
-    await play(img, [{ transform: "none" }, { transform: "scale(1.06,.9) translateY(4%)" }], { duration: 500, easing: "steps(3)" });
-    sparks.forEach(function (sp) { sp.remove(); });
+    img.style.transformOrigin = "40% 100%";
 
-    // The bolt comes down from the sky onto Pikachu.
-    var boltH = b.y + b.h * 0.4 + 220;
-    var boltPts = zigzag(50, 0, 50, boltH, 9, 28);
-    var bolt = fxSvg(parent, b.x + b.w * 0.36 - 50, b.y + b.h * 0.4 - boltH, 100, boltH, "0 0 100 " + boltH,
-      '<polyline points="' + boltPts + '" fill="none" stroke="#ffe94a" stroke-width="14" stroke-linejoin="bevel"/>' +
-      '<polyline points="' + boltPts + '" fill="none" stroke="#fffbe0" stroke-width="5" stroke-linejoin="bevel"/>');
+    // 1. "Pika... pika..." Crouch and charge; the cheeks crackle.
+    say(img, "PIKA... PIKA...", 1400, "poke", "hero");
+    sfx("charge");
+    var sparks = cheeks.map(function (c) { return fxSvg(parent, b.x + b.w * c[0] - 14, b.y + b.h * c[1] - 14, 28, 28, "0 0 28 28"); });
+    var crackle = setInterval(function () {
+      sparks.forEach(function (el) {
+        el.innerHTML = boltLine(zig(3, 14, 25, 14, 4, 6), 3, 1.2) + boltLine(zig(14, 3, 14, 25, 4, 6), 3, 1.2);
+        el.style.opacity = Math.random() < 0.8 ? "1" : "0";
+      });
+    }, 80);
+    await play(img, [
+      { transform: "none", filter: "none" },
+      { transform: "scale(1.05,.9)", filter: "brightness(1.15)", offset: 0.3 },
+      { transform: "scale(1.06,.88) translateX(-1.5%)", filter: "brightness(1.3) drop-shadow(0 0 4px #ffe94a)", offset: 0.55 },
+      { transform: "scale(1.06,.88) translateX(1.5%)", filter: "brightness(1.15)", offset: 0.75 },
+      { transform: "scale(1.08,.86)", filter: "brightness(1.4) drop-shadow(0 0 6px #ffe94a)" }
+    ], { duration: 1200, easing: "steps(8)" });
+    clearInterval(crackle);
+    sparks.forEach(function (el) { el.remove(); });
+
+    // 2. "CHUUU!" Leap up and discharge: shockwave ring plus crackling bolts all around.
+    say(img, "CHUUU!", 1700, "poke", "hero");
     sfx("thunder");
-    say(img, "PIKACHU USED THUNDERBOLT!", 2600, "poke", "hero");
-    var aura = img.animate([
-      { filter: "none", transform: "scale(1.06,.9) translateY(4%)" },
-      { filter: "brightness(1.9) drop-shadow(0 0 10px #ffe94a)", transform: "translateY(-14%)", offset: 0.3 },
-      { filter: "brightness(1.2) drop-shadow(0 0 6px #ffe94a)", transform: "translateY(-14%)", offset: 0.6 },
-      { filter: "brightness(1.8) drop-shadow(0 0 10px #ffe94a)", transform: "translateY(-6%)", offset: 0.8 },
-      { filter: "none", transform: "none" }
-    ], { duration: 1400, easing: "steps(7)" });
-    await play(bolt, [{ opacity: 0 }, { opacity: 1, offset: 0.1 }, { opacity: 0.25, offset: 0.4 }, { opacity: 1, offset: 0.6 }, { opacity: 0 }], { duration: 800, easing: "steps(5)" });
-    bolt.remove();
+    var R = Math.max(b.w, b.h) * 0.95;
+    var ring = fxSvg(parent, cx - R * 0.7, cy - R * 0.7, R * 1.4, R * 1.4, "0 0 100 100",
+      '<circle cx="50" cy="50" r="42" fill="none" stroke="#fff36b" stroke-width="5"/>' +
+      '<circle cx="50" cy="50" r="42" fill="none" stroke="#fffbe0" stroke-width="2"/>');
+    ring.animate([{ transform: "scale(.25)", opacity: 1 }, { transform: "scale(1.35)", opacity: 0 }], { duration: 550, easing: "ease-out", fill: "forwards" });
+    var burst = fxSvg(parent, cx - R, cy - R, R * 2, R * 2, "-100 -100 200 200");
+    var angles = [-160, -120, -85, -50, -15, 20, 140, 175];
+    var tick = 0;
+    function discharge() {
+      tick++;
+      var html = "";
+      angles.forEach(function (deg, i) {
+        if ((tick + i) % 4 === 0) return; // a few bolts blink out each frame
+        var r = deg * Math.PI / 180, inner = 34, outer = 66 + Math.random() * 30;
+        html += boltLine(zig(Math.cos(r) * inner, Math.sin(r) * inner, Math.cos(r) * outer, Math.sin(r) * outer, 5, 9), 7, 2.5);
+      });
+      burst.innerHTML = html;
+    }
+    discharge();
+    var crack = setInterval(discharge, 75);
+    await play(img, [
+      { transform: "scale(1.08,.86)", filter: "brightness(1.4) drop-shadow(0 0 6px #ffe94a)" },
+      { transform: "translateY(-18%) scale(.96,1.06)", filter: "brightness(1.9) drop-shadow(0 0 12px #ffe94a)", offset: 0.12 },
+      { transform: "translateY(-18%) translateX(-2%)", filter: "brightness(1.4) drop-shadow(0 0 7px #ffe94a)", offset: 0.3 },
+      { transform: "translateY(-18%) translateX(2%)", filter: "brightness(1.9) drop-shadow(0 0 12px #ffe94a)", offset: 0.48 },
+      { transform: "translateY(-18%) translateX(-2%)", filter: "brightness(1.4) drop-shadow(0 0 7px #ffe94a)", offset: 0.66 },
+      { transform: "translateY(-16%)", filter: "brightness(1.8) drop-shadow(0 0 10px #ffe94a)", offset: 0.82 },
+      { transform: "scale(1.05,.93)", filter: "brightness(1.2) drop-shadow(0 0 4px #ffe94a)", offset: 0.93 },
+      { transform: "none", filter: "none" }
+    ], { duration: 1600, easing: "steps(12)" });
+    clearInterval(crack);
+    ring.remove();
+    await play(burst, [{ opacity: 1 }, { opacity: 0 }], { duration: 200, easing: "steps(2)" });
+    burst.remove();
 
-    // Electric arcs crackle outwards.
-    var cx = b.x + b.w * 0.4, cy = b.y + b.h * 0.45;
-    var arcs = [0, 60, 120, 180, 240, 300].map(function (deg) {
-      var a = fxSvg(parent, cx - 18, cy - 18, 36, 36, "0 0 36 36",
-        '<polyline points="' + zigzag(18, 18, 34, 18, 4, 4) + '" fill="none" stroke="#fff36b" stroke-width="3"/>');
-      a.style.transformOrigin = "50% 50%";
-      return a.animate([
-        { transform: "rotate(" + deg + "deg) translateX(0) scale(.6)", opacity: 1 },
-        { transform: "rotate(" + deg + "deg) translateX(" + b.w * 0.45 + "px) scale(1.2)", opacity: 0 }
-      ], { duration: 500, easing: "steps(4)", fill: "forwards" }).finished.then(function () { a.remove(); });
+    // 3. A few stray sparks drift off as he lands.
+    var strays = [[-0.2, -0.1], [0.75, -0.05], [0.3, -0.35]].map(function (o, i) {
+      var sp = fxSvg(parent, b.x + b.w * o[0], b.y + b.h * (0.3 + o[1]), 16, 16, "0 0 16 16", boltLine(zig(2, 8, 14, 8, 3, 4), 2.5, 1));
+      return play(sp, [{ transform: "translateY(0)", opacity: 1 }, { transform: "translateY(" + (14 + i * 6) + "px)", opacity: 0 }],
+        { duration: 700, delay: i * 90, easing: "steps(5)" }).then(function () { sp.remove(); });
     });
-    await Promise.all(arcs.concat([aura.finished.catch(function () {})]));
-    aura.cancel();
-  }
-
-  // Cloud: one clean swing of the Buster Sword, a wave of light trailing the blade.
-  async function swordSwing(img) {
-    var parent = img.offsetParent, b = box(img);
-    var size = b.w * 1.15;
-    var wave = fxSvg(parent, b.x + b.w * 0.42 - size * 0.9, b.y + b.h * 0.04, size, size, "0 0 100 100",
-      '<path d="M88 14 A58 58 0 0 0 14 84" fill="none" stroke="#9fe8ff" stroke-opacity=".55" stroke-width="12" stroke-linecap="round" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1"/>' +
-      '<path d="M88 14 A58 58 0 0 0 14 84" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1"/>');
-    wave.style.opacity = "0";
-    img.style.transformOrigin = "50% 100%";
-    // Wind up...
-    await play(img, [{ transform: "rotate(0deg)" }, { transform: "rotate(6deg) translateY(1%)" }], { duration: 260, easing: "steps(2)" });
-    // ...swing, with the light wave drawn along the blade's path.
-    sfx("slash");
-    wave.style.opacity = "1";
-    var paths = wave.querySelectorAll("path");
-    var draw = Array.prototype.map.call(paths, function (p) {
-      return p.animate([{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }], { duration: 220, easing: "ease-out", fill: "forwards" }).finished;
-    });
-    await Promise.all([play(img, [{ transform: "rotate(6deg) translateY(1%)" }, { transform: "rotate(-7deg) translateX(-4%)" }], { duration: 220, easing: "steps(3)" })].concat(draw));
-    // Let the wave fade out as he settles back.
-    await Promise.all([
-      play(wave, [{ opacity: 1 }, { opacity: 0, transform: "translateX(-6%)" }], { duration: 450, easing: "ease-out" }),
-      play(img, [{ transform: "rotate(-7deg) translateX(-4%)" }, { transform: "rotate(0deg)" }], { duration: 450, easing: "steps(3)" })
-    ]);
-    wave.remove();
+    await Promise.all(strays);
     img.getAnimations().forEach(function (a) { a.cancel(); });
     img.style.transformOrigin = "";
   }
 
-  async function spinAttack(img) {
-    var parent = img.offsetParent, b = box(img);
-    // Charge: sparkles gather at the tip of the Master Sword.
-    var tip = { x: b.x + b.w * 0.88, y: b.y + b.h * 0.58 };
-    var glint = fxSvg(parent, tip.x - 16, tip.y - 16, 32, 32, "0 0 32 32",
-      '<path d="M16 2 L18 14 L30 16 L18 18 L16 30 L14 18 L2 16 L14 14 Z" fill="#fffbe0" stroke="#9fe8ff" stroke-width="1.5"/>');
-    sfx("charge");
-    var charge = glint.animate([{ transform: "scale(.3) rotate(0deg)", opacity: 0.4 }, { transform: "scale(1.2) rotate(90deg)", opacity: 1 }], { duration: 300, iterations: 3, direction: "alternate", easing: "steps(3)" });
-    await play(img, [{ transform: "none" }, { transform: "scale(1.04,.94) translateY(3%)" }], { duration: 900, easing: "steps(4)" });
-    charge.cancel(); glint.remove();
+  // ---- Cloud: Buster Sword swing, then the FF7 victory twirl -------------
+  // Real Final Fantasy Brave Exvius frames. The invite Cloud is that game's
+  // victory pose, so the last frame hands straight back to him.
+  function seq(dir, name, n) {
+    var out = [];
+    for (var i = 1; i <= n; i++) out.push(dir + name + "-" + (i < 10 ? "0" : "") + i + ".png");
+    return out;
+  }
+  // Swing frames, minus the two where he hops off his spot.
+  var CLOUD_ATK = seq("assets/cloud/", "atk", 12).filter(function (u, i) { return i !== 7 && i !== 8; }), CLOUD_TWIRL = seq("assets/cloud/", "twirl", 25), CLOUD_WIN = seq("assets/cloud/", "win", 4);
+  // Where the frame canvas sits in invite pixels when it overlays the invite Cloud exactly.
+  var CLOUD_RECT = [771 - 312, 735 - 194, 859];
+  // The swing sheet stands him 27 game px right and 2 lower; 1 game px = 5.65 invite px.
+  var CLOUD_ATK_RECT = [CLOUD_RECT[0] - 27 * 5.65, CLOUD_RECT[1] - 2 * 5.65, 859];
+  var LINK_MS = seq("assets/link/", "ms", 10);
+  // Hilt (purple guard) position inside each Master Sword frame, in game pixels.
+  var LINK_HILT = [[6.1, 20], [5.2, 26], [3.7, 28.6], [3.5, 29.5], [3.5, 29.5], [3.5, 29.5], [3.5, 29.5], [3.5, 29.5], [3.5, 29.5], [3.5, 29.5]];
+  var LINK_ARCS = ["right", "down", "left", "up"].map(function (d) { return "assets/link/arc-" + d + ".png"; });
+  CLOUD_ATK.concat(CLOUD_TWIRL, CLOUD_WIN, LINK_MS, LINK_ARCS).forEach(function (u) { new Image().src = u; });
 
-    // Spin! A glowing arc sweeps around him while he whirls.
-    say(img, "HYAAAH!", 1600, "poke", "hero");
-    sfx("spin");
-    var r = Math.max(b.w, b.h) * 0.62, cx = b.x + b.w * 0.5, cy = b.y + b.h * 0.55;
-    var ring = fxSvg(parent, cx - r, cy - r * 0.55, r * 2, r * 1.1, "0 0 200 110",
-      '<ellipse cx="100" cy="55" rx="92" ry="46" fill="none" stroke="#7fdcff" stroke-width="10" pathLength="100" stroke-dasharray="70 30" stroke-linecap="round"/>' +
-      '<ellipse cx="100" cy="55" rx="92" ry="46" fill="none" stroke="#ffffff" stroke-width="4" pathLength="100" stroke-dasharray="70 30" stroke-linecap="round"/>');
-    var ringAnim = ring.querySelectorAll("ellipse");
-    ringAnim.forEach(function (e) { e.animate([{ strokeDashoffset: 0 }, { strokeDashoffset: -200 }], { duration: 700, easing: "linear" }); });
-    ring.animate([{ opacity: 0 }, { opacity: 1, offset: 0.15 }, { opacity: 1, offset: 0.75 }, { opacity: 0 }], { duration: 700, easing: "linear", fill: "forwards" });
-    await play(img, [
-      { transform: "scaleX(1)" }, { transform: "scaleX(.2)" }, { transform: "scaleX(-1)" }, { transform: "scaleX(.2)" },
-      { transform: "scaleX(1)" }, { transform: "scaleX(.2)" }, { transform: "scaleX(-1)" }, { transform: "scaleX(.2)" }, { transform: "scaleX(1)" }
-    ], { duration: 700, easing: "steps(8)" });
-    ring.remove();
-    img.getAnimations().forEach(function (a) { a.cancel(); });
+  async function playFrames(el, frames, ms, onFrame) {
+    for (var i = 0; i < frames.length; i++) {
+      el.src = frames[i];
+      if (onFrame) onFrame(i);
+      await wait(ms);
+    }
   }
 
-  var MOVES = { pikachu: thunderbolt, cloud: swordSwing, link: spinAttack };
+  async function cloudMove(img) {
+    var parent = img.offsetParent;
+    var ov = document.createElement("img");
+    ov.className = "fx-sprite"; ov.alt = ""; ov.setAttribute("aria-hidden", "true");
+    ov.src = CLOUD_WIN[0];
+    place(ov, "cloud", "stage", CLOUD_RECT);
+    parent.appendChild(ov);
+    img.style.visibility = "hidden";
+    await wait(120);
+    // The swing: overhead slash with the game's own sword trail, then reset.
+    place(ov, "cloud", "stage", CLOUD_ATK_RECT);
+    await playFrames(ov, CLOUD_ATK, 80, function (i) { if (i === 1) sfx("slash"); });
+    await wait(150);
+    place(ov, "cloud", "stage", CLOUD_RECT);
+    // The victory twirl, ending with the sword back on his shoulder.
+    await playFrames(ov, CLOUD_TWIRL, 70, function (i) { if (i === 9 || i === 15) sfx("whoosh"); });
+    await playFrames(ov, CLOUD_WIN, 110);
+    img.style.visibility = "";
+    ov.remove();
+  }
+
+  // ---- Link: draw the Master Sword, charge, Spin Attack -------------------
+  // Real Cadence of Hyrule sword and spin-slash frames, anchored to the hilt
+  // the invite Link is already holding.
+  async function linkMove(img) {
+    var parent = img.offsetParent, b = box(img);
+    var u = b.w / 185;            // screen px per invite px (Link is 185 invite px wide)
+    var k = 6 * u;                // screen px per game px
+    var hand = { x: b.x + 163 * u, y: b.y + 118 * u };
+    var sword = document.createElement("img");
+    sword.className = "fx-sprite"; sword.alt = ""; sword.setAttribute("aria-hidden", "true");
+    sword.style.width = (39 * k) + "px";
+    parent.appendChild(sword);
+    function setSword(i) {
+      sword.src = LINK_MS[i];
+      sword.style.left = (hand.x - LINK_HILT[i][0] * k) + "px";
+      sword.style.top = (hand.y - LINK_HILT[i][1] * k) + "px";
+    }
+    // Draw...
+    sfx("whoosh");
+    for (var d = 0; d < 3; d++) { setSword(d); await wait(90); }
+    // ...and charge (the blade glints while he crouches).
+    sfx("charge");
+    img.style.transformOrigin = "50% 100%";
+    var crouch = img.animate([{ transform: "none" }, { transform: "scale(1.03,.95)" }], { duration: 300, fill: "forwards", easing: "steps(2)" });
+    for (var c = 0; c < 14; c++) { setSword(3 + (c % 7)); await wait(85); }
+    crouch.cancel();
+    sword.style.visibility = "hidden";
+
+    // Spin Attack: the sweep goes round him twice while he whirls.
+    say(img, "HYAAAH!", 1300, "poke", "hero");
+    sfx("spin");
+    var size = 96 * 3.4 * u, cx = b.x + b.w * 0.5, cy = b.y + b.h * 0.5;
+    var arc = document.createElement("img");
+    arc.className = "fx-sprite"; arc.alt = ""; arc.setAttribute("aria-hidden", "true");
+    arc.style.width = size + "px";
+    arc.style.left = (cx - size / 2) + "px"; arc.style.top = (cy - size / 2) + "px";
+    parent.appendChild(arc);
+    var facing = [1, 1, -1, -1];
+    for (var t = 0; t < 8; t++) {
+      arc.src = LINK_ARCS[t % 4];
+      img.style.transform = "scaleX(" + facing[t % 4] + ")";
+      await wait(75);
+    }
+    arc.remove();
+    img.style.transform = "";
+
+    // Sword away.
+    sword.style.visibility = "";
+    for (var e = 2; e >= 0; e--) { setSword(e); await wait(80); }
+    sword.remove();
+    img.style.transformOrigin = "";
+  }
+
+  var MOVES = { pikachu: thunderbolt, cloud: cloudMove, link: linkMove };
 
   async function runMove(img, name) {
     img.dataset.busy = "1";
@@ -1003,33 +1081,35 @@
     try { await MOVES[name](img); }
     catch (e) { img.getAnimations().forEach(function (a) { a.cancel(); }); }
     finally {
-      $$(".fx", img.offsetParent || document).forEach(function (n) { n.remove(); });
+      $$(".fx, .fx-sprite", img.offsetParent || document).forEach(function (n) { n.remove(); });
       img.style.filter = "";
+      img.style.visibility = "";
+      img.style.transform = "";
       delete img.dataset.busy;
     }
   }
 
-  // Take turns: one signature move every few seconds on the visible screen.
+  // Pikachu, Cloud and Link take turns, one at a time, when they're on screen.
   function initMoves() {
     if (reduceMotion || !document.body.animate) return;
     var order = ["pikachu", "cloud", "link"], turn = Math.floor(Math.random() * order.length);
     (async function loop() {
-      await wait(3500);
+      await wait(3000);
       for (;;) {
         var did = false;
-        var anyBusy = $$(".screen.is-active .sprite").some(function (i) { return MOVES[spriteName(i)] && i.dataset.busy; });
+        var heroes = $$(".screen.is-active .sprite").filter(function (i) { return MOVES[spriteName(i)]; });
+        var anyBusy = heroes.some(function (i) { return i.dataset.busy; });
         if (!document.hidden && !anyBusy) {
-          for (var k = 0; k < order.length && !did; k++) {
-            var name = order[(turn + k) % order.length];
-            var img = $$(".screen.is-active .sprite").filter(function (i) {
+          for (var n = 0; n < order.length && !did; n++) {
+            var name = order[(turn + n) % order.length];
+            var img = heroes.filter(function (i) {
               var r = i.getBoundingClientRect();
-              return spriteName(i) === name && !i.dataset.busy && !i.closest(".is-victory") &&
-                r.bottom > 0 && r.top < window.innerHeight;
+              return spriteName(i) === name && !i.closest(".is-victory") && r.bottom > 0 && r.top < window.innerHeight;
             })[0];
-            if (img) { turn = (turn + k + 1) % order.length; await runMove(img, name); did = true; }
+            if (img) { turn = (turn + n + 1) % order.length; await runMove(img, name); did = true; }
           }
         }
-        await wait(did ? 3500 + Math.random() * 1500 : 1000);
+        await wait(did ? 4000 + Math.random() * 2000 : 1000);
       }
     })();
   }
