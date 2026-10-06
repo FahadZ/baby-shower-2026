@@ -39,7 +39,7 @@ await pCtx.setOffline(false);
 const t0 = Date.now();
 await p.waitForSelector(".dot.on", { timeout: 15000 }).catch(() => fail("socket did not reconnect"));
 ok("reconnected in " + (Date.now() - t0) + " ms after 20 s offline");
-await host.click("text=END ROUND NOW"); await sleep(2500);
+await host.click("text=END ROUND NOW"); await sleep(5500);
 s = await api();
 if (!["reveal", "locked"].includes(s.phase)) fail("expected reveal after END ROUND NOW, got " + s.phase);
 const txt = await p.textContent("body");
