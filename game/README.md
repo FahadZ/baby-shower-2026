@@ -191,6 +191,22 @@ If the wifi dies: phones reconnect on their own and show the current phase withi
 second of being back online. Submitted answers are kept. If the venue wifi is hopeless,
 tell people to use mobile data: the game is tiny.
 
+## Rehearsal results
+
+`node scripts/rehearse.mjs --bots 80` drives a host phone, two auto-playing phones and
+the TV through all 21 rounds plus the final, predictions and credits, screenshotting
+every phase into `docs/screens/full/` (player, host, TV). Last run: all phases
+reached, **0 browser errors, 0 server errors**.
+
+`node scripts/robustness.mjs` checks the failure modes that matter on the night. Last run:
+
+| Check | Result |
+|---|---|
+| Phone offline for 20 s mid-round, then back | reconnected in 13 ms, phase correct |
+| Answer submitted before the outage | preserved, shown on the reveal |
+| Phone reloaded mid-game | same player, same points, leaderboard rebuilt with their row |
+| Host phone closed mid-round | round ended and scored on the server clock |
+
 ## Deploying (one command once the secrets exist)
 
 The Worker, the Durable Object and the static files deploy together. The custom

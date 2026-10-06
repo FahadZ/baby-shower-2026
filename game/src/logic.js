@@ -475,6 +475,7 @@ export function removeBots(state) {
   for (const id of Object.keys(core.players)) if (core.players[id].bot) { delete core.players[id]; n++; }
   core.botQueue = [];
   core.nextBot = 0;
+  core.botCounter = 0;
   state.dirty.add("core");
   return n;
 }

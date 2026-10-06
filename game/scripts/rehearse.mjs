@@ -122,13 +122,10 @@ while (Date.now() < deadline) {
       await sleep(400);
     }
     if (s.phase === "credits") break;
-    if (s.phase === "howto") {
-      await host.click('button:has-text("START ROUND")');
-    } else if (["intro", "reveal", "results", "leaderboard", "final", "predictions"].includes(s.phase)) {
+    if (["howto", "intro", "reveal", "results", "leaderboard", "final", "predictions", "lobby"].includes(s.phase)) {
       if (s.phase === "predictions") { await p1.fill("#firstWord", "PIKACHU").catch(() => {}); await p1.click("text=SAVE PREDICTION").catch(() => {}); await sleep(600); }
-      await host.click("text=/^(START GAME|SHOW HOW-TO|SHOW ROUND RESULTS|SHOW LEADERBOARD|NEXT ROUND.*|NEXT GAME|FINAL RANKINGS|PREDICTIONS|ROLL CREDITS)$/");
-    } else if (s.phase === "lobby") {
-      await host.click("text=START GAME");
+      // The big NEXT button (its label changes per phase; the status panel repeats phase names, so select by class).
+      await host.click(".btn.primary.huge");
     }
     continue;
   }

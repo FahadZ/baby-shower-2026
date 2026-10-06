@@ -21,7 +21,7 @@ await host.goto(BASE + "/host");
 await host.fill("#pin", PIN); await host.click("text=UNLOCK REMOTE");
 await host.waitForSelector("text=HOLD TO RESET");
 { const btn = await host.$("text=HOLD TO RESET"); await btn.scrollIntoViewIfNeeded(); const b = await btn.boundingBox(); await host.mouse.move(b.x + 10, b.y + 10); await host.mouse.down(); await sleep(1200); await host.mouse.up(); await sleep(400); await host.click("text=REMOVE BOTS"); await sleep(400); }
-await p.goto(BASE + "/"); await p.waitForSelector("#name"); await p.fill("#name", "Robust Rita"); await p.click("text=RANDOM"); await p.click("text=READY!");
+await p.goto(BASE + "/"); await p.waitForSelector("#name"); await p.fill("#name", "Rita " + (Date.now() % 100000)); await p.click("text=RANDOM"); await p.click("text=READY!");
 await p.waitForSelector("text=YOU'RE IN!");
 await host.click("text=+20 BOTS"); await sleep(600);
 await host.click("text=START GAME"); await sleep(400);
@@ -39,20 +39,24 @@ await pCtx.setOffline(false);
 const t0 = Date.now();
 await p.waitForSelector(".dot.on", { timeout: 15000 }).catch(() => fail("socket did not reconnect"));
 ok("reconnected in " + (Date.now() - t0) + " ms after 20 s offline");
-await host.click("text=END ROUND NOW"); await sleep(5500);
 s = await api();
-if (!["reveal", "locked"].includes(s.phase)) fail("expected reveal after END ROUND NOW, got " + s.phase);
+// With AUTO-END on and one human locked in, the round may already have ended during the gap.
+if (s.phase === "playing") { await host.click("text=END ROUND NOW"); }
+for (let i = 0; i < 30 && !["reveal", "results"].includes((await api()).phase); i++) await sleep(500);
+await sleep(4500);
+s = await api();
+if (!["reveal", "results"].includes(s.phase)) fail("expected reveal after the round ended, got " + s.phase);
 const txt = await p.textContent("body");
 if (!/YOUR GUESS/.test(txt)) fail("answer not preserved across the offline gap (no YOUR GUESS on reveal)"); else ok("answer preserved across offline gap");
 
 // 2. Reload keeps identity and points.
-await host.click("text=SHOW ROUND RESULTS"); await sleep(300); await host.click("text=SHOW LEADERBOARD"); await sleep(500);
+if ((await api()).phase === "reveal") { await host.click("text=SHOW ROUND RESULTS"); await sleep(300); }
+await host.click("text=SHOW LEADERBOARD"); await sleep(500);
 await p.reload(); await p.waitForSelector(".dot.on", { timeout: 15000 });
-await sleep(2500);
-const after = await p.textContent("body");
-if (!/LEADERBOARD|#\d+/.test(after)) fail("after reload the phone did not render the leaderboard phase");
-const youRow = await p.$(".brow.me");
-if (!youRow) fail("after reload the player's own row is missing (identity lost?)"); else ok("identity kept across reload: " + (await youRow.textContent()).trim().slice(0, 40));
+// The leaderboard sequence animates the personal card first, then the rows (several seconds).
+const youCard = await p.waitForSelector(".you-card .rank", { timeout: 15000 }).catch(() => null);
+const youRow = await p.waitForSelector(".brow.me", { timeout: 15000 }).catch(() => null);
+if (!youCard || !youRow) fail("after reload the player's own card/row is missing (identity lost?)"); else ok("identity kept across reload: " + (await youCard.textContent()).trim() + " / " + (await youRow.textContent()).trim().slice(0, 40));
 
 // 3. Host phone dies mid-round: the server still ends the round.
 await host.click("text=/^NEXT ROUND/"); await sleep(300);

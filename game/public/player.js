@@ -19,7 +19,8 @@ const soundBtn = $("#soundBtn");
 
 let snap = null, you = null, live = null;
 let playerId = store("bl.playerId");
-let joined = false, joinError = "", editing = false;
+// With a saved id we assume we are still in (hello confirms it); a join-error flips this.
+let joined = !!playerId, joinError = "", editing = false;
 let screenKey = null;
 let cur = { cancel: false, cd: null, game: null, seq: 0 };
 let pendingLabel = null;
@@ -110,6 +111,8 @@ document.addEventListener("visibilitychange", () => { if (!document.hidden && jo
 function render(force) {
   if (!snap) return;
   const key = !joined || editing ? "join" : [snap.phase, snap.roundId, snap.revealNonce, snap.gameIndex].join("|");
+  // If this screen was built before our own "you" message arrived (reload mid-game), build it again with it.
+  if (!force && key === screenKey && you && you.id && cur.youId !== you.id && key !== "join") force = true;
   if (hudTag) hudTag.textContent = snap.game && snap.phase !== "lobby" ? "G" + (snap.gameIndex + 1) + "/" + snap.gameCount + (snap.round ? " R" + snap.round : "") : (snap.playerCount || 0) + " PLAYERS";
   if (key !== screenKey || force) {
     teardown();
@@ -124,7 +127,7 @@ function teardown() {
   cur.cancel = true;
   if (cur.cd) cur.cd.stop();
   if (cur.game && cur.game.unmount) { try { cur.game.unmount(); } catch (e) { /* ignore */ } }
-  cur = { cancel: false, cd: null, game: null, seq: cur.seq + 1 };
+  cur = { cancel: false, cd: null, game: null, seq: cur.seq + 1, youId: null };
   clear(app);
   window.scrollTo(0, 0);
 }
@@ -170,6 +173,7 @@ function hudLine(text) {
 
 function mount() {
   const me = cur;
+  me.youId = you && you.id ? you.id : null;
   const cancelled = () => me.cancel;
   if (!joined || editing) return mountJoin();
   switch (snap.phase) {
@@ -251,7 +255,8 @@ function mount() {
       appendTo(app, h("div", { class: "center screen", style: { paddingTop: "4vh" } },
         h("img", { class: "hearts px", src: "assets/deco/hearts.png", alt: "" }),
         h("h1", { class: "title big" }, "THANKS FOR PLAYING!"),
-        meRow ? h("div", { class: "panel dark you-card" }, h("div", { class: "label" }, "YOU FINISHED"), h("div", { class: "rank" }, "#" + meRow.rank), h("div", { class: "of" }, "OF " + snap.results.board.length + " · " + meRow.points + " PTS")) : null,
+        meRow && meRow.rank ? h("div", { class: "panel dark you-card" }, h("div", { class: "label" }, "YOU FINISHED"), h("div", { class: "rank" }, "#" + meRow.rank), h("div", { class: "of" }, "OF " + snap.results.board.length + " · " + meRow.points + " PTS"))
+          : h("div", { class: "panel dark you-card" }, h("div", { class: "label" }, "YOU JOINED FOR THE ENCORE"), h("div", { class: "of" }, "NEXT TIME, GET HERE FOR ROUND 1!")),
         you ? spriteEl(you.avatar, { size: "lg", cls: "idle" }) : null,
         hudLine("SEE YOU WHEN PLAYER 3 SPAWNS.")));
       return;

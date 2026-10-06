@@ -25,7 +25,10 @@ export function crowdStage(container, { phantom = true } = {}) {
   }
   function update(players) {
     const n = Math.max(1, players.length);
-    const rows = n > 24 ? 3 : n > 10 ? 2 : 1;
+    const rows = n > 60 ? 4 : n > 24 ? 3 : n > 10 ? 2 : 1;
+    const sw = stage.offsetWidth || 600;
+    const sh = stage.offsetHeight || Math.round(sw * 196 / 966);
+    const spriteH = Math.max(22, Math.round(sw * (n > 40 ? 0.055 : n > 16 ? 0.07 : 0.1)));
     players.forEach((p, i) => {
       let el = seen.get(p.id);
       if (!el) {
@@ -39,11 +42,10 @@ export function crowdStage(container, { phantom = true } = {}) {
       const col = Math.floor(i / rows), cols = Math.ceil(n / rows);
       const x = 6 + ((col + 0.5) / cols) * 88 + ((hashX(p.id) % 7) - 3) * 0.4;
       el.style.left = x.toFixed(2) + "%";
-      el.style.bottom = (row * 24) + "%";
+      // Rows stack up the bricks in pixels (the crowd container itself has no height).
+      el.style.bottom = Math.round(row * spriteH * 0.85) + "px";
       el.style.zIndex = String(10 - row);
-      // Sprites scale with the stage so a crowd of 80 still fits on the bricks.
-      const sw = stage.offsetWidth || 600;
-      el.style.height = Math.max(22, Math.round(sw * (n > 40 ? 0.05 : n > 16 ? 0.07 : 0.1))) + "px";
+      el.style.height = spriteH + "px";
       el.querySelector(".nm").hidden = n > 14;
     });
     for (const [id, el] of seen) if (!players.some((p) => p.id === id)) { el.remove(); seen.delete(id); }

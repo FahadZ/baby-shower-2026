@@ -17,7 +17,9 @@ export function calloutText(c) {
     case "SPEED_DEMON": return { big: "SPEED DEMON", small: n + " LOCKED IN AT " + (c.value / 1000).toFixed(1) + "s", cls: "blue" };
     case "BIGGEST_CLIMB": return { big: "BIGGEST CLIMB ▲" + c.value, small: n + " JUMPED " + c.value + " SPOTS", cls: "green" };
     case "COMEBACK": return { big: "COMEBACK!", small: n + " CAME FROM #" + c.value + " INTO THE TOP 5", cls: "green" };
-    case "PHOTO_FINISH": return { big: "PHOTO FINISH", small: n + " LEADS " + (c.other ? c.other.name.toUpperCase() : "") + " BY " + c.value + " PTS", cls: "red" };
+    case "PHOTO_FINISH": return c.value === 0
+      ? { big: "TIED AT THE TOP!", small: n + " AND " + (c.other ? c.other.name.toUpperCase() : "") + " ARE DEAD LEVEL", cls: "red" }
+      : { big: "PHOTO FINISH", small: n + " LEADS " + (c.other ? c.other.name.toUpperCase() : "") + " BY " + c.value + " PTS", cls: "red" };
     case "FIRST_BLOOD": return { big: "FIRST BLOOD", small: n + " IS ON THE BOARD", cls: "" };
     default: return { big: c.type, small: n, cls: "" };
   }
@@ -104,7 +106,7 @@ function rowEl(r, meId) {
   const delta = r.delta || 0;
   const dl = h("span", { class: "dl " + (delta > 0 ? "up" : delta < 0 ? "down" : "same"), style: r.prevRank ? null : { visibility: "hidden" } }, delta > 0 ? "▲" + delta : delta < 0 ? "▼" + Math.abs(delta) : "=");
   const el = h("div", { class: "brow" + (r.id === meId ? " me" : "") + (r.rank === 1 ? " top1" : "") + (r.bot ? " bot" : ""), dataset: { id: r.id } },
-    h("span", { class: "rk" }, "#" + r.rank),
+    h("span", { class: "rk" }, r.rank ? "#" + r.rank : "--"),
     spriteEl(r.avatar, { size: "sm" }),
     h("span", { class: "nm" }, r.name),
     dl,
@@ -267,11 +269,13 @@ export async function showFinal(root, { results, you, big = false, cancelled }) 
   if (spots[0]) { await wait(dur(300)); await playMove(spots[0].av, moveFor(spots[0].r.avatar)); }
   if (!alive()) return;
   const me = board.find((r) => r.id === (you && you.id));
-  if (me) {
+  if (me && me.rank) {
     root.appendChild(h("div", { class: "panel dark you-card pop" },
       h("div", { class: "label" }, "YOU FINISHED"),
       h("div", { class: "rank" }, "#" + me.rank),
       h("div", { class: "of" }, "OF " + board.length + " · " + me.points + " PTS")));
+  } else if (you && you.id) {
+    root.appendChild(h("div", { class: "panel dark you-card pop" }, h("div", { class: "label" }, "YOU JOINED FOR THE ENCORE"), h("div", { class: "of" }, "NO SCORE THIS TIME, BUT THANKS FOR PLAYING!")));
   }
   const list = h("div", { class: "board mt" });
   board.forEach((r) => list.appendChild(rowEl(r, you && you.id)));
