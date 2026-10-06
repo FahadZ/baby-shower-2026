@@ -25,7 +25,22 @@ export class GameRoom extends DurableObject {
     const all = await this.ctx.storage.list();
     const st = L.createState(Date.now());
     const core = all.get("core");
-    if (core) st.core = { ...st.core, ...core, order: st.core.order };
+    if (core) {
+      // A deploy may add games or change the play order: keep the stored game by id,
+      // not by index, so a redeploy mid-evening never swaps the current game.
+      const order = st.core.order;
+      let gameIndex = core.gameIndex;
+      if (core.gameIndex >= 0 && Array.isArray(core.order)) {
+        const gid = core.order[core.gameIndex];
+        gameIndex = order.indexOf(gid);
+      }
+      st.core = { ...st.core, ...core, order, gameIndex };
+      if (core.gameIndex >= 0 && gameIndex < 0) {
+        // The game that was running no longer exists: back to the lobby, scores kept.
+        st.core.gameIndex = -1; st.core.round = 0; st.core.roundId = null; st.core.phase = "lobby"; st.core.endsAt = null;
+      }
+      if (st.core.gameIndex !== core.gameIndex || (core.order || []).join() !== order.join()) st.dirty.add("core");
+    }
     for (const [k, v] of all) {
       if (k.startsWith("answers:")) st.answers[k.slice(8)] = v;
       else if (k.startsWith("results:")) st.results[k.slice(8)] = v;

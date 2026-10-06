@@ -26,38 +26,90 @@ export default {
 
   mount(el, content, api) {
     const min = content.min, max = content.max, step = content.step || 1;
-    const start = Math.round(((min + max) / 2) / step) * step;
+    const snap = (v) => Math.max(min, Math.min(max, Math.round(v / step) * step));
+    const start = snap((min + max) / 2);
+    let value = start;
     const tag = h("div", { class: "price-tag big", "aria-live": "polite" }, fmtMoney(start, { cents: false }));
-    const range = h("input", { type: "range", class: "px-range", min: String(min), max: String(max), step: String(step), value: String(start), "aria-label": "Your price guess" });
     const btn = h("button", { class: "btn primary", type: "button" }, h("i", { class: "tri" }), "LOCK IN");
     let touched = false;
-    const read = () => Number(range.value);
     // The slider position always counts: it is sent as a soft (non-final) answer while it
     // moves, so when time runs out nobody is left without a guess. LOCK IN makes it final.
     let lastSoft = 0;
-    const sendSoft = () => { softTimer = null; lastSoft = Date.now(); api.submit(read(), { final: false }); };
-    range.addEventListener("input", () => {
-      touched = true;
-      tag.textContent = fmtMoney(read(), { cents: false });
-      api.sfx("blip");
-      if (Date.now() - lastSoft > 300) sendSoft(); else if (!softTimer) softTimer = setTimeout(sendSoft, 320);
-    });
+    const sendSoft = () => { softTimer = null; lastSoft = Date.now(); api.submit(value, { final: false }); };
+    const softSoon = () => { if (Date.now() - lastSoft > 300) sendSoft(); else if (!softTimer) softTimer = setTimeout(sendSoft, 320); };
+
+    // A big pixel slider built for thumbs: tap anywhere on the track to jump there, drag
+    // from anywhere (not just the thumb), plus − / + for fine tuning. A hidden native
+    // range input stays in sync for keyboard and screen-reader users.
+    const fill = h("div", { class: "pxs-fill" });
+    const thumb = h("div", { class: "pxs-thumb", "aria-hidden": "true" });
+    const track = h("div", { class: "pxs-track" }, fill);
+    const native = h("input", { type: "range", class: "pxs-native", min: String(min), max: String(max), step: String(step), value: String(start), "aria-label": "Your price guess" });
+    const slider = h("div", { class: "pxs game-surface" }, track, thumb, native);
+    const pct = () => (max > min ? (value - min) / (max - min) : 0);
+    function paint() {
+      fill.style.width = (pct() * 100).toFixed(2) + "%";
+      // Thumb centre runs from the track's left edge (28px in) to its right edge.
+      thumb.style.left = "calc(" + (pct() * 100).toFixed(2) + "% - " + (pct() * 56).toFixed(1) + "px)";
+      tag.textContent = fmtMoney(value, { cents: false });
+      native.value = String(value);
+    }
+    function setValue(v, { silent } = {}) {
+      const nv = snap(Number(v));
+      if (!isFinite(nv)) return;
+      const changed = nv !== value;
+      value = nv;
+      paint();
+      if (changed && !silent) { touched = true; api.sfx("blip"); softSoon(); }
+    }
+    el._setPrice = setValue;
+    function fromPointer(ev) {
+      const r = track.getBoundingClientRect();
+      const x = Math.max(0, Math.min(r.width, ev.clientX - r.left));
+      setValue(min + (x / Math.max(1, r.width)) * (max - min));
+    }
+    let dragging = false;
+    slider.addEventListener("pointerdown", (ev) => { dragging = true; slider.setPointerCapture(ev.pointerId); fromPointer(ev); ev.preventDefault(); });
+    slider.addEventListener("pointermove", (ev) => { if (dragging) fromPointer(ev); });
+    const stop = () => { dragging = false; };
+    slider.addEventListener("pointerup", stop);
+    slider.addEventListener("pointercancel", stop);
+    native.addEventListener("input", () => setValue(native.value));
+
+    // − / + nudge buttons: tap for one step, hold to repeat.
+    const nudge = (dir) => {
+      const b = h("button", { class: "pxs-nudge", type: "button", "aria-label": dir < 0 ? "Lower by " + step : "Raise by " + step }, dir < 0 ? "−" : "+");
+      let rep = null, delay = null;
+      const go = () => setValue(value + dir * step);
+      const down = (ev) => { ev.preventDefault(); go(); delay = setTimeout(() => { rep = setInterval(go, 70); }, 350); };
+      const up = () => { clearTimeout(delay); clearInterval(rep); rep = null; };
+      b.addEventListener("pointerdown", down);
+      ["pointerup", "pointerleave", "pointercancel"].forEach((n) => b.addEventListener(n, up));
+      b.addEventListener("click", (ev) => ev.preventDefault());
+      return b;
+    };
+
     btn.addEventListener("click", () => {
       if (softTimer) { clearTimeout(softTimer); softTimer = null; }
-      api.submit(read(), { label: fmtMoney(read(), { cents: false }) });
+      api.submit(value, { label: fmtMoney(value, { cents: false }) });
       btn.textContent = "UPDATE GUESS";
     });
     const prev = api.you && api.you() && api.you().myAnswer;
-    if (typeof prev === "number") { range.value = String(prev); tag.textContent = fmtMoney(prev, { cents: false }); btn.textContent = "UPDATE GUESS"; }
+    if (typeof prev === "number") { setValue(prev, { silent: true }); btn.textContent = "UPDATE GUESS"; }
     else setTimeout(sendSoft, 400);
-    appendTo(el, 
+    appendTo(el,
       h("h2", { class: "title" }, content.title),
       content.subtitle ? h("p", { class: "sub" }, content.subtitle) : null,
       ...itemCards(content.items),
       content.items.length > 1 ? h("p", { class: "sub" }, "WHAT DO ALL " + content.items.length + " COST TOGETHER?") : null,
-      h("div", { class: "slider-wrap center" }, tag, range, h("div", { class: "range-ends" }, h("span", null, fmtMoney(min, { cents: false })), h("span", null, fmtMoney(max, { cents: false })))),
+      h("div", { class: "slider-wrap center" },
+        h("div", { class: "pxs-row" }, nudge(-1), tag, nudge(1)),
+        slider,
+        h("div", { class: "range-ends" }, h("span", null, fmtMoney(min, { cents: false })), h("span", null, fmtMoney(max, { cents: false }))),
+        h("p", { class: "tiny" }, "TAP OR DRAG THE BAR · − / + TO FINE-TUNE")),
       btn
     );
+    paint();
     setTimeout(() => { if (!touched) tag.classList.add("blink"); setTimeout(() => tag.classList.remove("blink"), 1200); }, 2500);
   },
 
@@ -65,10 +117,9 @@ export default {
 
   // Rehearsal only: a plausible guess, submitted like a tap would.
   autoplay(el, content, api) {
-    const range = el.querySelector("input[type=range]");
     const v = content.min + (content.max - content.min) * (0.25 + Math.random() * 0.5);
     const snapped = Math.round(v / (content.step || 1)) * (content.step || 1);
-    if (range) { range.value = String(snapped); range.dispatchEvent(new Event("input")); }
+    if (el._setPrice) el._setPrice(snapped);
     api.submit(snapped, { label: fmtMoney(snapped, { cents: false }) });
   },
 
