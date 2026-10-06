@@ -282,13 +282,15 @@ export default {
   // How-to card: a mini stream with a ghost finger catching the good stuff.
   howtoDemo(el, content) {
     if (demoGame) demoGame.stop();
-    const canvas = h("canvas", { class: "game-surface", "aria-hidden": "true", style: { display: "block", width: "100%", height: "170px", border: "3px solid #1d1b18" } });
+    const tv = document.documentElement.dataset.screen === "tv";
+    const canvas = h("canvas", { class: "game-surface", "aria-hidden": "true", style: { display: "block", width: "100%", height: tv ? "240px" : "170px", border: "3px solid #1d1b18" } });
+    const lg = tv ? 40 : 24;
     const legend = h("div", { class: "row", style: { justifyContent: "center", gap: "14px", marginTop: "8px", fontSize: ".65em", flexWrap: "wrap" } },
-      h("span", null, spriteNode("good", 24), " +1"),
-      (content.round || 1) >= 2 ? h("span", null, spriteNode("gold", 24, true), " +3") : null,
-      h("span", null, spriteNode("bad", 24), " −1"));
+      h("span", null, spriteNode("good", lg), " +1"),
+      (content.round || 1) >= 2 ? h("span", null, spriteNode("gold", lg, true), " +3") : null,
+      h("span", null, spriteNode("bad", lg), " −1"));
     appendTo(el, canvas, legend);
-    demoGame = createDash(canvas, { round: content.round || 1, twins: !!content.twins, duration: 1e9 }, { demo: true, reduced: reduceMotion() });
+    demoGame = createDash(canvas, { round: content.round || 1, twins: !!content.twins, duration: 1e9 }, { demo: true, reduced: reduceMotion(), size: tv ? 66 : SIZE });
     const mine = demoGame;
     return () => { mine.stop(); if (demoGame === mine) demoGame = null; };
   },
@@ -391,13 +393,13 @@ export default {
       race.appendChild(h("div", { class: "lb", style: { fontSize: api.big ? "1em" : ".8em" } },
         sp, h("span", { class: "nm", style: { color: isMe ? "#ffd84a" : "" } }, p.name + (isMe ? " (YOU)" : "")), h("span", { class: "bar", style: { height: "18px" } }, fill), v));
       if (i === 0) bestSprite = sp;
-      await wait(60);
+      await wait(50);
       api.sfx("coin");
-      fill.style.transition = "width .7s steps(12)";
+      fill.style.transition = "width .55s steps(10)";
       fill.style.width = Math.round(100 * r.raw / max) + "%";
-      await countUp(v, 0, r.raw, 700, { onTick: () => api.sfx("tick", 0.03), every: 3 });
+      await countUp(v, 0, r.raw, 550, { onTick: () => api.sfx("tick", 0.03), every: 3 });
       v.textContent = String(r.raw);
-      await wait(180);
+      await wait(120);
     }
     if (bestSprite) {
       hop(bestSprite);

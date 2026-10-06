@@ -97,6 +97,8 @@ function bossArena(content, { big = false } = {}) {
   };
 }
 
+const buzz = (api, p) => { try { if (api && typeof api.vibrate === "function") api.vibrate(p); } catch (e) { /* ignore */ } };
+
 function pct(v, max) { return max > 0 ? Math.max(0, Math.min(100, 100 * v / max)) : 0; }
 
 function optionRow(i, text, { tag = "div", extra = "" } = {}) {
@@ -121,13 +123,13 @@ html[data-screen="tv"] .boss-arena.big { --boss-px: 11px; }
 .boss-body.ko { animation: boss-ko 1.2s steps(14) 1 forwards; }
 .boss-sprite { position: absolute; left: 0; top: 0; width: 1em; height: 1em; }
 .boss-hp { flex: 1; min-width: 0; }
-.boss-hp-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: .8em; margin-bottom: 6px; color: var(--cream-2); }
+.boss-hp-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 2px 8px; font-size: .78em; margin-bottom: 6px; color: var(--cream-2); }
 .boss-hp-head .boss-nm { color: var(--gold); white-space: nowrap; }
-.boss-hp-head .boss-hp-num { white-space: nowrap; font-size: .9em; }
+.boss-hp-head .boss-hp-num { white-space: nowrap; font-size: .85em; margin-left: auto; }
 .boss-hp-track { height: 20px; border: 3px solid var(--ink); background: var(--cream-2); box-shadow: 2px 2px 0 #000; overflow: hidden; }
 .boss-hp-fill { display: block; height: 100%; background: var(--red); box-shadow: inset 0 5px 0 #ff6b78, inset 0 -4px 0 #8a1420; transition: width .9s steps(18); }
 html[data-screen="tv"] .boss-hp-track { height: 36px; }
-.boss-dmg { position: absolute; left: 50%; top: 0; transform: translateX(-50%); color: #ff6b78; font-size: 2.2em; font-family: var(--font); white-space: nowrap; text-shadow: 3px 3px 0 #000; animation: boss-float 1.3s steps(12) 1 forwards; z-index: 6; }
+.boss-dmg { position: absolute; left: 50%; top: 10%; transform: translateX(-50%); color: #ff6b78; font-size: 3em; font-family: var(--font); white-space: nowrap; text-shadow: 3px 3px 0 #000; animation: boss-float 1.3s steps(12) 1 forwards; z-index: 6; }
 .boss-dmg.gold { color: var(--gold); }
 .boss-slash { position: absolute; left: 50%; top: -10%; width: .9em; height: 120%; background: #fff; box-shadow: 0 0 0 .3em var(--gold); transform-origin: top center; transform: translateX(-50%) rotate(32deg) scaleY(0); animation: boss-slash .4s steps(5) 1 forwards; z-index: 5; }
 .boss-spark { width: 3.2em; height: 3.2em; animation: boss-spark .6s steps(4) 1 forwards; }
@@ -155,7 +157,8 @@ button.boss-opt:active { transform: translate(2px, 2px); box-shadow: inset -4px 
 .boss-opt.right .bar i { background: #fff; }
 .boss-title { margin-top: 2px; font-size: 1.25em; }
 .boss-stamp { display: inline-block; padding: 10px 18px; border: 5px solid var(--gold); color: var(--gold); font-size: 1.5em; transform: rotate(-8deg); background: rgba(0,0,0,.5); animation: stamp-in .35s steps(5) 1; text-shadow: 3px 3px 0 #000; }
-.boss-demo { position: relative; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 6px 0; }
+.boss-demo { --boss-px: 7px; position: relative; display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 18px 0 6px; overflow: hidden; }
+html[data-screen="tv"] .boss-demo { --boss-px: 11px; }
 .boss-demo .boss-hp { width: min(100%, 320px); }
 @keyframes boss-bob { 50% { transform: translateY(-.8em); } }
 @keyframes boss-shake { 0%, 100% { transform: none; } 15% { transform: translate(-1.6em, .2em); } 35% { transform: translate(1.4em, -.4em); } 55% { transform: translate(-1em, .3em); } 75% { transform: translate(.8em, 0); } }
@@ -217,7 +220,7 @@ export default {
       btns.forEach((b, j) => b.classList.toggle("picked", j === i));
       arena.slash();
       api.sfx("slash");
-      api.vibrate(20);
+      buzz(api, 20);
       api.submit(i, { label: GLYPHS[i] + " " + content.options[i] });
     };
     btns.forEach((b, i) => b.addEventListener("click", () => choose(i)));
@@ -268,7 +271,7 @@ export default {
     const list = h("div", { class: "boss-opts" + (api.big ? " grid" : "") }, ...rows);
     el.appendChild(list);
     api.sfx(mine == null ? "pop" : mine === reveal.answer ? "coin" : "error");
-    if (mine === reveal.answer) api.vibrate([30, 40, 30]);
+    if (mine === reveal.answer) buzz(api, [30, 40, 30]);
     await wait(80);
     rows.forEach((row, i) => { row.querySelector(".bar i").style.width = pct((reveal.split && reveal.split[i]) || 0, answered) + "%"; });
     el.appendChild(h("div", { class: "panel" }, h("strong", null, "FACT: "), reveal.fact || ""));
@@ -286,7 +289,7 @@ export default {
       if (!alive()) return;
       arena.hit();
       arena.float("-" + dmg.toLocaleString("en-CA"));
-      api.vibrate([40, 30, 60]);
+      buzz(api, [40, 30, 60]);
       arena.fill.style.width = pct(after, max) + "%";
       await countUp(arena.num, before, after, 900, { format: (n) => fmtHp(n, max), onTick: () => api.sfx("tick", 0.03), every: 500 });
       api.sfx("thunder");
@@ -309,7 +312,7 @@ export default {
     if (reveal.defeated) {
       arena.ko();
       api.sfx("fanfare");
-      api.vibrate([60, 40, 60, 40, 120]);
+      buzz(api, [60, 40, 60, 40, 120]);
       await wait(300);
       stampWrap.appendChild(h("div", { class: "boss-stamp" }, reveal.alreadyDown ? "STILL DOWN!" : "BOSS DEFEATED!"));
       rain(api.big ? 40 : 26, 2800);

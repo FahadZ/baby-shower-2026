@@ -91,7 +91,7 @@ export default {
     const items = {};
     for (const id in itemsById) {
       const it = itemsById[id];
-      items[id] = { name: it.name, emoji: it.emoji, color: it.color, shape: it.shape, essential: !!it.essential };
+      items[id] = { name: it.name, emoji: it.emoji, color: it.color, shape: it.shape, value: it.value, essential: !!it.essential };
     }
     return {
       mask,
