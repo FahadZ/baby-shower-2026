@@ -634,23 +634,33 @@
   }
 
   // ---------------------------------------------------------------
-  //  Kirby's copy ability: something falls, he inhales it, wears it,
-  //  then spits it out as a star and goes back to pink. Uses only art
-  //  cropped from the invite (mushroom, Tetris blocks, sparkle).
+  //  Kirby's copy ability, using real Kirby Super Star sprites: an enemy
+  //  falls, Kirby inhales it, puffs up, becomes Fire / Sword / Ice Kirby,
+  //  then spits the ability out as a star and turns back into himself.
   // ---------------------------------------------------------------
+  var K = "assets/kirby/";
   var ABILITIES = [
-    { name: "MUSHROOM KIRBY!", src: "assets/sprites/mushroom.png", size: 0.48, hat: 0.46,
-      filter: "hue-rotate(-42deg) saturate(2.2) brightness(.95)" },
-    { name: "BLOCK KIRBY!", src: "assets/deco/block-s.png", size: 0.66, hat: 0.56,
-      filter: "hue-rotate(150deg) saturate(1.2) brightness(.95)" },
-    { name: "STAR KIRBY!", src: "assets/deco/sparkle.png", size: 0.62, hat: 0.56,
-      filter: "sepia(1) saturate(5) hue-rotate(8deg) brightness(1.15) drop-shadow(0 0 6px rgba(255,220,90,.9))" }
+    { name: "FIRE KIRBY!", enemy: [K + "leo-1.png", K + "leo-2.png"], enemyW: 32,
+      frames: [K + "fire-1.png", K + "fire-2.png", K + "fire-3.png", K + "fire-4.png"], frameW: 24 },
+    { name: "SWORD KIRBY!", enemy: [K + "blade-1.png"], enemyW: 35,
+      frames: [K + "sword-1.png", K + "sword-2.png", K + "sword-3.png", K + "sword-4.png"], frameW: 31 },
+    { name: "ICE KIRBY!", enemy: [K + "chilly-1.png", K + "chilly-2.png"], enemyW: 32,
+      frames: [K + "ice-1.png", K + "ice-2.png", K + "ice-3.png", K + "ice-4.png"], frameW: 24 }
   ];
+  // Preload so frame swaps never flash blank.
+  ABILITIES.forEach(function (ab) { ab.enemy.concat(ab.frames).forEach(function (u) { new Image().src = u; }); });
+  [K + "puffed-1.png", K + "spit-1.png"].forEach(function (u) { new Image().src = u; });
 
   function wait(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
   function play(el, frames, opts) {
     var a = el.animate(frames, Object.assign({ fill: "forwards" }, opts));
     return a.finished.catch(function () {});
+  }
+  // Cycle an <img> through sprite frames; returns a stop() function.
+  function flip(img, frames, ms) {
+    if (frames.length < 2) return function () {};
+    var i = 0, t = setInterval(function () { i = (i + 1) % frames.length; img.src = frames[i]; }, ms);
+    return function () { clearInterval(t); };
   }
 
   function initKirby() {
@@ -681,22 +691,24 @@
       kirby.classList.remove("hop", "glance");
       var kw = kirby.offsetWidth, kh = kirby.offsetHeight;
       var kx = kirby.offsetLeft, ky = kirby.offsetTop;
-      var mouthX = kx + kw * 0.5, mouthY = ky + kh * 0.55;
+      var mouthX = kx + kw * 0.5, mouthY = ky + kh * 0.55, feetY = ky + kh;
+      // One SNES pixel, sized so the game's Kirby body matches the invite's Kirby.
+      var px = kw * 0.92 / 22;
 
-      // 1. Something falls from the sky, wobbling.
-      var iw = Math.round(kw * ab.size);
-      var item = make(ab.src, iw);
-      var startX = mouthX - iw / 2 - kw * 0.15;
-      item.style.left = startX + "px";
+      // 1. An enemy falls from the sky, wobbling (and walking in mid-air).
+      var iw = Math.round(ab.enemyW * px * 0.85);
+      var item = make(ab.enemy[0], iw);
+      var stopWalk = flip(item, ab.enemy, 220);
+      item.style.left = (mouthX - iw / 2 - kw * 0.15) + "px";
       item.style.top = (ky - kh * 2.6) + "px";
       await play(item, [
         { transform: "translate(0,-40px) rotate(0deg)", opacity: 0 },
-        { transform: "translate(6px,10px) rotate(20deg)", opacity: 1, offset: 0.25 },
-        { transform: "translate(-6px,50px) rotate(-15deg)", offset: 0.6 },
-        { transform: "translate(0," + Math.round(kh * 1.25) + "px) rotate(10deg)", opacity: 1 }
+        { transform: "translate(6px,10px) rotate(12deg)", opacity: 1, offset: 0.25 },
+        { transform: "translate(-6px,50px) rotate(-10deg)", offset: 0.6 },
+        { transform: "translate(0," + Math.round(kh * 1.1) + "px) rotate(6deg)", opacity: 1 }
       ], { duration: 1800, easing: "linear" });
 
-      // 2. Inhale: Kirby stretches wide, wind streaks rush in, item gets pulled into his mouth.
+      // 2. Inhale: Kirby stretches wide, wind streaks rush in, the enemy gets pulled into his mouth.
       sfx("inhale");
       var streaks = [0, 1, 2].map(function (n) {
         var d = document.createElement("i");
@@ -721,34 +733,48 @@
         { transform: cur + " translate(0,0) scale(1)", opacity: 1 },
         { transform: cur + " translate(" + dx + "px," + dy + "px) scale(.15) rotate(540deg)", opacity: 0.9 }
       ], { duration: 650, easing: "cubic-bezier(.6,0,1,1)" });
-      item.remove();
+      stopWalk(); item.remove();
       await inhale;
       streaks.forEach(function (d) { d.remove(); });
-
-      // 3. Gulp! Puff up, flash, and transform.
-      sfx("swallow");
-      await play(kirby, [
-        { transform: "scale(1.18,.9) translateY(3%)" }, { transform: "scale(1.28,1.2)", filter: "brightness(2)", offset: 0.35 },
-        { transform: "scale(.94,1.06)", filter: "brightness(1.6)", offset: 0.7 }, { transform: "scale(1,1)", filter: ab.filter }
-      ], { duration: 600, easing: "steps(5)" });
       kirby.getAnimations().forEach(function (a) { a.cancel(); });
-      kirby.style.filter = ab.filter;
-      var hw = Math.round(kw * ab.hat);
-      var hat = make(ab.src, hw, "kirby-hat");
-      hat.style.left = (mouthX - hw / 2) + "px";
-      hat.style.top = (ky - hw * 0.55) + "px";
-      play(hat, [{ transform: "translateY(-12px) scale(.6)", opacity: 0 }, { transform: "none", opacity: 1 }], { duration: 300, easing: "steps(3)" });
-      say(kirby, ab.name);
-      var bob = kirby.animate([{ transform: "translateY(0)" }, { transform: "translateY(-6%)" }], { duration: 500, iterations: Infinity, direction: "alternate", easing: "steps(2)" });
-      var hatBob = hat.animate([{ transform: "translateY(0)" }, { transform: "translateY(-6%)" }], { duration: 500, iterations: Infinity, direction: "alternate", easing: "steps(2)" });
-      await wait(3200);
-      bob.cancel(); hatBob.cancel();
 
-      // 4. Release: squash, spit a star out to the left, back to pink.
-      await play(kirby, [{ transform: "scale(1,1)" }, { transform: "scale(1.2,.85)" }], { duration: 160, easing: "steps(2)" });
+      // From here the game's own sprites stand in for Kirby, feet planted where his are.
+      var body = make(K + "puffed-1.png", Math.round(32 * px), "kirby-body");
+      function stand(w) {
+        body.style.width = w + "px";
+        body.style.left = (mouthX - w / 2) + "px";
+        body.style.top = "auto";
+        body.style.bottom = (ledge.offsetHeight - feetY) + "px";
+      }
+      stand(Math.round(32 * px));
+      kirby.style.visibility = "hidden";
+
+      // 3. Mouthful... gulp! Flash, and become the copy ability.
+      sfx("swallow");
+      await play(body, [
+        { transform: "scale(1,1)" }, { transform: "scale(1.08,.92)", offset: 0.3 },
+        { transform: "scale(.96,1.05)", offset: 0.6 }, { transform: "scale(1,1)" }
+      ], { duration: 700, easing: "steps(4)" });
+      await play(body, [{ filter: "brightness(1)" }, { filter: "brightness(3)" }, { filter: "brightness(1)" }], { duration: 300, easing: "steps(3)" });
+      body.getAnimations().forEach(function (a) { a.cancel(); });
+      body.src = ab.frames[0];
+      stand(Math.round(ab.frameW * px));
+      var stopIdle = flip(body, ab.frames, 140);
+      say(body, ab.name);
+      var bob = body.animate([{ transform: "translateY(0)" }, { transform: "translateY(-5%)" }], { duration: 560, iterations: Infinity, direction: "alternate", easing: "steps(2)" });
+      await wait(3200);
+      bob.cancel(); stopIdle();
+
+      // 4. Release: squash, the ability pops out as a star, back to plain Kirby.
+      await play(body, [{ transform: "scale(1,1)" }, { transform: "scale(1.15,.88)" }], { duration: 160, easing: "steps(2)" });
       sfx("spit");
-      hat.remove();
-      kirby.style.filter = "";
+      var puff = make(K + "spit-1.png", Math.round(16 * px), "kirby-puff");
+      puff.style.left = (kx - 8 * px) + "px";
+      puff.style.top = (mouthY - 8 * px) + "px";
+      play(puff, [{ opacity: 1, transform: "scale(.6)" }, { opacity: 1, transform: "scale(1.1)", offset: 0.5 }, { opacity: 0, transform: "scale(1.2)" }], { duration: 400, easing: "steps(4)" })
+        .then(function () { puff.remove(); });
+      body.remove();
+      kirby.style.visibility = "";
       var star = make("assets/deco/sparkle.png", Math.round(kw * 0.45), "kirby-star");
       star.style.left = (kx - kw * 0.1) + "px";
       star.style.top = (mouthY - kw * 0.22) + "px";
@@ -768,7 +794,7 @@
       await wait(2500);
       for (;;) {
         if (!document.hidden && current === "title") {
-          try { await cycle(); } catch (e) { delete kirby.dataset.busy; kirby.style.filter = ""; }
+          try { await cycle(); } catch (e) { delete kirby.dataset.busy; kirby.style.visibility = ""; $$(".kirby-fx", ledge).forEach(function (n) { n.remove(); }); }
           await wait(4000 + Math.random() * 3000);
         } else {
           await wait(1000);

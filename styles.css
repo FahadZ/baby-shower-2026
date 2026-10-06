@@ -371,9 +371,9 @@ strong { font-weight: 400; color: var(--cream-2); }
 .noscript { text-align: center; background: var(--cream); color: var(--ink); padding: 12px; }
 
 /* Kirby's copy ability */
-.kirby-fx { position: absolute; z-index: 3; height: auto; max-width: none; pointer-events: none; image-rendering: pixelated;
-  filter: drop-shadow(2px 0 0 #1d1b18) drop-shadow(-2px 0 0 #1d1b18) drop-shadow(0 2px 0 #1d1b18) drop-shadow(0 -2px 0 #1d1b18); }
-.kirby-hat { z-index: 4; }
+.kirby-fx { position: absolute; z-index: 3; height: auto; max-width: none; pointer-events: none; image-rendering: pixelated; }
+.kirby-body { z-index: 4; filter: none; transform-origin: 50% 100%; }
+.kirby-puff { z-index: 5; filter: none; }
 .kirby-wind {
   position: absolute; z-index: 3; width: 3px; pointer-events: none;
   background: repeating-linear-gradient(to bottom, #fffaf0 0 6px, transparent 6px 10px);
