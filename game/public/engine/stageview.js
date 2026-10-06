@@ -22,7 +22,7 @@ export function createStageView(root, { now, tv = false }) {
   }
 
   const api = (snap) => ({
-    big: true, tv, now, sfx, you: () => null, results: snap.results, players: () => snap.players || [],
+    big: true, tv, now, sfx, you: () => null, results: snap.results, content: snap.content || null, players: () => snap.players || [],
     live: () => lastLive, timeLeft: () => Math.max(0, (snap.endsAt || 0) - now()), roundTime: snap.roundTime
   });
 

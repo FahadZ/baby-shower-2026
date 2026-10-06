@@ -145,6 +145,7 @@ function gameApi() {
     players: () => (snap.results && snap.results.board) || snap.players || [],
     live: () => live,
     results: snap.results,
+    content: snap.content || null,
     big: false,
     tv: false
   };

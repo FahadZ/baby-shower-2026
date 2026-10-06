@@ -117,7 +117,8 @@ export default {
   onLive(stat) { ... },
 
   // The answer reveal. reveal = revealData() from the server; api.results.board has every
-  // player row ({id,name,avatar,points,rank,roundPoints}); api.you() is null on the TV.
+  // player row ({id,name,avatar,points,rank,roundPoints}); api.content is the round's
+  // content(); api.you() is null on the TV.
   reveal(el, reveal, api) { ... },
 
   // Optional: TV / host STAGE during play. Return { update(live, snap) }.

@@ -160,6 +160,7 @@ button.boss-opt:active { transform: translate(2px, 2px); box-shadow: inset -4px 
 .boss-demo { --boss-px: 7px; position: relative; display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 18px 0 6px; overflow: hidden; }
 html[data-screen="tv"] .boss-demo { --boss-px: 11px; }
 .boss-demo .boss-hp { width: min(100%, 320px); }
+html[data-screen="tv"] .boss-demo .boss-hp { width: min(100%, 720px); }
 @keyframes boss-bob { 50% { transform: translateY(-.8em); } }
 @keyframes boss-shake { 0%, 100% { transform: none; } 15% { transform: translate(-1.6em, .2em); } 35% { transform: translate(1.4em, -.4em); } 55% { transform: translate(-1em, .3em); } 75% { transform: translate(.8em, 0); } }
 @keyframes boss-ko { 0% { transform: none; opacity: 1; } 25% { transform: translateY(-3em) rotate(-14deg); opacity: 1; } 100% { transform: translateY(60em) rotate(50deg); opacity: 0; } }

@@ -88,7 +88,7 @@ if (GAME) {
   if (gi < 0) throw new Error("game not registered: " + GAME);
   for (let attempt = 0; attempt < 3; attempt++) {
     await host.selectOption("select", String(gi));
-    await host.click("text=JUMP");
+    await host.click('button:has-text("JUMP")');
     await sleep(700);
     if ((await api()).gameIndex === gi) break;
   }
