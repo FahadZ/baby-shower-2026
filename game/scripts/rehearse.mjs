@@ -120,7 +120,9 @@ while (guard++ < 400) {
       await sleep(400);
     }
     if (s.phase === "credits") break;
-    if (["intro", "reveal", "results", "leaderboard", "final", "predictions"].includes(s.phase)) {
+    if (s.phase === "howto") {
+      await host.click('button:has-text("START ROUND")');
+    } else if (["intro", "reveal", "results", "leaderboard", "final", "predictions"].includes(s.phase)) {
       if (s.phase === "predictions") { await p1.fill("#firstWord", "PIKACHU").catch(() => {}); await p1.click("text=SAVE PREDICTION").catch(() => {}); await sleep(600); }
       await host.click("text=/^(START GAME|SHOW HOW-TO|SHOW ROUND RESULTS|SHOW LEADERBOARD|NEXT ROUND.*|NEXT GAME|FINAL RANKINGS|PREDICTIONS|ROLL CREDITS)$/");
     } else if (s.phase === "lobby") {

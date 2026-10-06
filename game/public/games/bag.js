@@ -44,7 +44,7 @@ const CSS = `
 .bag-hl i.dim { background: rgba(224,40,58,.22); box-shadow: inset 0 0 0 2px rgba(122,18,32,.6); }
 .bag-ghost { position: fixed; left: 0; top: 0; z-index: 60; pointer-events: none; opacity: .85; will-change: transform; }
 .bag-ghost.back { transition: transform .18s steps(4); opacity: .45; }
-.bag-tray-label { width: 100%; display: flex; justify-content: space-between; font-size: .62em; color: var(--muted); padding: 0 6px; }
+.bag-tray-label { width: 100%; display: flex; justify-content: space-between; gap: 8px; font-size: .62em; color: var(--muted); padding: 0 6px; white-space: nowrap; }
 .bag-tray { width: 100%; display: flex; gap: 8px; align-items: stretch; padding: 8px; overflow-x: auto; overflow-y: hidden; touch-action: none; background: var(--bg-dark); border: 4px solid var(--ink); box-shadow: inset -4px -4px 0 #1a1c17, inset 4px 4px 0 #4a5042, 4px 4px 0 #000; scrollbar-width: none; min-height: 110px; }
 .bag-tray::-webkit-scrollbar { display: none; }
 .bag-tray.drop { box-shadow: inset 0 0 0 5px var(--green), 4px 4px 0 #000; }
@@ -184,7 +184,7 @@ function mountRound(el, content, api) {
   appendTo(el, h("div", { class: "bag-wrap" },
     h("h2", { class: "bag-title" }, content.title || "FIT THE DIAPER BAG"),
     hud, board,
-    h("div", { class: "bag-tray-label" }, h("span", null, "TRAY · DRAG INTO THE BAG · TAP TO ROTATE"), leftLbl),
+    h("div", { class: "bag-tray-label" }, h("span", null, "TRAY · DRAG IN · TAP TO ROTATE"), leftLbl),
     tray));
 
   const tiles = new Map();      // id -> tile in the bag

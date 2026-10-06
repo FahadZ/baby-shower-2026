@@ -26,7 +26,7 @@ await p.waitForSelector("text=YOU'RE IN!");
 await host.click("text=+20 BOTS"); await sleep(600);
 await host.click("text=START GAME"); await sleep(400);
 await host.click("text=SHOW HOW-TO"); await sleep(300);
-await host.click("text=START ROUND NOW"); await sleep(800);
+await host.click('button:has-text("START ROUND")'); await sleep(800);
 let s = await api();
 if (s.phase !== "playing") fail("expected playing, got " + s.phase);
 
@@ -56,7 +56,7 @@ if (!youRow) fail("after reload the player's own row is missing (identity lost?)
 
 // 3. Host phone dies mid-round: the server still ends the round.
 await host.click("text=/^NEXT ROUND/"); await sleep(300);
-await host.click("text=START ROUND NOW"); await sleep(500);
+await host.click('button:has-text("START ROUND")'); await sleep(500);
 s = await api();
 const endsAt = s.endsAt;
 await hostCtx.close();

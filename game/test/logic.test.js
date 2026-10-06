@@ -35,8 +35,11 @@ test("full round flow with bots scores, ranks and produces results", () => {
   L.command(st, "next", null, 2100);
   assert.equal(st.core.phase, "howto");
   assert.equal(st.core.roundId, "price-1");
-  let t = st.core.endsAt;
-  L.tick(st, t);
+  assert.equal(st.core.endsAt, null, "the how-to waits for the host");
+  L.tick(st, 99999);
+  assert.equal(st.core.phase, "howto", "no auto-start");
+  L.command(st, "next", null, 3000);
+  let t = st.core.startedAt;
   assert.equal(st.core.phase, "playing");
   assert.equal(st.core.botQueue.length, 10);
   const snap = L.publicState(st, t);
@@ -81,6 +84,7 @@ test("pause and resume keep the remaining time and bot timings", () => {
   L.command(st, "next", null, 0);
   L.command(st, "next", null, 0);
   assert.equal(st.core.phase, "playing");
+  assert.equal(st.core.endsAt > 0, true);
   const endsAt = st.core.endsAt;
   L.command(st, "pause", null, 5000);
   assert.equal(st.core.paused, true);
@@ -118,6 +122,20 @@ test("extend, end, skip, reset and goto", () => {
   assert.equal(L.removeBots(st), 2);
 });
 
+test("auto-end is a host setting", () => {
+  const st = fresh();
+  const me = L.join(st, { name: "Solo", avatar: av("sonic") }, 0).playerId;
+  L.addBots(st, 2, 0);
+  L.command(st, "autoEnd", { on: false }, 0);
+  L.command(st, "start", null, 0); L.command(st, "next", null, 0); L.command(st, "next", null, 0);
+  const ends = st.core.endsAt;
+  L.answer(st, me, "price-1", 40, 1000);
+  assert.equal(st.core.endsAt, ends, "no early end while auto-end is off");
+  L.command(st, "autoEnd", { on: true }, 1500);
+  L.answer(st, me, "price-1", 41, 2000);
+  assert.equal(st.core.endsAt, 2000 + L.AUTO_END_GRACE_MS);
+});
+
 test("host auth: pin gives a token, token re-auths, wrong pin fails", () => {
   const st = fresh();
   assert.ok(L.authHost(st, { pin: "0000" }, "1234").error);
@@ -134,7 +152,7 @@ test("final phase after the last round of the last game", () => {
   L.command(st, "start", null, 0);
   let guard = 0;
   while (st.core.phase !== "final" && guard++ < 500) {
-    if (["howto", "playing", "locked"].includes(st.core.phase)) L.tick(st, st.core.endsAt);
+    if (["playing", "locked"].includes(st.core.phase)) L.tick(st, st.core.endsAt);
     else L.command(st, "next", null, 0);
   }
   assert.equal(st.core.phase, "final");

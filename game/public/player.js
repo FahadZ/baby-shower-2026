@@ -194,9 +194,7 @@ function mount() {
         h("div", { class: "panel" }, (snap.howto && snap.howto.text) || ""),
         demo));
       if (g && g.howtoDemo) { try { me.stopDemo = g.howtoDemo(demo, snap.content || {}); } catch (e) { /* ignore */ } }
-      const cdWrap = h("div", { class: "mt" });
-      app.appendChild(cdWrap);
-      me.cd = countdown(cdWrap, { endsAt: snap.endsAt, roundTime: snap.round === 1 ? 8000 : 4000, now: net.now, sound: false });
+      app.appendChild(h("p", { class: "blink gold center mt" }, "WAITING FOR PLAYER 1 TO START THE ROUND"));
       me.game = { unmount: () => { if (me.stopDemo) me.stopDemo(); } };
       return;
     }

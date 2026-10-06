@@ -41,7 +41,8 @@ export function createState(now = Date.now(), seed) {
       nextBot: 0,
       botCounter: 0,
       scoredRounds: [],
-      firstRank: {}
+      firstRank: {},
+      settings: { autoEnd: true }
     },
     answers: {},     // roundId -> { playerId: { a, t, final } }
     results: {},     // roundId -> result record (see lockRound)
@@ -210,8 +211,9 @@ export function answer(state, playerId, roundId, a, now = Date.now(), final = tr
   bucket[playerId] = { a, t: Math.max(0, now - core.startedAt), final: !!final };
   state.dirty.add("answers:" + roundId);
   p.lastSeen = now;
-  // Auto-end: every connected human has locked in.
-  if (game.autoEnd !== false && !game.progressive) {
+  // Auto-end (host setting): every connected human has locked in.
+  const settings = core.settings || { autoEnd: true };
+  if (settings.autoEnd !== false && game.autoEnd !== false && !game.progressive) {
     const humans = Object.values(core.players).filter((q) => !q.bot && q.connected);
     const allIn = humans.length > 0 && humans.every((q) => bucket[q.id] && bucket[q.id].final);
     if (allIn && core.endsAt - now > AUTO_END_GRACE_MS) {
@@ -270,8 +272,8 @@ function enterHowto(state, round, now) {
   core.startedAt = null;
   core.botQueue = [];
   core.nextBot = 0;
-  const ms = round === 1 ? HOWTO_FIRST_MS : HOWTO_MS;
-  setPhase(state, "howto", now, now + ms);
+  // The how-to screen waits for the host: only "NEXT" / "START ROUND" begins play.
+  setPhase(state, "howto", now, null);
   contentFor(state, game, round);
 }
 
@@ -430,8 +432,7 @@ export function tick(state, now = Date.now()) {
   if (core.paused) return { changed };
   if (core.phase === "playing") changed = releaseBots(state, now, now) || changed;
   if (core.endsAt != null && now >= core.endsAt) {
-    if (core.phase === "howto") { startPlaying(state, now); changed = true; }
-    else if (core.phase === "playing") { lockRound(state, now); changed = true; }
+    if (core.phase === "playing") { lockRound(state, now); changed = true; }
     else if (core.phase === "locked") { setPhase(state, "reveal", now); changed = true; }
   }
   return { changed };
@@ -440,7 +441,7 @@ export function tick(state, now = Date.now()) {
 export function nextWake(core) {
   if (core.paused) return null;
   let t = null;
-  if (["howto", "playing", "locked"].includes(core.phase) && core.endsAt != null) t = core.endsAt;
+  if (["playing", "locked"].includes(core.phase) && core.endsAt != null) t = core.endsAt;
   if (core.phase === "playing" && core.nextBot < core.botQueue.length) {
     const b = core.botQueue[core.nextBot].at;
     t = t == null ? b : Math.min(t, b);
@@ -576,6 +577,10 @@ export function command(state, cmd, arg, now = Date.now()) {
       state.dirty.add("core");
       return { ok: true };
     }
+    case "autoEnd":
+      core.settings = { ...(core.settings || {}), autoEnd: !!(arg && arg.on) };
+      state.dirty.add("core");
+      return { ok: true, autoEnd: core.settings.autoEnd };
     case "kick":
       return removePlayer(state, arg && arg.playerId) ? { ok: true, kicked: arg.playerId } : { error: "NO SUCH PLAYER" };
     case "addBots":
@@ -620,7 +625,8 @@ export function publicState(state, now = Date.now()) {
     revealNonce: core.revealNonce,
     order: core.order.map((id) => gameInfo(GAMES_BY_ID[id])),
     scored: core.scoredRounds.length,
-    taken: takenAvatars(core)
+    taken: takenAvatars(core),
+    settings: core.settings || { autoEnd: true }
   };
   if (game && core.round && ["howto", "playing", "locked", "reveal", "results"].includes(core.phase)) {
     snap.content = contentFor(state, game, core.round);

@@ -55,7 +55,7 @@ function nextLabel(s) {
   switch (s.phase) {
     case "lobby": return "START GAME";
     case "intro": return "SHOW HOW-TO";
-    case "howto": return "START ROUND NOW";
+    case "howto": return "START ROUND";
     case "playing": return "END ROUND NOW";
     case "locked": return "SCORING...";
     case "reveal": return "SHOW ROUND RESULTS";
@@ -117,12 +117,13 @@ function mountControls() {
   const sec = h("div", { class: "btn-grid" },
     h("button", { class: "btn small", type: "button", disabled: !playing, onclick: () => cmd("extend") }, "+15 SEC"),
     h("button", { class: "btn small", type: "button", disabled: !playing, onclick: () => cmd(s.paused ? "resume" : "pause") }, s.paused ? "RESUME" : "PAUSE"),
-    h("button", { class: "btn small", type: "button", disabled: !["howto", "playing"].includes(s.phase), onclick: () => cmd("end") }, "END ROUND NOW"),
+    h("button", { class: "btn small", type: "button", disabled: s.phase !== "playing", onclick: () => cmd("end") }, "END ROUND NOW"),
     h("button", { class: "btn small", type: "button", disabled: ["lobby", "final", "predictions", "credits"].includes(s.phase), onclick: () => confirm("Skip this round? It will not be scored.") && cmd("skipRound") }, "SKIP ROUND"),
     h("button", { class: "btn small", type: "button", disabled: ["lobby", "final", "predictions", "credits"].includes(s.phase), onclick: () => confirm("Skip the rest of this game?") && cmd("skipGame") }, "SKIP GAME"),
     h("button", { class: "btn small", type: "button", disabled: !["reveal", "results", "leaderboard"].includes(s.phase), onclick: () => cmd("replay") }, "REPLAY REVEAL"),
     h("button", { class: "btn small", type: "button", disabled: !["reveal", "results"].includes(s.phase), onclick: () => cmd("showLeaderboard") }, "LEADERBOARD"),
-    h("button", { class: "btn small", type: "button", onclick: () => { muted = !muted; store("bl.hostMute", muted ? "on" : "off"); audio.enable(!muted); toast(muted ? "THIS PHONE IS MUTED" : "SOUND ON (PLUG INTO A SPEAKER)"); } }, muted ? "UNMUTE" : "MUTE"));
+    h("button", { class: "btn small", type: "button", onclick: () => { muted = !muted; store("bl.hostMute", muted ? "on" : "off"); audio.enable(!muted); toast(muted ? "THIS PHONE IS MUTED" : "SOUND ON (PLUG INTO A SPEAKER)"); } }, muted ? "UNMUTE" : "MUTE"),
+    h("button", { class: "btn small", type: "button", dataset: { f: "autoend" }, title: "End a round early once every connected player has locked in", onclick: () => cmd("autoEnd", { on: !(snap.settings && snap.settings.autoEnd) }) }, "AUTO-END: " + (s.settings && s.settings.autoEnd ? "ON" : "OFF")));
   const stageBtn = h("button", { class: "btn", type: "button", onclick: () => { stageMode = true; lastKey = null; render(true); } }, "STAGE VIEW (BIG SCREEN)");
 
   // Jump to any game.
@@ -161,8 +162,9 @@ function updateControls() {
   f("players").textContent = s.connectedCount + "/" + s.playerCount + (s.botCount ? " (" + s.botCount + " BOTS)" : "");
   f("answers").textContent = s.phase === "playing" || s.phase === "locked" ? s.answerCount + "/" + s.playerCount : "—";
   const cdWrap = f("cd");
-  if (["howto", "playing", "locked"].includes(s.phase) && s.endsAt) {
-    if (!cd) { cd = countdown(cdWrap, { endsAt: s.endsAt, roundTime: s.phase === "playing" ? s.roundTime : (s.round === 1 ? 8000 : 4000), now: net.now, paused: s.paused, sound: false }); }
+  const ae = f("autoend"); if (ae) ae.textContent = "AUTO-END: " + (s.settings && s.settings.autoEnd ? "ON" : "OFF");
+  if (["playing", "locked"].includes(s.phase) && s.endsAt) {
+    if (!cd) { cd = countdown(cdWrap, { endsAt: s.endsAt, roundTime: s.phase === "playing" ? s.roundTime : 1200, now: net.now, paused: s.paused, sound: false }); }
     else cd.update({ endsAt: s.endsAt, paused: s.paused, pauseLeft: s.pauseLeft });
   } else if (cd) { cd.stop(); cd = null; clear(cdWrap); }
 }

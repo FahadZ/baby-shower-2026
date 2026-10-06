@@ -34,7 +34,7 @@ export class GameRoom extends DurableObject {
         const gid = core.order[core.gameIndex];
         gameIndex = order.indexOf(gid);
       }
-      st.core = { ...st.core, ...core, order, gameIndex };
+      st.core = { ...st.core, ...core, order, gameIndex, settings: { autoEnd: true, ...(core.settings || {}) } };
       if (core.gameIndex >= 0 && gameIndex < 0) {
         // The game that was running no longer exists: back to the lobby, scores kept.
         st.core.gameIndex = -1; st.core.round = 0; st.core.roundId = null; st.core.phase = "lobby"; st.core.endsAt = null;

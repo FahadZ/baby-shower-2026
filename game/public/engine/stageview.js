@@ -82,9 +82,7 @@ export function createStageView(root, { now, tv = false }) {
             h("div", { class: "panel" }, (snap.howto && snap.howto.text) || ""),
             demo));
         if (g && g.howtoDemo) { try { g.howtoDemo(demo, snap.content || {}); } catch (e) { /* ignore */ } }
-        const cdWrap = h("div", { class: "mt" });
-        root.appendChild(cdWrap);
-        me.cd = countdown(cdWrap, { endsAt: snap.endsAt, roundTime: snap.round === 1 ? 8000 : 4000, now, sound: false });
+        root.appendChild(h("p", { class: "blink gold center mt" }, "WAITING FOR PLAYER 1 TO START THE ROUND"));
         break;
       }
       case "playing": {
