@@ -116,6 +116,7 @@ export default {
       .sort((a, b) => (points[b] || 0) - (points[a] || 0) || rows[a].t - rows[b].t).slice(0, 3);
     return {
       seed: ctx.seed,
+      round,
       mode: scene.mode,
       targets: scene.targets.map((t) => ({ key: t.key, x: t.x, y: t.y, size: t.size, name: targetName(t.key) })),
       counts: { all5, found },

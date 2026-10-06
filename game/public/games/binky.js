@@ -1,0 +1,480 @@
+// WHERE'S THE BINKY? (client). A canvas full of emoji with five baby items
+// hidden in it. Every phone regenerates the scene from content.seed with the
+// shared generator, so everyone hunts the same picture. Progressive: each find
+// is submitted as it happens, the final one when all five are in.
+import { h, appendTo, wait, reduceMotion } from "../engine/dom.js";
+import { spriteEl } from "../engine/avatars.js";
+import { liveBars } from "../engine/stage.js";
+import { mulberry32 } from "../engine/rng.js";
+import { generateScene, hitTest, targetName, targetChar } from "./binky-scene.js";
+import data from "../data/binky.js";
+
+const TAU = Math.PI * 2;
+const EMOJI_FONT = '"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji","Twemoji Mozilla",sans-serif';
+const INK = "#1d1b18", GREEN = "#8cc523", RED = "#e0283a", GOLD = "#ffd84a", NIGHT = "#0c0e0b", CREAM = "#f3e6cf", CREAM2 = "#ead7b8";
+const ease = (p) => 1 - Math.pow(1 - p, 3);
+const easeInOut = (p) => (p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2);
+
+// ------------------------------------------------------------ drawing
+// The whole scene once, at device resolution. Everything else is composited from it.
+function renderBase(scene, pxW) {
+  const k = pxW / scene.w;
+  const c = document.createElement("canvas");
+  c.width = Math.max(1, Math.round(pxW));
+  c.height = Math.max(1, Math.round(scene.h * k));
+  const g = c.getContext("2d");
+  g.scale(k, k);
+  g.fillStyle = CREAM;
+  g.fillRect(0, 0, scene.w, scene.h);
+  g.fillStyle = CREAM2;
+  for (let y = 0; y < scene.h; y += 100) for (let x = (y / 100) % 2 ? 100 : 0; x < scene.w; x += 200) g.fillRect(x, y, 100, 100);
+  g.textAlign = "center";
+  g.textBaseline = "middle";
+  for (const gl of scene.glyphs) {
+    g.save();
+    g.translate(gl.x, gl.y);
+    g.rotate(gl.rot || 0);
+    g.font = gl.size + "px " + (data.shapes.includes(gl.ch) ? "sans-serif" : EMOJI_FONT);
+    g.fillStyle = gl.color || INK;
+    g.fillText(gl.ch, 0, 0);
+    g.restore();
+  }
+  return c;
+}
+
+function ringPath(ctx, x, y, r) {
+  ctx.beginPath();
+  for (let i = 0; i < 16; i++) {
+    const a = (i / 16) * TAU;
+    const px = x + Math.cos(a) * r, py = y + Math.sin(a) * r;
+    if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+  }
+  ctx.closePath();
+}
+
+function drawRing(ctx, x, y, r, color, w) {
+  ctx.lineJoin = "miter";
+  ringPath(ctx, x, y, r);
+  ctx.strokeStyle = INK; ctx.lineWidth = w + 4; ctx.stroke();
+  ctx.strokeStyle = color; ctx.lineWidth = w; ctx.stroke();
+}
+
+function drawCross(ctx, x, y, s, alpha) {
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.lineCap = "square";
+  for (const [c, w] of [[INK, 9], [RED, 5]]) {
+    ctx.strokeStyle = c; ctx.lineWidth = w;
+    ctx.beginPath(); ctx.moveTo(x - s, y - s); ctx.lineTo(x + s, y + s); ctx.moveTo(x + s, y - s); ctx.lineTo(x - s, y + s); ctx.stroke();
+  }
+  ctx.restore();
+}
+
+// A canvas that shows one scene: fits itself to its CSS width, composites the
+// base image with the flashlight, rings, misses and an optional zoom camera.
+function createView(canvas, scene, { night = false } = {}) {
+  const ctx = canvas.getContext("2d");
+  const st = { night, light: night ? { x: scene.w / 2, y: scene.h / 2 } : null, rings: [], marks: [], zoom: null };
+  let base = null, cssW = 0, cssH = 0, dpr = 1, raf = 0, animUntil = 0, alive = true;
+
+  function fit() {
+    if (!alive) return false;
+    const w = canvas.clientWidth || canvas.getBoundingClientRect().width;
+    if (!w) { requestAnimationFrame(fit); return false; }
+    dpr = Math.min(2, window.devicePixelRatio || 1);
+    cssW = w; cssH = w * scene.h / scene.w;
+    canvas.style.height = cssH + "px";
+    const pxW = Math.round(cssW * dpr);
+    if (canvas.width !== pxW) {
+      canvas.width = pxW; canvas.height = Math.round(cssH * dpr);
+      base = renderBase(scene, pxW);
+    }
+    paint(performance.now());
+    return true;
+  }
+
+  const scale = () => cssW / scene.w;
+  function map(ux, uy) {
+    const s = scale();
+    if (!st.zoom) return [ux * s, uy * s];
+    return [(ux - st.zoom.x) * s * st.zoom.k + cssW / 2, (uy - st.zoom.y) * s * st.zoom.k + cssH / 2];
+  }
+
+  function paint(now) {
+    if (!base) return;
+    const s = scale() * (st.zoom ? st.zoom.k : 1);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.imageSmoothingEnabled = false;
+    ctx.clearRect(0, 0, cssW, cssH);
+    const drawScene = () => {
+      const [ox, oy] = map(0, 0);
+      ctx.drawImage(base, ox, oy, scene.w * s, scene.h * s);
+    };
+    if (st.night) {
+      ctx.fillStyle = NIGHT;
+      ctx.fillRect(0, 0, cssW, cssH);
+      if (st.light) {
+        const [lx, ly] = map(st.light.x, st.light.y);
+        const r = data.flashlight * s;
+        ctx.save();
+        ctx.beginPath(); ctx.arc(lx, ly, r, 0, TAU); ctx.clip();
+        drawScene();
+        ctx.fillStyle = "rgba(255,216,74,.12)";
+        ctx.fillRect(0, 0, cssW, cssH);
+        ctx.restore();
+        ctx.strokeStyle = "rgba(255,216,74,.6)"; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.arc(lx, ly, r, 0, TAU); ctx.stroke();
+      }
+    } else {
+      ctx.fillStyle = CREAM;
+      ctx.fillRect(0, 0, cssW, cssH);
+      drawScene();
+    }
+    for (const rg of st.rings) {
+      const age = rg.born ? (now - rg.born) / 260 : 1;
+      const pop = age < 1 ? 1 + (1 - ease(Math.max(0, age))) * 0.8 : 1;
+      const [x, y] = map(rg.x, rg.y);
+      drawRing(ctx, x, y, (rg.size * 0.8 + 12) * s * pop, rg.color || GREEN, Math.max(3, 5 * s * (st.zoom ? st.zoom.k : 1)));
+    }
+    st.marks = st.marks.filter((m) => m.until > now);
+    for (const m of st.marks) {
+      const [x, y] = map(m.x, m.y);
+      drawCross(ctx, x, y, Math.max(8, 26 * s), Math.min(1, (m.until - now) / 200));
+    }
+  }
+
+  function loop(now) {
+    raf = 0;
+    paint(now);
+    if (alive && now < animUntil) raf = requestAnimationFrame(loop);
+  }
+  function request(ms = 0) {
+    animUntil = Math.max(animUntil, performance.now() + ms);
+    if (!raf && alive) raf = requestAnimationFrame(loop);
+  }
+  function toUnits(e) {
+    const r = canvas.getBoundingClientRect();
+    const x = (e.clientX - r.left) / Math.max(1, r.width) * scene.w;
+    const y = (e.clientY - r.top) / Math.max(1, r.height) * scene.h;
+    return [Math.max(0, Math.min(scene.w, x)), Math.max(0, Math.min(scene.h, y))];
+  }
+  function destroy() { alive = false; if (raf) cancelAnimationFrame(raf); raf = 0; }
+  return { st, fit, request, toUnits, destroy, isAlive: () => alive };
+}
+
+function sceneCanvas({ big = false, night = false, cap = "48vh" } = {}) {
+  return h("canvas", {
+    class: "game-surface", width: "10", height: "14", "aria-label": "The toy pile",
+    style: { display: "block", width: big ? "min(100%, " + cap + ")" : "100%", margin: "0 auto", border: "4px solid " + INK, boxShadow: "4px 4px 0 #000", background: night ? NIGHT : CREAM }
+  });
+}
+
+const chipStyle = (on, big) => ({
+  display: "inline-block", padding: big ? "6px 10px" : "4px 6px", border: "3px solid " + INK, fontSize: big ? ".8em" : ".65em", lineHeight: "1.3",
+  background: on ? GREEN : "#2b2f27", color: on ? INK : "#bdb29c", boxShadow: "2px 2px 0 #000", whiteSpace: "nowrap", transition: "background .15s"
+});
+
+function chipRow(keys, names, chars, { big = false } = {}) {
+  const chips = {};
+  const row = h("div", { class: "row", style: { justifyContent: "center", flexWrap: "wrap", gap: "6px", margin: "0 0 10px" } });
+  keys.forEach((k) => {
+    chips[k] = h("span", { style: chipStyle(false, big), dataset: { key: k } }, (chars[k] || targetChar(k)) + " " + (names[k] || targetName(k)));
+    row.appendChild(chips[k]);
+  });
+  return { row, chips, light(k, on = true) { if (chips[k]) Object.assign(chips[k].style, chipStyle(on, big)); } };
+}
+
+// ----------------------------------------------------------- module
+let current = null;   // the phone's live round
+let stage = null;     // the TV / STAGE view
+let demoStop = null;  // the how-to loop
+
+export default {
+  id: "binky",
+  progressive: true,
+
+  // A finger wanders over a few glyphs, taps the bottle, a ring pops. Loops.
+  howtoDemo(el, content) {
+    const night = content && content.mode === "night";
+    const canvas = h("canvas", { "aria-hidden": "true", style: { display: "block", width: "100%", height: "150px", border: "3px solid " + INK, background: night ? NIGHT : CREAM } });
+    el.appendChild(canvas);
+    const ctx = canvas.getContext("2d");
+    const rng = mulberry32(99);
+    const W = 300, H = 150;
+    const glyphs = [];
+    for (let i = 0; i < 16; i++) glyphs.push({ x: 12 + rng() * (W - 24), y: 12 + rng() * (H - 24), ch: rng.pick(data.distractors), size: 16 + rng() * 14, rot: rng() * 1.2 - 0.6 });
+    const target = { x: 96, y: 78, ch: data.targets[0].ch, size: 26 };
+    const from = { x: 250, y: 140 };
+    let raf = 0, t0 = performance.now(), on = true;
+    function frame(now) {
+      if (!on) return;
+      const w = canvas.clientWidth || 300, dpr = Math.min(2, window.devicePixelRatio || 1);
+      if (canvas.width !== Math.round(w * dpr)) { canvas.width = Math.round(w * dpr); canvas.height = Math.round(150 * dpr); }
+      const k = w / W;
+      ctx.setTransform(dpr * k, 0, 0, dpr * k, 0, 0);
+      const p = ((now - t0) % 2600) / 2600;
+      const travel = Math.min(1, p / 0.45);
+      const fx = from.x + (target.x - from.x) * easeInOut(travel), fy = from.y + 6 + (target.y - from.y) * easeInOut(travel);
+      const tapped = p > 0.5;
+      const press = p > 0.45 && p < 0.55 ? 0.85 : 1;
+      const drawScene = () => {
+        ctx.fillStyle = CREAM; ctx.fillRect(0, 0, W, H);
+        ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        for (const g of glyphs.concat(target)) { ctx.save(); ctx.translate(g.x, g.y); ctx.rotate(g.rot || 0); ctx.font = g.size + "px " + EMOJI_FONT; ctx.fillText(g.ch, 0, 0); ctx.restore(); }
+      };
+      if (night) {
+        ctx.fillStyle = NIGHT; ctx.fillRect(0, 0, W, H);
+        ctx.save(); ctx.beginPath(); ctx.arc(fx, fy - 4, 42, 0, TAU); ctx.clip(); drawScene(); ctx.restore();
+        ctx.strokeStyle = "rgba(255,216,74,.6)"; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(fx, fy - 4, 42, 0, TAU); ctx.stroke();
+      } else drawScene();
+      if (tapped) drawRing(ctx, target.x, target.y, 22 + (p < 0.6 ? (0.6 - p) * 60 : 0), GREEN, 4);
+      ctx.save(); ctx.translate(fx, fy); ctx.scale(press, press); ctx.font = "34px " + EMOJI_FONT; ctx.textAlign = "center"; ctx.textBaseline = "top"; ctx.fillText("👆", 0, 0); ctx.restore();
+      raf = requestAnimationFrame(frame);
+    }
+    raf = requestAnimationFrame(frame);
+    demoStop = () => { on = false; cancelAnimationFrame(raf); };
+    return demoStop;
+  },
+
+  mount(el, content, api) {
+    const round = content.round || 1;
+    const scene = generateScene(content.seed, round);
+    const night = content.mode === "night";
+    const keys = content.targetKeys || data.targets.map((t) => t.key);
+    const names = content.targetNames || {}, chars = content.targetChars || {};
+    const found = [], times = [];
+    const t0 = performance.now();
+
+    const counter = h("div", { class: "counter center", "aria-live": "polite", style: { fontSize: "1.6em", margin: "0 0 6px" } }, "FOUND 0/" + keys.length);
+    const chips = chipRow(keys, names, chars);
+    const canvas = sceneCanvas({ night });
+    const after = h("div", { class: "center", style: { marginTop: "12px" } });
+    appendTo(el,
+      h("h2", { class: "title", style: { fontSize: "1.2em", margin: "4px 0" } }, content.title || "WHERE'S THE BINKY?"),
+      content.subtitle ? h("p", { class: "sub", style: { marginBottom: "8px" } }, content.subtitle) : null,
+      counter, chips.row, canvas,
+      h("p", { class: "tiny center", style: { marginTop: "8px" } }, night ? "DRAG TO MOVE THE FLASHLIGHT. TAP TO GRAB." : "TAP AN ITEM WHEN YOU SPOT IT."),
+      after);
+
+    const view = createView(canvas, scene, { night });
+    // A phone that reloaded mid-round keeps what it already found.
+    const prev = api.you && api.you() && api.you().myAnswer;
+    if (prev && Array.isArray(prev.found)) {
+      prev.found.forEach((k, i) => {
+        const t = scene.targets.find((x) => x.key === k);
+        if (!t || found.includes(k)) return;
+        found.push(k); times.push(Number(prev.t && prev.t[i]) || 0);
+        view.st.rings.push({ x: t.x, y: t.y, size: t.size, color: GREEN, born: 0 });
+        chips.light(k);
+      });
+      counter.textContent = "FOUND " + found.length + "/" + keys.length;
+    }
+    view.fit();
+
+    function celebrate() {
+      api.sfx("win");
+      api.vibrate([30, 40, 60]);
+      const secs = (times[times.length - 1] / 1000).toFixed(1);
+      appendTo(after,
+        h("div", { class: "stamp pop", style: { borderColor: GREEN, color: GREEN, fontSize: "1.3em" } }, "ALL FOUND!"),
+        h("p", { class: "sub", style: { marginTop: "10px" } }, "+ SPEED BONUS · " + secs + "s"));
+    }
+
+    function foundOne(t) {
+      found.push(t.key);
+      times.push(Math.round(performance.now() - t0));
+      view.st.rings.push({ x: t.x, y: t.y, size: t.size, color: GREEN, born: performance.now() });
+      api.sfx("coin");
+      api.vibrate(20);
+      chips.light(t.key);
+      counter.textContent = "FOUND " + found.length + "/" + keys.length;
+      const done = found.length >= keys.length;
+      // One submit per find; the fifth one is final.
+      api.submit({ found: found.slice(), t: times.slice() }, { final: done, label: "FOUND " + found.length + "/" + keys.length });
+      view.request(300);
+      if (done) celebrate();
+    }
+
+    // The one tap path: real taps and the rehearsal autoplay both come through here.
+    function tapAt(x, y) {
+      if (!view.isAlive()) return false;
+      if (night) view.st.light = { x, y };
+      if (found.length >= keys.length) { view.request(); return false; }
+      const hit = hitTest(scene, x, y, found);
+      if (hit) { foundOne(hit); return true; }
+      view.st.marks.push({ x, y, until: performance.now() + 450 });
+      api.sfx("blip");
+      view.request(450);
+      return false;
+    }
+
+    const onDown = (e) => { e.preventDefault(); const [x, y] = view.toUnits(e); tapAt(x, y); };
+    const onMove = (e) => { if (!night) return; const [x, y] = view.toUnits(e); view.st.light = { x, y }; view.request(); };
+    const onResize = () => view.fit();
+    canvas.addEventListener("pointerdown", onDown);
+    canvas.addEventListener("pointermove", onMove);
+    window.addEventListener("resize", onResize);
+
+    current = {
+      scene, keys, found, tapAt,
+      destroy() {
+        canvas.removeEventListener("pointerdown", onDown);
+        canvas.removeEventListener("pointermove", onMove);
+        window.removeEventListener("resize", onResize);
+        view.destroy();
+      }
+    };
+  },
+
+  unmount() {
+    if (current) { try { current.destroy(); } catch (e) { /* ignore */ } current = null; }
+    if (stage) { try { stage.destroy(); } catch (e) { /* ignore */ } stage = null; }
+    if (demoStop) { try { demoStop(); } catch (e) { /* ignore */ } demoStop = null; }
+  },
+
+  // Rehearsal: "tap" 3 to 5 targets (and one miss) through the real tap path.
+  autoplay(el, content, api) {
+    const s = current;
+    if (!s) return;
+    const n = 3 + Math.floor(Math.random() * 3);
+    const picks = s.scene.targets.slice().sort(() => Math.random() - 0.5).slice(0, n);
+    let delay = 600 + Math.random() * 800;
+    setTimeout(() => { if (current === s) s.tapAt(Math.random() * s.scene.w, Math.random() * s.scene.h); }, delay);
+    picks.forEach((t) => {
+      delay += 1000 + Math.random() * 2000;
+      setTimeout(() => { if (current === s) s.tapAt(t.x + (Math.random() - 0.5) * 40, t.y + (Math.random() - 0.5) * 40); }, delay);
+    });
+  },
+
+  async reveal(el, reveal, api) {
+    const you = api.you && api.you();
+    const board = (api.results && api.results.board) || [];
+    const byId = Object.fromEntries(board.map((r) => [r.id, r]));
+    const round = reveal.round || (api.results && api.results.round) || 1;
+    if (!reveal.targets || reveal.seed == null) { appendTo(el, h("p", { class: "sub" }, "NO REVEAL DATA.")); return; }
+    const scene = generateScene(reveal.seed, round);
+    const myFound = new Set(you && you.myAnswer && Array.isArray(you.myAnswer.found) ? you.myAnswer.found : []);
+    const mine = reveal.targets.filter((t) => myFound.has(t.key)).length;
+
+    appendTo(el, h("h2", { class: "title" }, "WHERE WERE THEY?"));
+    const canvas = sceneCanvas({ big: api.big, cap: "52vh" });
+    el.appendChild(canvas);
+    const view = createView(canvas, scene, { night: false });
+    view.fit();
+    const alive = () => el.isConnected && view.isAlive();
+    const quick = reduceMotion();
+
+    // Camera tour: dive onto the first item, glide to each of the others, pull back out.
+    const K = 3;
+    const clampCenter = (x, y, k) => [Math.max(scene.w / (2 * k), Math.min(scene.w - scene.w / (2 * k), x)), Math.max(scene.h / (2 * k), Math.min(scene.h - scene.h / (2 * k), y))];
+    const full = { x: scene.w / 2, y: scene.h / 2, k: 1 };
+    async function glide(from, to, ms) {
+      if (quick) { view.st.zoom = to.k === 1 ? null : to; view.request(); return; }
+      const start = performance.now();
+      await new Promise((done) => {
+        const step = (now) => {
+          if (!alive()) { done(); return; }
+          const p = Math.min(1, (now - start) / ms), e = easeInOut(p);
+          view.st.zoom = { x: from.x + (to.x - from.x) * e, y: from.y + (to.y - from.y) * e, k: from.k + (to.k - from.k) * e };
+          view.request();
+          if (p < 1) requestAnimationFrame(step); else done();
+        };
+        requestAnimationFrame(step);
+      });
+    }
+    await wait(api.big ? 900 : 500);
+    let cam = full;
+    for (const t of reveal.targets) {
+      if (!alive()) return;
+      const [cx, cy] = clampCenter(t.x, t.y, K);
+      const to = { x: cx, y: cy, k: K };
+      api.sfx("pop");
+      view.st.rings.push({ x: t.x, y: t.y, size: t.size, color: you ? (myFound.has(t.key) ? GREEN : RED) : GOLD, born: performance.now() + (quick ? 0 : 350) });
+      await glide(cam, to, 700);
+      cam = to;
+      await wait(quick ? 150 : 250);
+    }
+    await glide(cam, full, 600);
+    view.st.zoom = null;
+    view.request();
+    if (!alive()) return;
+
+    // The tally.
+    const all5 = reveal.counts ? reveal.counts.all5 || 0 : 0;
+    api.sfx(all5 ? "coin" : "thunk");
+    const chips = chipRow(reveal.targets.map((t) => t.key), Object.fromEntries(reveal.targets.map((t) => [t.key, t.name])), {}, { big: api.big });
+    reveal.targets.forEach((t) => {
+      const n = reveal.counts && reveal.counts.found ? reveal.counts.found[t.key] || 0 : 0;
+      chips.chips[t.key].textContent = targetChar(t.key) + " " + t.name + " ×" + n;
+      chips.light(t.key, n > 0);
+    });
+    const fast = reveal.fastest && (byId[reveal.fastest.id] || { name: reveal.fastest.name || "?" });
+    appendTo(el,
+      h("div", { class: "panel dark center pop", style: { marginTop: "14px" } },
+        h("div", { class: "counter", style: { fontSize: "1.5em" } }, all5 + (all5 === 1 ? " PLAYER" : " PLAYERS") + " FOUND ALL 5"),
+        chips.row,
+        fast ? h("div", { class: "row", style: { justifyContent: "center", gap: "10px", marginTop: "6px" } },
+          fast.avatar ? spriteEl(fast.avatar, { size: "sm", cls: "hop" }) : null,
+          h("span", { class: "tiny", style: { color: GOLD } }, "FASTEST: " + fast.name + " · " + (reveal.fastest.t / 1000).toFixed(1) + "s")) : h("p", { class: "tiny", style: { margin: "6px 0 0" } }, "NOBODY FOUND ALL FIVE. THEY'RE SNEAKY.")));
+    if (you) {
+      const missed = reveal.targets.filter((t) => !myFound.has(t.key)).map((t) => t.name);
+      appendTo(el, h("div", { class: "panel center" },
+        h("strong", { style: { fontSize: "1.3em" } }, "YOU FOUND " + mine + "/" + reveal.targets.length),
+        h("br"),
+        h("span", { class: "tiny", style: { color: "#6b3510" } }, mine === reveal.targets.length ? "CLEAN SWEEP!" : "MISSED: " + missed.join(", "))));
+    }
+    const best = (reveal.best || []).map((id) => byId[id]).filter(Boolean);
+    if (best.length) {
+      const wrap = h("div", { class: "row", style: { justifyContent: "center", gap: "14px", marginTop: "10px" } });
+      best.forEach((r, i) => wrap.appendChild(h("div", { class: "center" }, spriteEl(r.avatar, { cls: "hop" }), h("div", { class: "tiny" }, (i === 0 ? "TOP: " : "") + r.name))));
+      appendTo(el, h("p", { class: "sub" }, "SHARPEST EYES"), wrap);
+    }
+  },
+
+  // TV / host STAGE: the scene (no rings) beside a live bar race of found counts.
+  stageView(el, content, api) {
+    const round = content.round || 1;
+    const scene = generateScene(content.seed, round);
+    const night = content.mode === "night";
+    const keys = content.targetKeys || data.targets.map((t) => t.key);
+    const canvas = sceneCanvas({ big: true, night, cap: "46vh" });
+    const chips = chipRow(keys, content.targetNames || {}, content.targetChars || {}, { big: true });
+    keys.forEach((k) => chips.light(k, true));
+    const count = h("div", { class: "counter center", dataset: { role: "binky-count" } }, "0 SEARCHING");
+    const avg = h("p", { class: "sub" }, "");
+    const barsWrap = h("div", null);
+    appendTo(el,
+      h("h2", { class: "title big" }, content.title || "WHERE'S THE BINKY?"),
+      content.subtitle ? h("p", { class: "sub" }, content.subtitle) : null,
+      h("div", { class: api.tv ? "tv-two" : "stack", style: api.tv ? { gridTemplateColumns: "auto 1fr", alignItems: "center" } : null },
+        h("div", null, canvas),
+        h("div", null, chips.row, count, avg, h("p", { class: "label center" }, "FOUND SO FAR"), barsWrap)));
+    const bars = liveBars(barsWrap, { max: 10 });
+    const view = createView(canvas, scene, { night });
+    view.fit();
+    // At night the TV's flashlight roams on its own so the crowd sees the pile.
+    let raf = 0, alive = true;
+    if (night) {
+      const t0 = performance.now();
+      const roam = (now) => {
+        if (!alive) return;
+        const t = (now - t0) / 1000;
+        view.st.light = { x: scene.w / 2 + Math.sin(t * 0.7) * scene.w * 0.36, y: scene.h / 2 + Math.cos(t * 0.45) * scene.h * 0.38 };
+        view.request();
+        raf = requestAnimationFrame(roam);
+      };
+      raf = requestAnimationFrame(roam);
+    }
+    const onResize = () => view.fit();
+    window.addEventListener("resize", onResize);
+    stage = { destroy() { alive = false; cancelAnimationFrame(raf); window.removeEventListener("resize", onResize); view.destroy(); } };
+    return {
+      update(live, snap) {
+        const n = live && live.answered != null ? live.answered : (snap && snap.answerCount) || 0;
+        count.textContent = n + " SEARCHING";
+        avg.textContent = live && live.avg != null ? "AVG " + live.avg + " OF " + keys.length + " FOUND" : "";
+        if (live && live.bars) bars.update(live.bars, { unit: "/" + keys.length });
+      }
+    };
+  }
+};
