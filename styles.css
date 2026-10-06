@@ -370,6 +370,16 @@ strong { font-weight: 400; color: var(--cream-2); }
 .footer p { margin: 0; }
 .noscript { text-align: center; background: var(--cream); color: var(--ink); padding: 12px; }
 
+/* Signature moves */
+.fx { position: absolute; z-index: 6; pointer-events: none; overflow: visible; }
+.fx-ghost { pointer-events: none; z-index: 1; filter: brightness(1.6) drop-shadow(0 0 4px #7fdcff); }
+.speech-poke { background: #fffaf0; border-radius: 0; }
+.speech-ff {
+  background: linear-gradient(#2a46c8, #0f1f77); color: #fff; border: 3px solid #e8e8f0;
+  box-shadow: 0 0 0 2px #1d1b18, 4px 4px 0 2px rgba(0,0,0,.35); letter-spacing: .08em;
+}
+.speech-ff::after { display: none; }
+
 /* Kirby's copy ability */
 .kirby-fx { position: absolute; z-index: 3; height: auto; max-width: none; pointer-events: none; image-rendering: pixelated; }
 .kirby-body { z-index: 4; filter: none; transform-origin: 50% 100%; }
