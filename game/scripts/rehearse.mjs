@@ -62,7 +62,8 @@ if (st0.phase !== "lobby" || st0.playerCount) {
 }
 
 // Two real phones join.
-for (const [pg, name] of [[p1, "Fahad Test"], [p2, "Oyshe Test"]]) {
+const suffix = String(Date.now() % 10000);
+for (const [pg, name] of [[p1, "Fahad " + suffix], [p2, "Oyshe " + suffix]]) {
   await pg.goto(BASE + "/?auto=1");
   await pg.waitForSelector("#name", { timeout: 15000 });
   await pg.fill("#name", name);
