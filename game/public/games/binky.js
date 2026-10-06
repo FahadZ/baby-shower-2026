@@ -162,10 +162,11 @@ function createView(canvas, scene, { night = false } = {}) {
   return { st, fit, request, toUnits, destroy, isAlive: () => alive };
 }
 
-function sceneCanvas({ big = false, night = false, cap = "48vh" } = {}) {
+// cap is a height budget on big screens; the width follows the 1000:1400 aspect.
+function sceneCanvas({ big = false, night = false, cap = "70vh" } = {}) {
   return h("canvas", {
     class: "game-surface", width: "10", height: "14", "aria-label": "The toy pile",
-    style: { display: "block", width: big ? "min(100%, " + cap + ")" : "100%", margin: "0 auto", border: "4px solid " + INK, boxShadow: "4px 4px 0 #000", background: night ? NIGHT : CREAM }
+    style: { display: "block", width: big ? "min(100%, calc(" + cap + " * 1000 / 1400))" : "100%", margin: "0 auto", border: "4px solid " + INK, boxShadow: "4px 4px 0 #000", background: night ? NIGHT : CREAM }
   });
 }
 
@@ -208,10 +209,14 @@ export default {
     let raf = 0, t0 = performance.now(), on = true;
     function frame(now) {
       if (!on) return;
-      const w = canvas.clientWidth || 300, dpr = Math.min(2, window.devicePixelRatio || 1);
-      if (canvas.width !== Math.round(w * dpr)) { canvas.width = Math.round(w * dpr); canvas.height = Math.round(150 * dpr); }
-      const k = w / W;
-      ctx.setTransform(dpr * k, 0, 0, dpr * k, 0, 0);
+      const w = canvas.clientWidth || 300, hc = canvas.clientHeight || 150, dpr = Math.min(2, window.devicePixelRatio || 1);
+      if (canvas.width !== Math.round(w * dpr)) { canvas.width = Math.round(w * dpr); canvas.height = Math.round(hc * dpr); }
+      // Fit the 300x150 demo inside the canvas (the TV is much wider than it is tall).
+      const k = Math.min(w / W, hc / H);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.fillStyle = night ? NIGHT : CREAM;
+      ctx.fillRect(0, 0, w, hc);
+      ctx.setTransform(dpr * k, 0, 0, dpr * k, dpr * (w - W * k) / 2, dpr * (hc - H * k) / 2);
       const p = ((now - t0) % 2600) / 2600;
       const travel = Math.min(1, p / 0.45);
       const fx = from.x + (target.x - from.x) * easeInOut(travel), fy = from.y + 6 + (target.y - from.y) * easeInOut(travel);
@@ -356,9 +361,9 @@ export default {
     const myFound = new Set(you && you.myAnswer && Array.isArray(you.myAnswer.found) ? you.myAnswer.found : []);
     const mine = reveal.targets.filter((t) => myFound.has(t.key)).length;
 
-    appendTo(el, h("h2", { class: "title" }, "WHERE WERE THEY?"));
-    const canvas = sceneCanvas({ big: api.big, cap: "52vh" });
-    el.appendChild(canvas);
+    const canvas = sceneCanvas({ big: api.big, cap: api.tv ? "80vh" : "60vh" });
+    const tally = h("div", null);
+    appendTo(el, h("h2", { class: "title" }, "WHERE WERE THEY?"), api.tv ? h("div", { class: "tv-two", style: { alignItems: "center" } }, h("div", null, canvas), tally) : [canvas, tally]);
     const view = createView(canvas, scene, { night: false });
     view.fit();
     const alive = () => el.isConnected && view.isAlive();
@@ -409,7 +414,7 @@ export default {
       chips.light(t.key, n > 0);
     });
     const fast = reveal.fastest && (byId[reveal.fastest.id] || { name: reveal.fastest.name || "?" });
-    appendTo(el,
+    appendTo(tally,
       h("div", { class: "panel dark center pop", style: { marginTop: "14px" } },
         h("div", { class: "counter", style: { fontSize: "1.5em" } }, all5 + (all5 === 1 ? " PLAYER" : " PLAYERS") + " FOUND ALL 5"),
         chips.row,
@@ -418,7 +423,7 @@ export default {
           h("span", { class: "tiny", style: { color: GOLD } }, "FASTEST: " + fast.name + " · " + (reveal.fastest.t / 1000).toFixed(1) + "s")) : h("p", { class: "tiny", style: { margin: "6px 0 0" } }, "NOBODY FOUND ALL FIVE. THEY'RE SNEAKY.")));
     if (you) {
       const missed = reveal.targets.filter((t) => !myFound.has(t.key)).map((t) => t.name);
-      appendTo(el, h("div", { class: "panel center" },
+      appendTo(tally, h("div", { class: "panel center" },
         h("strong", { style: { fontSize: "1.3em" } }, "YOU FOUND " + mine + "/" + reveal.targets.length),
         h("br"),
         h("span", { class: "tiny", style: { color: "#6b3510" } }, mine === reveal.targets.length ? "CLEAN SWEEP!" : "MISSED: " + missed.join(", "))));
@@ -427,7 +432,7 @@ export default {
     if (best.length) {
       const wrap = h("div", { class: "row", style: { justifyContent: "center", gap: "14px", marginTop: "10px" } });
       best.forEach((r, i) => wrap.appendChild(h("div", { class: "center" }, spriteEl(r.avatar, { cls: "hop" }), h("div", { class: "tiny" }, (i === 0 ? "TOP: " : "") + r.name))));
-      appendTo(el, h("p", { class: "sub" }, "SHARPEST EYES"), wrap);
+      appendTo(tally, h("p", { class: "sub" }, "SHARPEST EYES"), wrap);
     }
   },
 
@@ -437,7 +442,7 @@ export default {
     const scene = generateScene(content.seed, round);
     const night = content.mode === "night";
     const keys = content.targetKeys || data.targets.map((t) => t.key);
-    const canvas = sceneCanvas({ big: true, night, cap: "46vh" });
+    const canvas = sceneCanvas({ big: true, night, cap: "68vh" });
     const chips = chipRow(keys, content.targetNames || {}, content.targetChars || {}, { big: true });
     keys.forEach((k) => chips.light(k, true));
     const count = h("div", { class: "counter center", dataset: { role: "binky-count" } }, "0 SEARCHING");
@@ -446,7 +451,7 @@ export default {
     appendTo(el,
       h("h2", { class: "title big" }, content.title || "WHERE'S THE BINKY?"),
       content.subtitle ? h("p", { class: "sub" }, content.subtitle) : null,
-      h("div", { class: api.tv ? "tv-two" : "stack", style: api.tv ? { gridTemplateColumns: "auto 1fr", alignItems: "center" } : null },
+      h("div", { class: api.tv ? "tv-two" : "stack", style: api.tv ? { alignItems: "center" } : null },
         h("div", null, canvas),
         h("div", null, chips.row, count, avg, h("p", { class: "label center" }, "FOUND SO FAR"), barsWrap)));
     const bars = liveBars(barsWrap, { max: 10 });

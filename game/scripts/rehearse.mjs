@@ -52,6 +52,7 @@ const st0 = await api();
 if (st0.phase !== "lobby" || st0.playerCount) {
   // Hold to reset.
   const btn = await host.$("text=HOLD TO RESET");
+  await btn.scrollIntoViewIfNeeded();
   const box = await btn.boundingBox();
   await host.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
   await host.mouse.down(); await sleep(1200); await host.mouse.up();

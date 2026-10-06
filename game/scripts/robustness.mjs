@@ -20,7 +20,7 @@ host.on("dialog", (d) => d.accept());
 await host.goto(BASE + "/host");
 await host.fill("#pin", PIN); await host.click("text=UNLOCK REMOTE");
 await host.waitForSelector("text=HOLD TO RESET");
-{ const btn = await host.$("text=HOLD TO RESET"); const b = await btn.boundingBox(); await host.mouse.move(b.x + 10, b.y + 10); await host.mouse.down(); await sleep(1200); await host.mouse.up(); await sleep(400); await host.click("text=REMOVE BOTS"); await sleep(400); }
+{ const btn = await host.$("text=HOLD TO RESET"); await btn.scrollIntoViewIfNeeded(); const b = await btn.boundingBox(); await host.mouse.move(b.x + 10, b.y + 10); await host.mouse.down(); await sleep(1200); await host.mouse.up(); await sleep(400); await host.click("text=REMOVE BOTS"); await sleep(400); }
 await p.goto(BASE + "/"); await p.waitForSelector("#name"); await p.fill("#name", "Robust Rita"); await p.click("text=RANDOM"); await p.click("text=READY!");
 await p.waitForSelector("text=YOU'RE IN!");
 await host.click("text=+20 BOTS"); await sleep(600);

@@ -126,8 +126,8 @@ function mountControls() {
   const stageBtn = h("button", { class: "btn", type: "button", onclick: () => { stageMode = true; lastKey = null; render(true); } }, "STAGE VIEW (BIG SCREEN)");
 
   // Jump to any game.
-  const sel = h("select", { "aria-label": "Jump to game" }, ...(s.order || []).map((g, i) => h("option", { value: String(i), selected: i === s.gameIndex }, (i + 1) + ". " + g.title)));
-  const jump = h("div", { class: "row" }, sel, h("button", { class: "btn small", type: "button", onclick: () => confirm("Jump to " + sel.options[sel.selectedIndex].text + "?") && cmd("goto", { gameIndex: Number(sel.value), round: 1 }) }, "JUMP"));
+  const sel = h("select", { "aria-label": "Jump to game", style: { flex: "1 1 0", minWidth: "0", width: "100%", fontSize: "16px", padding: "10px 6px" } }, ...(s.order || []).map((g, i) => h("option", { value: String(i), selected: i === s.gameIndex }, (i + 1) + ". " + g.title)));
+  const jump = h("div", { class: "row" }, sel, h("button", { class: "btn small", type: "button", style: { flex: "none" }, onclick: () => confirm("Jump to " + sel.options[sel.selectedIndex].text + "?") && cmd("goto", { gameIndex: Number(sel.value), round: 1 }) }, "JUMP"));
 
   // Bots and reset.
   const bots = h("div", { class: "btn-grid" },
