@@ -78,15 +78,21 @@ await sleep(1500);
 await shot("00-lobby");
 
 if (GAME) {
-  // Jump straight to one game (its intro) from the lobby.
+  // Jump straight to one game (its intro) from the lobby. The host page rebuilds its
+  // controls when the phase changes, so wait for the intro before touching the select.
   await host.click("text=START GAME");
-  await sleep(600);
+  for (let i = 0; i < 20 && (await api()).phase !== "intro"; i++) await sleep(200);
+  await host.waitForSelector("text=SHOW HOW-TO");
   const s1 = await api();
   const gi = (s1.order || []).findIndex((g) => g.id === GAME);
   if (gi < 0) throw new Error("game not registered: " + GAME);
-  await host.selectOption("select", String(gi));
-  await host.click("text=JUMP");
-  await sleep(600);
+  for (let attempt = 0; attempt < 3; attempt++) {
+    await host.selectOption("select", String(gi));
+    await host.click("text=JUMP");
+    await sleep(700);
+    if ((await api()).gameIndex === gi) break;
+  }
+  if ((await api()).gameIndex !== gi) throw new Error("could not jump to " + GAME);
 }
 let last = "", n = 0, guard = 0, gameIdx = null, stageShot = false;
 while (guard++ < 400) {

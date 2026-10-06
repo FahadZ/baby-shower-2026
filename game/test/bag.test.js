@@ -17,7 +17,7 @@ test("rotate: quarter turns clockwise, four turns is the identity", () => {
   assert.deepEqual(rotate(L, 4), L);
   assert.deepEqual(rotate(L, -1), rotate(L, 3));
   assert.deepEqual(rotate(T, 2), [".#.", "###"]);
-  assert.deepEqual(rotate(T, 1), ["#.", "##", "#."]);
+  assert.deepEqual(rotate(T, 1), [".#", "##", ".#"]);
   assert.deepEqual(cells(T), [[0, 0], [1, 0], [2, 0], [1, 1]]);
   assert.deepEqual(dims(rotate(["####", "####"], 1)), { w: 2, h: 4 });
   for (const key in data.items) {

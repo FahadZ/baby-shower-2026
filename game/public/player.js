@@ -82,7 +82,7 @@ function onMessage(msg) {
       break;
     case "answer-ok":
       if (msg.final && cur.game && !cur.game.progressive) showLockedIn(pendingLabel);
-      audio.sfx("select");
+      if (msg.final) audio.sfx("select");
       break;
     case "live":
       live = msg.stat;
