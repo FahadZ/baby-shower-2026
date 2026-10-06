@@ -7,8 +7,8 @@ const ROUND_MS = 10000;
 const players = (n) => Array.from({ length: n }, (_, i) => ({ id: "p" + i, name: "P" + i }));
 const ctx = (seed, extra = {}) => ({ seed, roundId: "boss-1", round: 1, roundTime: ROUND_MS, players: players(5), results: {}, data, ...extra });
 
-test("data: ten 4-option questions with a valid answer index and a fact", () => {
-  assert.equal(data.questions.length, 10);
+test("data: fifteen 4-option questions with a valid answer index and a fact", () => {
+  assert.equal(data.questions.length, 15);
   for (const q of data.questions) {
     assert.equal(q.options.length, 4);
     assert.ok(q.answer >= 0 && q.answer < 4);
@@ -16,23 +16,23 @@ test("data: ten 4-option questions with a valid answer index and a fact", () => 
     assert.equal(new Set(q.options).size, 4, "options are distinct");
   }
   assert.equal(data.boss.name, "KING BINKY");
-  assert.equal(data.boss.hpPerPlayer, 2400);
-  assert.equal(boss.rounds, 3);
+  assert.equal(data.boss.hpPerPlayer, 4000);
+  assert.equal(boss.rounds, 5);
   assert.equal(boss.roundTime(1), ROUND_MS);
   assert.equal(boss.maxPoints(1), 2000);
   assert.equal(boss.autoEnd, true);
   assert.equal(boss.progressive, false);
 });
 
-test("content: the same three distinct questions for a seed across rounds, never the answer", () => {
+test("content: the same five distinct questions for a seed across rounds, never the answer", () => {
   const picks = pickQuestions(42);
-  assert.equal(picks.length, 3);
-  assert.equal(new Set(picks).size, 3, "three distinct questions");
+  assert.equal(picks.length, 5);
+  assert.equal(new Set(picks).size, 5, "five distinct questions");
   assert.deepEqual(pickQuestions(42), picks, "deterministic for a seed");
-  const qs = [1, 2, 3].map((r) => boss.content(r, ctx(42, { round: r, roundId: "boss-" + r })));
+  const qs = [1, 2, 3, 4, 5].map((r) => boss.content(r, ctx(42, { round: r, roundId: "boss-" + r })));
   qs.forEach((c, i) => {
     assert.equal(c.round, i + 1);
-    assert.equal(c.title, "BOSS BATTLE " + (i + 1) + "/3");
+    assert.equal(c.title, "BOSS BATTLE " + (i + 1) + "/5");
     assert.equal(c.q, data.questions[picks[i]].q);
     assert.deepEqual(c.options, data.questions[picks[i]].options);
     assert.equal("answer" in c, false, "content never includes the answer");
@@ -40,7 +40,7 @@ test("content: the same three distinct questions for a seed across rounds, never
     assert.equal(JSON.stringify(c).includes(data.questions[picks[i]].fact), false);
     assert.equal(c.bossName, "KING BINKY");
   });
-  assert.equal(new Set(qs.map((c) => c.q)).size, 3);
+  assert.equal(new Set(qs.map((c) => c.q)).size, 5);
   // A second call with the same seed agrees with the first (every round agrees).
   assert.deepEqual(boss.content(2, ctx(42, { round: 2 })), qs[1]);
   // Another seed is also valid content.
@@ -50,17 +50,17 @@ test("content: the same three distinct questions for a seed across rounds, never
 
 test("content: boss HP is hpPerPlayer x players (min 3) and carries over from earlier rounds", () => {
   const c1 = boss.content(1, ctx(42));
-  assert.equal(c1.bossMax, 2400 * 5);
+  assert.equal(c1.bossMax, 4000 * 5);
   assert.equal(c1.bossHp, c1.bossMax);
   const small = boss.content(1, ctx(42, { players: [] }));
-  assert.equal(small.bossMax, 2400 * 3, "at least 3 players' worth of HP");
+  assert.equal(small.bossMax, 4000 * 3, "at least 3 players' worth of HP");
   const results = { "boss-1": { points: { a: 2000, b: 1200, c: 0 } } };
   const c2 = boss.content(2, ctx(42, { round: 2, results }));
-  assert.equal(c2.bossMax, 12000);
-  assert.equal(c2.bossHp, 12000 - 3200);
+  assert.equal(c2.bossMax, 20000);
+  assert.equal(c2.bossHp, 20000 - 3200);
   const results3 = { ...results, "boss-2": { points: { a: 1600, b: 0 } } };
   const c3 = boss.content(3, ctx(42, { round: 3, results: results3 }));
-  assert.equal(c3.bossHp, 12000 - 3200 - 1600);
+  assert.equal(c3.bossHp, 20000 - 3200 - 1600);
   // A recorded bossMax from round 1 wins over a changed room size.
   const withMax = { "boss-1": { points: { a: 100 }, reveal: { bossMax: 48000 } } };
   const c2b = boss.content(2, ctx(42, { round: 2, results: withMax, players: players(2) }));
@@ -97,7 +97,7 @@ test("score: correct at t=0 is 2000, correct at the buzzer is 1200, wrong is 0",
 });
 
 test("revealData: answer, fact, split, damage, HP before/after and the defeated flag", () => {
-  const c = ctx(42, { players: players(3) }); // bossMax 7200
+  const c = ctx(42, { players: players(3) }); // bossMax 12000
   const q = questionFor(1, c);
   const wrong = (q.answer + 1) % 4;
   const answers = { a: { a: q.answer, t: 500 }, b: { a: q.answer, t: 100 }, c: { a: wrong, t: 200 }, d: { a: q.answer, t: 900 }, e: { a: q.answer, t: 9000 } };
@@ -111,20 +111,20 @@ test("revealData: answer, fact, split, damage, HP before/after and the defeated 
   assert.equal(r.correctCount, 4);
   assert.equal(r.answered, 5);
   assert.equal(r.damage, pts.a + pts.b + pts.d + pts.e);
-  assert.equal(r.bossMax, 7200);
-  assert.equal(r.bossHpBefore, 7200);
-  assert.equal(r.bossHpAfter, Math.max(0, 7200 - r.damage));
+  assert.equal(r.bossMax, 12000);
+  assert.equal(r.bossHpBefore, 12000);
+  assert.equal(r.bossHpAfter, Math.max(0, 12000 - r.damage));
   assert.deepEqual(r.best, ["b", "a", "d"], "fastest three correct");
-  assert.equal(r.defeated, 7200 - r.damage <= 0);
+  assert.equal(r.defeated, 12000 - r.damage <= 0);
   assert.equal(r.lastRound, false);
 
-  // Round 3 with most of the HP already gone: this hit finishes the boss.
-  const results = { "boss-1": { points: { a: 2000, b: 2000 } }, "boss-2": { points: { a: 2000 } } };
-  const c3 = ctx(42, { round: 3, roundId: "boss-3", players: players(3), results });
-  const q3 = questionFor(3, c3);
+  // The last round with most of the HP already gone: this hit finishes the boss.
+  const results = { "boss-1": { points: { a: 2000, b: 2000 } }, "boss-2": { points: { a: 2000, b: 2000 } }, "boss-3": { points: { a: 2000 } }, "boss-4": { points: { a: 800 } } };
+  const c3 = ctx(42, { round: 5, roundId: "boss-5", players: players(3), results });
+  const q3 = questionFor(5, c3);
   const a3 = { a: { a: q3.answer, t: 0 }, b: { a: (q3.answer + 2) % 4, t: 0 } };
-  const p3 = boss.score(a3, 3, c3);
-  const r3 = boss.revealData(a3, 3, c3, p3);
+  const p3 = boss.score(a3, 5, c3);
+  const r3 = boss.revealData(a3, 5, c3, p3);
   assert.equal(r3.bossHpBefore, 1200);
   assert.equal(r3.damage, 2000);
   assert.equal(r3.bossHpAfter, 0);
@@ -134,7 +134,7 @@ test("revealData: answer, fact, split, damage, HP before/after and the defeated 
 
   // Not enough damage: still standing.
   const a3b = { b: { a: (q3.answer + 2) % 4, t: 0 } };
-  const r3b = boss.revealData(a3b, 3, c3, boss.score(a3b, 3, c3));
+  const r3b = boss.revealData(a3b, 5, c3, boss.score(a3b, 5, c3));
   assert.equal(r3b.damage, 0);
   assert.equal(r3b.bossHpAfter, 1200);
   assert.equal(r3b.defeated, false);
@@ -161,5 +161,5 @@ test("howto text", () => {
   const h = boss.howto(1);
   assert.equal(h.text, "FINAL BOSS. TAP THE RIGHT ANSWER FAST. EVERY CORRECT ANSWER HITS THE BOSS. DOUBLE POINTS.");
   assert.equal(h.points, "UP TO 2000 PTS");
-  assert.ok(boss.howto(2).title.includes("2/3"));
+  assert.ok(boss.howto(2).title.includes("2/5"));
 });

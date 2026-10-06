@@ -1,8 +1,8 @@
 // BOSS BATTLE data: baby trivia with surprising answers, plus the boss itself.
-// Three questions are picked per game (seeded, so every phone agrees). Edit
+// Five questions are picked per game (seeded, so every phone agrees). Edit
 // freely: `answer` is the index into `options`, `fact` shows on the reveal.
 export default {
-  boss: { name: "KING BINKY", hpPerPlayer: 2400 },
+  boss: { name: "KING BINKY", hpPerPlayer: 4000 },
 
   questions: [
     {
@@ -64,6 +64,36 @@ export default {
       options: ["JANUARY", "MAY", "DECEMBER", "SEPTEMBER"],
       answer: 3,
       fact: "SEPTEMBER. COUNT BACK NINE MONTHS AND YOU LAND ON THE HOLIDAYS. NO FURTHER QUESTIONS."
+    },
+    {
+      q: "WHEN DOES THE FIRST TOOTH USUALLY SHOW UP?",
+      options: ["AROUND 2 MONTHS", "AROUND 6 MONTHS", "AROUND 12 MONTHS", "AROUND 18 MONTHS"],
+      answer: 1,
+      fact: "AROUND 6 MONTHS, USUALLY THE TWO BOTTOM FRONT ONES. ABOUT 1 IN 2,000 BABIES IS BORN WITH A TOOTH ALREADY IN."
+    },
+    {
+      q: "HOW MUCH DOES A BABY'S BRAIN GROW IN THE FIRST YEAR?",
+      options: ["IT STAYS THE SAME SIZE", "ABOUT 10% BIGGER", "IT DOUBLES", "IT TRIPLES"],
+      answer: 2,
+      fact: "IT DOUBLES. BY AGE 3 IT'S ALREADY AT ABOUT 80% OF ADULT SIZE. NO WONDER THEY NAP SO MUCH."
+    },
+    {
+      q: "HOW FAR CAN A NEWBORN SEE CLEARLY?",
+      options: ["ACROSS THE ROOM", "ABOUT 8 TO 12 INCHES", "ABOUT 3 FEET", "THEY CAN'T SEE AT ALL"],
+      answer: 1,
+      fact: "8 TO 12 INCHES: EXACTLY THE DISTANCE TO YOUR FACE WHILE FEEDING. THAT IS NOT A COINCIDENCE."
+    },
+    {
+      q: "WHAT DO BABIES ALREADY DO INSIDE THE WOMB?",
+      options: ["SNORE", "HICCUP", "WHISTLE", "SNEEZE"],
+      answer: 1,
+      fact: "HICCUP! FROM THE SECOND TRIMESTER ON. MOM CAN FEEL THEM AS LITTLE RHYTHMIC TAPS."
+    },
+    {
+      q: "BY THE FIRST BIRTHDAY, A BABY USUALLY WEIGHS...",
+      options: ["THE SAME AS AT BIRTH", "DOUBLE ITS BIRTH WEIGHT", "TRIPLE ITS BIRTH WEIGHT", "FIVE TIMES ITS BIRTH WEIGHT"],
+      answer: 2,
+      fact: "TRIPLE. DOUBLE BY ABOUT 5 MONTHS, TRIPLE BY ONE YEAR. THEN THE GROWTH SPURTS SLOW DOWN. A LITTLE."
     }
   ]
 };

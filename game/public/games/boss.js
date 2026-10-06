@@ -5,7 +5,7 @@ import { h, appendTo, clear, countUp, wait, rain } from "../engine/dom.js";
 import { spriteEl } from "../engine/avatars.js";
 
 const GLYPHS = ["▲", "◆", "●", "■"];
-const ROUNDS = 3;
+const ROUNDS = 5;
 
 // ------------------------------------------------------------ the boss
 // 16 x 22 pixel pacifier: crown, ring, shield with angry eyes, teat.

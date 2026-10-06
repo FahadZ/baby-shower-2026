@@ -174,16 +174,21 @@ function sceneCanvas({ big = false, night = false, cap = "70vh" } = {}) {
   });
 }
 
+// Target chips: a big glyph (the thing to look for) over a small label.
 const chipStyle = (on, big) => ({
-  display: "inline-block", padding: big ? "6px 10px" : "4px 6px", border: "3px solid " + INK, fontSize: big ? ".8em" : ".65em", lineHeight: "1.3",
+  display: "inline-flex", flexDirection: "column", alignItems: "center", gap: "2px", minWidth: big ? "92px" : "62px",
+  padding: big ? "8px 10px 6px" : "6px 6px 4px", border: "3px solid " + INK, fontSize: big ? ".8em" : ".6em", lineHeight: "1.2",
   background: on ? GREEN : "#2b2f27", color: on ? INK : "#bdb29c", boxShadow: "2px 2px 0 #000", whiteSpace: "nowrap", transition: "background .15s"
 });
+const glyphStyle = (big) => ({ fontSize: big ? "44px" : "34px", lineHeight: "1", fontFamily: "'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif" });
 
 function chipRow(keys, names, chars, { big = false } = {}) {
   const chips = {};
   const row = h("div", { class: "row", style: { justifyContent: "center", flexWrap: "wrap", gap: "6px", margin: "0 0 10px" } });
   keys.forEach((k) => {
-    chips[k] = h("span", { style: chipStyle(false, big), dataset: { key: k } }, (chars[k] || targetChar(k)) + " " + (names[k] || targetName(k)));
+    chips[k] = h("span", { style: chipStyle(false, big), dataset: { key: k } },
+      h("span", { style: glyphStyle(big), "aria-hidden": "true" }, chars[k] || targetChar(k)),
+      h("span", null, names[k] || targetName(k)));
     row.appendChild(chips[k]);
   });
   return { row, chips, light(k, on = true) { if (chips[k]) Object.assign(chips[k].style, chipStyle(on, big)); } };

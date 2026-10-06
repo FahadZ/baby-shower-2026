@@ -185,7 +185,7 @@ wipes scores and answers (players stay) when you are done.
 | 4 | Diaper Dash | 3 | 20 s | tap falling pacifiers, avoid the diapers |
 | 5 | Put It In Order | 3 | 30 s | drag 5 tiles into order |
 | 6 | Fit the Diaper Bag | 3 | 45/45/30 s | drag items into a grid bag, tap to rotate |
-| 7 | Boss Battle | 3 | 10 s | 4-option quiz, double points, hits the boss |
+| 7 | Boss Battle | 5 | 10 s | 4-option quiz, double points, hits the boss |
 
 If the wifi dies: phones reconnect on their own and show the current phase within a
 second of being back online. Submitted answers are kept. If the venue wifi is hopeless,
@@ -194,7 +194,7 @@ tell people to use mobile data: the game is tiny.
 ## Rehearsal results
 
 `node scripts/rehearse.mjs --bots 80` drives a host phone, two auto-playing phones and
-the TV through all 21 rounds plus the final, predictions and credits, screenshotting
+the TV through all 23 rounds plus the final, predictions and credits, screenshotting
 every phase into `docs/screens/full/` (player, host, TV). Last run: all phases
 reached, **0 browser errors, 0 server errors**.
 

@@ -1,5 +1,5 @@
 // BOSS BATTLE (server side). The classic 4-option quiz saved for last and
-// framed as a boss fight: three questions, 10 s each, double points, and every
+// framed as a boss fight: five questions, 10 s each, double points, and every
 // correct answer deals its points as damage to KING BINKY. The room defeats
 // the boss together, so the HP carries over from round to round via ctx.results.
 import data from "../../public/data/boss.js";
@@ -7,12 +7,12 @@ import { speedPoints } from "../scoring.js";
 import { rngFor } from "../rng.js";
 
 const ROUND_MS = 10000;
-const ROUNDS = 3;
+const ROUNDS = 5;
 const MAX_POINTS = 2000;
 const MIN_PLAYERS = 3;
 const BOT_CORRECT_P = 0.55;
 
-// The three questions for a whole game: one seeded pick shared by every round
+// The five questions for a whole game: one seeded pick shared by every round
 // (and by every phone, if it ever needs to reproduce it).
 export function pickQuestions(seed) {
   const rng = rngFor(seed, "boss-pick");
