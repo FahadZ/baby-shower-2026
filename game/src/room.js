@@ -16,6 +16,7 @@ export class GameRoom extends DurableObject {
     this.state = null;
     this.flushTimer = null;
     this.liveTimer = null;
+    this.persistTimer = null;
     this.rates = new Map();
     this.ctx.blockConcurrencyWhile(async () => { await this.load(); });
   }
@@ -24,7 +25,7 @@ export class GameRoom extends DurableObject {
     const all = await this.ctx.storage.list();
     const st = L.createState(Date.now());
     const core = all.get("core");
-    if (core) st.core = { ...st.core, ...core };
+    if (core) st.core = { ...st.core, ...core, order: st.core.order };
     for (const [k, v] of all) {
       if (k.startsWith("answers:")) st.answers[k.slice(8)] = v;
       else if (k.startsWith("results:")) st.results[k.slice(8)] = v;
@@ -124,15 +125,22 @@ export class GameRoom extends DurableObject {
         if (res.error && !res.ignored) reply({ t: "error", error: res.error });
         if (res.ok) {
           reply({ t: "answer-ok", roundId: msg.roundId, final: msg.final !== false });
-          changed = true;
           this.scheduleLive();
+          // Progressive (partial) answers arrive many times a second from 80 phones:
+          // persist them soon, but only re-broadcast state for final answers / auto-end.
+          if (msg.final === false && !res.autoEnd) { this.persistSoon(); break; }
+          changed = true;
         }
         break;
       }
       case "prediction": {
         if (!att.pid) break;
         const res = L.setPrediction(st, att.pid, msg.data, now);
-        if (res.ok) { reply({ t: "prediction-ok" }); reply(L.youMessage(st, att.pid)); }
+        if (res.ok) {
+          reply({ t: "prediction-ok" });
+          reply(L.youMessage(st, att.pid));
+          this.mirrorPrediction(att.pid);
+        }
         await this.persist();
         break;
       }
@@ -182,6 +190,15 @@ export class GameRoom extends DurableObject {
   }
 
   // ------------------------------------------------------------ helpers
+  // Mirror a prediction into the RSVP Google Sheet (Apps Script web app), best effort.
+  mirrorPrediction(pid) {
+    const endpoint = this.env.RSVP_ENDPOINT;
+    const p = this.state.predictions[pid];
+    if (!endpoint || !p) return;
+    const body = JSON.stringify({ kind: "prediction", playerId: pid, player: p.name, dueDate: p.dueDate, weight: p.weight, looksLike: p.looksLike, firstWord: p.firstWord, hair: p.hair });
+    this.ctx.waitUntil(fetch(endpoint, { method: "POST", headers: { "content-type": "text/plain" }, body, redirect: "follow" }).catch(() => {}));
+  }
+
   bindPlayer(ws, att, pid) {
     att.pid = pid;
     ws.serializeAttachment(att);
@@ -205,6 +222,11 @@ export class GameRoom extends DurableObject {
 
   sendTo(ws, msg) {
     try { ws.send(JSON.stringify(msg)); } catch (e) { /* socket closed */ }
+  }
+
+  persistSoon() {
+    if (this.persistTimer) return;
+    this.persistTimer = setTimeout(() => { this.persistTimer = null; this.persist().catch(() => {}); }, 600);
   }
 
   async afterChange(broadcast = true) {

@@ -491,6 +491,7 @@ export function reset(state, now = Date.now()) {
   core.roundId = null;
   core.startedAt = null;
   core.seed = (core.seed + 7919) >>> 0;
+  core.order = GAMES.map((g) => g.id);
   setPhase(state, "lobby", now);
   state.dirty.add("core");
   oldAnswers.forEach((k) => state.dirty.add("del:answers:" + k));

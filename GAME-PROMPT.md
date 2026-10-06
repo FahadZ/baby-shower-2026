@@ -1,5 +1,8 @@
 # Build brief for Claude Code: "Baby Loading.. Party Games" (v1)
 
+> **Status: built.** The implementation lives in `game/` (see `game/README.md` for how to
+> run the night, what to fill in, and how to deploy). This file is the original brief.
+
 Paste everything below the line into Claude Code, run from a clone of this repo.
 Like `PROMPT.md`, keep personal details (PIN, tokens) out of committed files.
 

@@ -93,6 +93,9 @@ function doPost(e) {
     // Honeypot: pretend success, save nothing.
     if (data.website) return json({ ok: true });
 
+    // Party-game predictions (sent by the game server on the day; no deadline).
+    if (data.kind === "prediction") return json(savePrediction_(data));
+
     var props = PropertiesService.getScriptProperties();
     var deadline = new Date(props.getProperty("RSVP_DEADLINE") || EVENT.deadlineDefault);
     if (new Date() > deadline) return json({ ok: false, error: "RSVPs are closed" });
@@ -193,6 +196,37 @@ function upsert(r) {
     sheet.appendRow([now, r.name, r.email, r.attending, r.guests, r.kids, r.guestNames, r.message, now]);
     rebuildGuestList_();
     return { updated: false, row: sheet.getLastRow() };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+// Predictions from the party games: one row per player, upserted by player id.
+var PREDICTIONS_NAME = "Predictions";
+var PREDICTION_HEADERS = ["Saved", "Player", "Player id", "Due date", "Weight (lbs)", "Looks like", "First word", "Hair at birth"];
+function savePrediction_(d) {
+  var lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try {
+    var ss = SpreadsheetApp.openById(PropertiesService.getScriptProperties().getProperty("SHEET_ID"));
+    var sheet = ss.getSheetByName(PREDICTIONS_NAME);
+    if (!sheet) {
+      sheet = ss.insertSheet(PREDICTIONS_NAME);
+      sheet.getRange(1, 1, 1, PREDICTION_HEADERS.length).setValues([PREDICTION_HEADERS]).setFontWeight("bold").setBackground("#ead7b8");
+      sheet.setFrozenRows(1);
+    }
+    var pid = clean(d.playerId, 40);
+    if (!pid) throw new Error("Missing player id");
+    var row = [new Date(), clean(d.player, 40), pid, clean(d.dueDate, 40), clean(d.weight, 20), clean(d.looksLike, 20), clean(d.firstWord, 60), clean(d.hair, 60)];
+    var last = sheet.getLastRow();
+    if (last > 1) {
+      var ids = sheet.getRange(2, 3, last - 1, 1).getValues();
+      for (var i = 0; i < ids.length; i++) {
+        if (String(ids[i][0]) === pid) { sheet.getRange(i + 2, 1, 1, row.length).setValues([row]); return { ok: true, updated: true }; }
+      }
+    }
+    sheet.appendRow(row);
+    return { ok: true, updated: false };
   } finally {
     lock.releaseLock();
   }

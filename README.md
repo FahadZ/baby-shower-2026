@@ -27,6 +27,14 @@ Plain HTML/CSS/JS. There's no framework and no build step.
 | `apps-script/` | Google Apps Script backend (Sheet + emails) |
 | `print/qr-code.png` | QR code for the live URL |
 
+## Party games (`game/`)
+
+The live, host-controlled party games guests play on their phones at the shower live
+in [`game/`](game/README.md): a Cloudflare Worker + Durable Object at
+https://baby.thenerdnextdoor.ca/ (players), `/host` (the remote) and `/tv` (optional big
+screen). The build brief is `GAME-PROMPT.md`; the printable join cards are in
+`print/join-card.pdf`.
+
 ## Editing event details
 
 Open `config.js`:

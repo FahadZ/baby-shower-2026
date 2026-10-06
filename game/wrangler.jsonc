@@ -3,7 +3,14 @@
   "name": "baby-loading-games",
   "main": "src/index.js",
   "compatibility_date": "2026-10-01",
-  "assets": { "directory": "./public", "binding": "ASSETS" },
+  "assets": { "directory": "./public", "binding": "ASSETS", "not_found_handling": "none" },
+  // The game's own domain (the zone thenerdnextdoor.ca is on this Cloudflare account).
+  "routes": [ { "pattern": "baby.thenerdnextdoor.ca", "custom_domain": true } ],
+  "vars": {
+    // Where predictions are mirrored (the RSVP site's Apps Script web app). Blank disables it.
+    "RSVP_ENDPOINT": "https://script.google.com/macros/s/AKfycbwXqZhCGIl0DlD3AccbizHnMTQT5ne9F_PVpl4HHbuuBpsNC-1C5LWvfVYXQeGcw3o7/exec"
+  },
+  "observability": { "enabled": true },
   "durable_objects": { "bindings": [ { "name": "ROOM", "class_name": "GameRoom" } ] },
   "migrations": [ { "tag": "v1", "new_sqlite_classes": [ "GameRoom" ] } ]
 }

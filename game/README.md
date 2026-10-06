@@ -164,3 +164,46 @@ Plain `export default { ... }` the host can edit. Imported by both sides.
 If the wifi dies: phones reconnect on their own and show the current phase within a
 second of being back online. Submitted answers are kept. If the venue wifi is hopeless,
 tell people to use mobile data: the game is tiny.
+
+## Deploying (one command once the secrets exist)
+
+The Worker, the Durable Object and the static files deploy together. The custom
+domain `baby.thenerdnextdoor.ca` is created on first deploy because the zone is on
+the same Cloudflare account (see `routes` in `wrangler.jsonc`).
+
+```sh
+cd game
+npm install
+# Either log in interactively on your own machine...
+npx wrangler login
+# ...or, in a cloud session, have CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID in the environment.
+npx wrangler secret put HOST_PIN        # the PIN for /host; pick 4-6 digits, never commit it
+npx wrangler deploy
+```
+
+Then open `https://baby.thenerdnextdoor.ca/host`, enter the PIN, and you are live.
+Redeploys are safe mid-evening: the room's state lives in Durable Object storage, and
+phones reconnect on their own.
+
+To change the PIN later: `npx wrangler secret put HOST_PIN` again (existing host
+sessions keep their token until the next **RESET GAME**). To wipe everything, use
+**HOLD TO RESET** on the host page.
+
+### Cost
+
+Workers Paid already covers it. One evening is roughly 85 WebSocket connections, a few
+thousand incoming messages (billed at a 20:1 ratio) and under a minute of Durable
+Object compute, all inside the plan's included allowance (1 million requests and
+400,000 GB-s per month). Expected extra charge: $0.
+
+## What the hosts fill in before the party
+
+| Where | What |
+|---|---|
+| `public/data/momordad.js` | The `answer` for each fact and prediction card ("mom"/"dad"); drop 5+ baby photos into `public/assets/babyphotos/` and list them in `photoCards` (see the README.txt there) |
+| `public/data/price.js` | Re-check prices the week of the party; swap any item that is on the registry for a spare (list at the bottom of the file) |
+| `public/data/boss.js` | Optional: swap in your own trivia |
+| `public/data/avatars.js` | Generated from `scripts/roster.json`; remove characters you don't want and rerun `python3 scripts/make-avatar-palettes.py` |
+| Cloudflare secret `HOST_PIN` | The host PIN |
+
+After any data edit: `npm test` then `npx wrangler deploy`.

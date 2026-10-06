@@ -47,7 +47,11 @@ const net = connect({
   },
   onMessage
 });
-net.onOpen(() => { if (playerId) net.send({ t: "hello", playerId }); });
+let pendingJoin = null;
+net.onOpen(() => {
+  if (pendingJoin) net.send(pendingJoin);
+  else if (playerId) net.send({ t: "hello", playerId });
+});
 
 function onMessage(msg) {
   switch (msg.t) {
@@ -61,6 +65,7 @@ function onMessage(msg) {
       render();
       break;
     case "joined":
+      pendingJoin = null;
       playerId = msg.playerId;
       store("bl.playerId", playerId);
       joined = true; editing = false; joinError = "";
@@ -69,6 +74,7 @@ function onMessage(msg) {
       render(true);
       break;
     case "join-error":
+      pendingJoin = null;
       if (msg.unknown) { playerId = null; store("bl.playerId", null); joined = false; }
       joinError = msg.error || "COULD NOT JOIN";
       audio.sfx("error");
@@ -282,7 +288,7 @@ function mountJoin() {
   nameIn.addEventListener("input", () => { joinState.name = nameIn.value; });
   const preview = h("div", { class: "panel dark cs-preview" });
   const grid = h("div", { class: "cs-grid" });
-  const search = h("input", { type: "search", placeholder: "SEARCH CHARACTERS", "aria-label": "Search characters", value: joinState.filter });
+  const search = h("input", { type: "search", placeholder: "SEARCH", "aria-label": "Search characters", value: joinState.filter });
   search.addEventListener("input", () => { joinState.filter = search.value; drawGrid(); });
   const ready = h("button", { class: "btn primary huge", type: "button" }, h("i", { class: "tri" }), editing ? "SAVE" : "READY!");
   ready.addEventListener("click", () => {
@@ -293,7 +299,8 @@ function mountJoin() {
     store("bl.avatar", JSON.stringify(joinState.avatar));
     ready.disabled = true;
     ready.textContent = "JOINING...";
-    net.send({ t: "join", name, avatar: joinState.avatar, playerId: playerId || undefined });
+    pendingJoin = { t: "join", name, avatar: joinState.avatar, playerId: playerId || undefined };
+    net.send(pendingJoin);
     setTimeout(() => { ready.disabled = false; ready.textContent = editing ? "SAVE" : "READY!"; }, 2500);
   });
 
@@ -320,7 +327,8 @@ function mountJoin() {
       // Show this character in the first palette that is free (or the player's own).
       const free = PALETTES.find((p) => !taken.has(r.c + ":" + p) || (r.c + ":" + p) === mine);
       const sel = joinState.avatar && joinState.avatar.c === r.c;
-      const showP = sel ? joinState.avatar.p : (free || "p1");
+      // The grid always shows the original look; the preview shows the colour you actually get.
+      const showP = sel ? joinState.avatar.p : "p1";
       const cell = h("button", { type: "button", class: "cs-cell" + (sel ? " sel" : "") + (!free ? " taken" : ""), "aria-label": r.name + (free ? "" : ", all colours taken"), disabled: !free });
       appendTo(cell, spriteEl({ c: r.c, p: showP }), h("span", null, r.name),
         h("span", { class: "pal" }, ...PALETTES.map((p) => h("i", { class: (sel && p === joinState.avatar.p ? "on" : ""), style: { background: (taken.has(r.c + ":" + p) && (r.c + ":" + p) !== mine) ? "#555" : "#8cc523" } }))));
@@ -330,7 +338,7 @@ function mountJoin() {
           const order = PALETTES.slice(PALETTES.indexOf(joinState.avatar.p) + 1).concat(PALETTES.slice(0, PALETTES.indexOf(joinState.avatar.p) + 1));
           const next = order.find((p) => !taken.has(r.c + ":" + p) || (r.c + ":" + p) === mine);
           joinState.avatar = { c: r.c, p: next || joinState.avatar.p };
-        } else joinState.avatar = { c: r.c, p: showP };
+        } else joinState.avatar = { c: r.c, p: free || "p1" };
         audio.sfx("select");
         drawPreview(); drawGrid();
         const s = preview.querySelector(".av"); if (s) hop(s);

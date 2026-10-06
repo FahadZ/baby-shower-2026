@@ -88,7 +88,7 @@ if (GAME) {
   await host.click("text=JUMP");
   await sleep(600);
 }
-let last = "", n = 0, guard = 0, gameIdx = null;
+let last = "", n = 0, guard = 0, gameIdx = null, stageShot = false;
 while (guard++ < 400) {
   const s = await api();
   if (GAME) {
@@ -104,6 +104,14 @@ while (guard++ < 400) {
     const settle = { intro: 1200, howto: 1500, playing: 2500, locked: 600, reveal: 3500, results: 6500, leaderboard: 5500, final: 9000, predictions: 1500, credits: 1500 }[s.phase] || 1000;
     await sleep(FAST ? Math.min(settle, 2500) : settle);
     await shot(tag);
+    if (s.phase === "leaderboard" && !stageShot) {
+      stageShot = true;
+      await host.click("text=STAGE VIEW (BIG SCREEN)");
+      await sleep(FAST ? 2500 : 6000);
+      await host.screenshot({ path: path.join(OUT, `${tag.replace(/[^a-z0-9-]+/gi, "_")}-host-stage.png`), fullPage: true }).catch(() => {});
+      await host.click("text=EXIT");
+      await sleep(400);
+    }
     if (s.phase === "credits") break;
     if (["intro", "reveal", "results", "leaderboard", "final", "predictions"].includes(s.phase)) {
       if (s.phase === "predictions") { await p1.fill("#firstWord", "PIKACHU").catch(() => {}); await p1.click("text=SAVE PREDICTION").catch(() => {}); await sleep(600); }
