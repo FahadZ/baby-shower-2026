@@ -232,7 +232,7 @@ function rebuildGuestList_() {
 //  Email
 // ------------------------------------------------------------------
 function esc(s) {
-  return String(s || "").replace(/^'/, "").replace(/[&<>"]/g, function (c) {
+  return String(s == null ? "" : s).replace(/^'/, "").replace(/[&<>"]/g, function (c) {
     return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
   });
 }

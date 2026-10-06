@@ -496,13 +496,19 @@
       btn.disabled = true;
       setStatus("", "saving");
 
+      var body = JSON.stringify(payload);
       fetch(P.rsvpEndpoint, {
         method: "POST",
         headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify(payload),
+        body: body,
         redirect: "follow"
       })
-        .then(function (r) { return r.json(); })
+        .then(function (r) { return r.json(); }, function () {
+          // Some in-app browsers can't read Google's redirected reply. Re-send in
+          // no-cors mode: RSVPs are matched by email, so this can't duplicate a row.
+          return fetch(P.rsvpEndpoint, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: body })
+            .then(function () { return { ok: true, updated: false }; });
+        })
         .then(function (res) {
           if (!res || !res.ok) throw new Error((res && res.error) || "Unknown error");
           store("rsvp", JSON.stringify({ name: payload.name, email: payload.email }));

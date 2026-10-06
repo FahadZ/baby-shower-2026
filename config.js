@@ -23,7 +23,7 @@ window.PARTY = {
     "https://www.amazon.ca/baby-reg/fahad-alzaman-december-2026-cambridge/31VHTCQIBH8EX",
 
   // Google Apps Script web-app URL (ends in /exec). See README → Backend.
-  rsvpEndpoint: "",
+  rsvpEndpoint: "https://script.google.com/macros/s/AKfycbwXqZhCGIl0DlD3AccbizHnMTQT5ne9F_PVpl4HHbuuBpsNC-1C5LWvfVYXQeGcw3o7/exec",
 
   siteUrl: "https://fahadz.github.io/baby-shower-2026/",
   maxPlayers: 5,
