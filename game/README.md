@@ -159,11 +159,33 @@ Plain `export default { ... }` the host can edit. Imported by both sides.
 2. Open `/host` on your phone, enter the PIN. Keep the phone plugged in.
 3. Optional: open `/tv` on a laptop or TV browser, tap "YES, PLAY IT" for sound, go fullscreen.
 4. Watch players pile into the lobby. Kick anyone rude. Press **START GAME**.
-5. From then on the big **NEXT** button always does the right thing. Round timers run
-   on the server, so you can lock your phone mid-round and nothing stalls.
-6. Use **+15 SEC** if people need more time, **PAUSE** for a toast, **SKIP** to move on.
-7. After the last game: **FINAL RANKINGS**, then **PREDICTIONS**, then **ROLL CREDITS**.
-8. Download the leaderboard and the predictions as CSV from the host page.
+5. From then on the big **NEXT** button always does the right thing, and nothing moves
+   without you: each round's how-to screen waits for your **START ROUND** tap, and the
+   reveal, results and leaderboard each wait for **NEXT**. Round timers run on the
+   server, so you can lock your phone mid-round and the round still ends on time.
+6. Use **+15 SEC** if people need more time, **PAUSE** for a toast, **SKIP** to move on,
+   **END ROUND NOW** to cut a round short. **AUTO-END** (default on) ends a round a
+   moment after every connected player has locked in; turn it off if you'd rather
+   always run the full clock.
+7. Price Is Right and Put It In Order count whatever a player's slider or tile order
+   shows when time runs out, so slow lockers-in still score.
+8. After the last game: **FINAL RANKINGS**, then **PREDICTIONS**, then **ROLL CREDITS**.
+9. Download the leaderboard and the predictions as CSV from the host page.
+
+Rehearse beforehand: **+80 BOTS**, **START GAME**, and tap through. **HOLD TO RESET**
+wipes scores and answers (players stay) when you are done.
+
+### The games, in order
+
+| # | Game | Rounds | Time | Input |
+|---|---|---|---|---|
+| 1 | Price Is Right: Baby Edition | 3 | 15 s | slider (tap/drag anywhere, − / +) |
+| 2 | Where's the Binky? | 3 | 45 s | tap the 5 hidden items; round 3 is dark with a flashlight |
+| 3 | Mom or Dad? | 2 (3 with photos) | 32 s | swipe left/right, 5 cards |
+| 4 | Diaper Dash | 3 | 20 s | tap falling pacifiers, avoid the diapers |
+| 5 | Put It In Order | 3 | 30 s | drag 5 tiles into order |
+| 6 | Fit the Diaper Bag | 3 | 45/45/30 s | drag items into a grid bag, tap to rotate |
+| 7 | Boss Battle | 3 | 10 s | 4-option quiz, double points, hits the boss |
 
 If the wifi dies: phones reconnect on their own and show the current phase within a
 second of being back online. Submitted answers are kept. If the venue wifi is hopeless,
