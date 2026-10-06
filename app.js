@@ -504,7 +504,7 @@
     return m && LINES[m[1]] ? m[1] : null;
   }
   var bubble = null, bubbleTimer = null;
-  function say(img, text) {
+  function say(img, text, ms) {
     if (!bubble) {
       bubble = document.createElement("div");
       bubble.className = "speech";
@@ -520,7 +520,7 @@
     bubble.style.top = (r.top + window.scrollY - bubble.offsetHeight - 10) + "px";
     announce(text);
     clearTimeout(bubbleTimer);
-    bubbleTimer = setTimeout(hideBubble, 2200);
+    bubbleTimer = setTimeout(hideBubble, ms || 2200);
   }
   function hideBubble() {
     if (!bubble) return;
@@ -667,13 +667,13 @@
     var kirby = $('.ledge-right .sprite[data-at="kirby"]');
     if (!kirby || reduceMotion || !kirby.animate) return;
     var ledge = kirby.parentNode;
-    var last = -1;
+    // Random first ability on each visit, then the rest in order.
+    var next = Math.floor(Math.random() * ABILITIES.length);
 
     function pick() {
-      var i;
-      do { i = Math.floor(Math.random() * ABILITIES.length); } while (i === last && ABILITIES.length > 1);
-      last = i;
-      return ABILITIES[i];
+      var ab = ABILITIES[next];
+      next = (next + 1) % ABILITIES.length;
+      return ab;
     }
 
     function make(src, w, cls) {
@@ -760,9 +760,10 @@
       body.src = ab.frames[0];
       stand(Math.round(ab.frameW * px));
       var stopIdle = flip(body, ab.frames, 140);
-      say(body, ab.name);
+      var HOLD = 4500;
+      say(body, ab.name, HOLD - 300);
       var bob = body.animate([{ transform: "translateY(0)" }, { transform: "translateY(-5%)" }], { duration: 560, iterations: Infinity, direction: "alternate", easing: "steps(2)" });
-      await wait(3200);
+      await wait(HOLD);
       bob.cancel(); stopIdle();
 
       // 4. Release: squash, the ability pops out as a star, back to plain Kirby.
@@ -791,11 +792,11 @@
     }
 
     async function loop() {
-      await wait(2500);
+      await wait(1200);
       for (;;) {
         if (!document.hidden && current === "title") {
           try { await cycle(); } catch (e) { delete kirby.dataset.busy; kirby.style.visibility = ""; $$(".kirby-fx", ledge).forEach(function (n) { n.remove(); }); }
-          await wait(4000 + Math.random() * 3000);
+          await wait(1300 + Math.random() * 500);
         } else {
           await wait(1000);
         }
