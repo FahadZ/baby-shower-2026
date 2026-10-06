@@ -27,7 +27,7 @@ export default {
     changepad: { name: "CHANGE PAD", emoji: "🛏️", color: "#b5e8c8", value: 5, essential: false, shape: ["####"] },
     hat: { name: "SUN HAT", emoji: "🧢", color: "#e6c1f2", value: 3, essential: false, shape: ["##", "##"] },
     socks: { name: "SOCKS", emoji: "🧦", color: "#eeeeee", value: 1, essential: false, shape: ["#"] },
-    outfit: { name: "SPARE OUTFIT", emoji: "👚", color: "#ffd1e8", value: 6, essential: false, shape: ["###", "###"] }
+    outfit: { name: "OUTFIT", emoji: "👚", color: "#ffd1e8", value: 6, essential: false, shape: ["###", "###"] }
   },
 
   // The everyday bag: 8 x 10 with the two top corners cut (78 cells).

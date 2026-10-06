@@ -178,6 +178,12 @@ test("revealData and liveStat describe the room", () => {
   const none = bag.revealData({}, 1, ctx, {});
   assert.equal(none.winner, null);
   assert.deepEqual(none.top, []);
+  // A lone packer whose score was floored to 0 by the penalty still has the best bag.
+  const floored = { p1: { a: { placed: [{ key: "blanket", x: 0, y: 1, rot: 0 }] }, t: 5 } };
+  const r2 = bag.revealData(floored, 1, ctx, bag.score(floored, 1, ctx));
+  assert.equal(r2.winner.id, "p1");
+  assert.equal(r2.winner.stats.cellsUsed, 8);
+  assert.equal(bag.revealData({ p1: { a: { placed: [] }, t: 1 } }, 1, ctx, {}).winner, null);
 });
 
 test("bots: every greedy placement is valid, lands inside the round, and is spread over time", () => {

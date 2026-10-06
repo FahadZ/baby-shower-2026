@@ -87,7 +87,8 @@ export default {
       const ev = evaluate(answers[id].a, round);
       return { id, placed: ev.placed, stats: ev.stats, raw: ev.raw, pts: (points && points[id]) || 0 };
     }).sort((a, b) => b.raw - a.raw || b.stats.fillPct - a.stats.fillPct || a.id.localeCompare(b.id));
-    const winner = rows[0] && rows[0].raw > 0 ? rows[0] : null;
+    // The best bag is shown even when the essentials penalty floored its score.
+    const winner = rows[0] && rows[0].placed.length > 0 ? rows[0] : null;
     const items = {};
     for (const id in itemsById) {
       const it = itemsById[id];

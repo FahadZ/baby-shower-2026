@@ -37,7 +37,7 @@ const CSS = `
 @keyframes bag-shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
 @keyframes bag-drop { from { transform: translateY(-70px); opacity: 0; } 70% { transform: translateY(4px); opacity: 1; } to { transform: none; } }
 @keyframes bag-snap { 50% { transform: scale(1.12); } }
-.bag-hl { pointer-events: none; }
+.bag-hl { pointer-events: none; z-index: 61; }  /* above the ghost: the tint shows on the item itself */
 .bag-hl i { position: absolute; left: 0; top: 0; display: none; will-change: transform; }
 .bag-hl i.ok { background: rgba(140,197,35,.62); box-shadow: inset 0 0 0 3px var(--green-dark); }
 .bag-hl i.bad { background: rgba(224,40,58,.62); box-shadow: inset 0 0 0 3px #7a1220; }
@@ -51,7 +51,7 @@ const CSS = `
 .bag-tray .tt { flex: none; width: 74px; height: 86px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; background: var(--cream); color: var(--ink); border: 3px solid var(--ink); box-shadow: inset -3px -3px 0 var(--cream-shadow), inset 3px 3px 0 var(--cream-2); cursor: grab; touch-action: none; }
 .bag-tray .tt.src { opacity: .35; }
 .bag-tray .tt .mini-wrap { position: relative; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; }
-.bag-tray .tt .nm { font-size: 7px; line-height: 1; color: var(--link); white-space: nowrap; }
+.bag-tray .tt .nm { font-size: 7px; line-height: 1; color: var(--link); white-space: nowrap; max-width: 64px; overflow: hidden; text-overflow: ellipsis; }
 .bag-tray .tt .nm.ess { color: #b1261e; }
 .bag-tray .msg { flex: 1; align-self: center; text-align: center; font-size: .7em; color: var(--muted); padding: 8px 6px; line-height: 1.5; }
 .bag-race .lb .nm { width: 8em; }
