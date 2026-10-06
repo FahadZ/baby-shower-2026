@@ -1,329 +1,338 @@
-# Build brief for Claude Code: "Baby Loading.. Party Games" (DRAFT v0)
+# Build brief for Claude Code: "Baby Loading.. Party Games" (v1)
 
-> **Status: draft, not final.** Open decisions are listed at the top. Once we settle
-> them I'll trim this to the final paste-ready prompt (the same way `PROMPT.md` works).
+Paste everything below the line into Claude Code, run from a clone of this repo.
+Like `PROMPT.md`, keep personal details (PIN, tokens) out of committed files.
 
 ## How to run it
 
 | | Recommendation |
 |---|---|
-| Model | **Claude Opus 5.5** (use Fable 5.1 if your plan has it; it is the stronger model for the real-time state machine and the animation work) |
-| Effort | **high** for the whole build. Switch to **max** only if a session gets stuck on sync bugs or timing drift. Low/medium will cut corners on the leaderboard animations and the reconnect handling, which are the two things that make or break this on the day. |
-| Mode | Start in **plan mode**, approve the plan, then let it run. Budget three sessions, one per phase (see *Phasing* at the end). Each phase ends with a pushed, working site. |
-| Prereqs you do yourself | Create a free Firebase project (5 minutes, no credit card, same Google account as the RSVP Sheet). The prompt tells Claude to walk you through it step by step and to use the `firebase` CLI if you log in. |
-
-## Open decisions (answer these and I'll finalise)
-
-1. **Screen setup at the venue.** Is there a TV or projector for a big "stage" screen, or is this phones only? The design below assumes **TV + host phone as remote**. Phones-only still works: the host phone shows the leaderboard and people crowd around.
-2. **Game line-up.** Six games + a boss round are specced below (18 scored rounds + 3 boss questions). Which do you want to keep, cut, or swap?
-3. **Mom or Dad? content.** Needs your answers to about 15 questions, and optionally baby photos of you both. If you'd rather not share photos, the game runs on questions alone.
-4. **Prices in CAD.** The Price Is Right items are generic (no registry items). Claude will propose Canadian prices; you confirm them in a data file before the party.
-5. **Doodle Duel** needs a voting phase, so it's the slowest game (about 90 seconds per round). Keep it, or swap it for a third Where's the Binky scene?
-6. **Guest count.** Roughly how many phones? (Affects nothing technical under 100, but changes how many names fit on the TV leaderboard at once.)
+| Model | **Claude Opus 5.5** (Fable 5.1 if your plan has it; it is the stronger model for the server state machine and the animation work) |
+| Effort | **high** for the whole build. Go to **max** only if a session gets stuck on sync bugs or timing drift. Lower effort will cut corners on the leaderboard animations and reconnect handling, the two things that make or break this on the day. |
+| Mode | Start in **plan mode**, approve the plan, then let it run. Three sessions, one per phase (see *Phasing* at the end). Each phase ends with a deployed, working game. |
+| Before session 1 | Add two values to the Claude Code cloud environment (cloud environment menu in the session title bar → Edit → API credentials, or environment variables): `CLOUDFLARE_API_TOKEN` (a token with Workers Scripts: Edit, Workers Routes: Edit, DNS: Edit for thenerdnextdoor.ca) and `CLOUDFLARE_ACCOUNT_ID`. Never paste them into the chat. A new session picks them up. |
+| Still open | (a) Which subdomain for the game, e.g. `baby.thenerdnextdoor.ca` or `play.thenerdnextdoor.ca`. (b) Strike any Price Is Right candidate that is on your registry (see game 1). (c) Trim or extend the character roster list (see *Character select*). |
 
 ---
 
 # The prompt (paste everything below this line)
 
-You are my game designer, pixel-art director, front-end developer and QA. Build a
-live, host-controlled party game into this repo (FahadZ/baby-shower-2026) that guests
-play on their phones after scanning a QR code. Make routine creative and technical
-decisions yourself. Only stop to ask me if an account login or permission blocks you,
-or if an action would cost money. Do not buy or sign up for anything paid.
+You are my game designer, pixel-art director, full-stack developer and QA. Build a
+live, host-controlled party game into this repo (FahadZ/baby-shower-2026) that up to
+**80 guests** play on their phones after scanning a QR code. Make routine creative and
+technical decisions yourself. Only stop to ask me if an account login or permission
+blocks you, or if an action would cost money beyond my existing Cloudflare Workers Paid
+plan. Do not buy or sign up for anything new.
 
 ## Context: what already exists
 
-- Read `README.md`, `index.html`, `styles.css`, `app.js`, `config.js` first. This is a
-  plain HTML/CSS/JS site, no framework, no build step, hosted on GitHub Pages at
-  https://fahadz.github.io/baby-shower-2026/. Keep it that way.
-- Do not change the RSVP flow. The game lives in a new `game/` folder with its own
-  pages and is linked from nowhere on the RSVP site (guests reach it by QR only).
+- Read `README.md`, `index.html`, `styles.css`, `app.js`, `config.js` first. The RSVP
+  site is plain HTML/CSS/JS, no framework, no build step, on GitHub Pages at
+  https://fahadz.github.io/baby-shower-2026/. Do not change the RSVP flow. Guests reach
+  the game by QR only; nothing on the RSVP site links to it.
 - Reuse the visual system exactly: the CSS variables in `styles.css`, the Press Start 2P
   font, cream panels with pixel borders, the brick stage, clouds, falling blocks,
   sparkles and hearts from `assets/deco/` and `assets/scene/`.
-- The ten character sprites in `assets/sprites/` (cloud, ghost, kirby, link, mario,
-  mushroom, pacman, peach, pikachu, sonic) are the player avatars. Do not draw or
-  recreate characters. The signature moves already coded in `app.js` (Pikachu
-  Thunderbolt, Cloud Cross Slash, Link Spin Attack, Kirby copy ability) should be
-  factored into a shared module so the game can play them as celebrations.
-- The 8-bit sound effects and the chiptune theme in `app.js` / `assets/audio/` are
-  reusable. Phones stay silent by default; the TV screen carries the audio.
-- `scripts/bump-version.sh` stamps a build number for cache busting. Extend it to cover
-  the `game/` pages and run it before every deploy.
+- The signature moves coded in `app.js` (Pikachu Thunderbolt, Cloud Cross Slash, Link
+  Spin Attack, Kirby copy ability) and the 8-bit sound effects and chiptune theme in
+  `assets/audio/` are reusable. Factor the moves into a shared module the game can call.
+- `scripts/bump-version.sh` stamps a build number for cache busting on the RSVP site.
+  The game has its own deploy (below) so it does not need it, but keep the RSVP site's
+  flow intact.
 
-## Architecture
+## Architecture: phones first, server authoritative
 
-**Real-time backend: Firebase Realtime Database (free Spark plan) with anonymous auth.**
-GitHub Pages is static and the Apps Script backend cannot push updates, so the game
-needs a pub/sub store that phones can subscribe to.
+**Primary mode is phones only.** There may be no TV at the venue. So every phone must
+render the complete experience, including the full leaderboard show, and the host's
+phone must be able to run the entire evening on its own. A TV page exists as a bonus for
+when a screen is available.
 
-- The Firebase web config (apiKey, databaseURL, etc.) is public by design and goes in
-  `game/firebase-config.js`. Security lives in the database rules, which you write and
-  commit as `game/database.rules.json`.
-- Rules: anyone signed in anonymously may create/update only their own
-  `players/{uid}` and `answers/{roundId}/{uid}`; the `game/` state node, `scores/`,
-  `totals/` and `ranks/` are writable only by a client whose uid matches
-  `/hostUid`. `/hostUid` is claimed by writing a PIN that the rules compare to
-  `/hostPin` (readable by nobody; set once by me in the console). Rules may read
-  values clients cannot.
-- Use `.info/serverTimeOffset` so every phone computes the countdown from the same
-  server clock. Never trust a phone's local clock for timers or scoring.
-- Use `onDisconnect()` presence so the lobby shows who is connected.
-- Three views, three pages in `game/`:
-  - `index.html` (**player**): what the QR opens. Join, play, see results.
-  - `tv.html` (**stage**): the big screen. Shows the QR in the lobby, the round
-    content, timers, reveals, leaderboards. This page is the **scoring authority**: when
-    a round closes it reads all answers, computes scores with the shared
-    `game/engine/scoring.js`, and writes `scores/`, `totals/`, `ranks/` in one update.
-  - `host.html` (**remote**): the host's phone. PIN-protected. Buttons that advance the
-    state machine; the TV executes. If no TV is open, the host page runs the authority
-    itself (it must detect this and say so).
-- Game state is one node, `game/state`, with `{ phase, gameId, round, roundId,
-  endsAt, revealStep, updatedAt }`. Phases: `lobby → intro(game) → howto(round) →
-  playing → locked → reveal → results → leaderboard → (next round | next game) →
-  final → predictions → credits`. Every page is a pure function of this node plus its own
-  uid, so a phone that was locked, refreshed, or lost signal renders the right screen
-  the moment it reconnects. Answers are keyed by uid and idempotent; a resubmit before
-  `endsAt` overwrites, after it is ignored by the authority.
+**Backend: Cloudflare Workers + one Durable Object, deployed to a subdomain of
+thenerdnextdoor.ca** (I have Workers Paid; the Cloudflare API token and account id are
+in the environment as `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`).
+
+- The whole game is one Worker project in `game/`: `wrangler.jsonc`, `src/` (Worker +
+  Durable Object), `public/` (static front end served with Workers Static Assets). One
+  `wrangler deploy` ships both. Bind a custom domain (I'll tell you which subdomain;
+  default to `baby.thenerdnextdoor.ca`). Vendor nothing from CDNs; all front-end code is
+  plain JS modules in `public/`.
+- **One Durable Object instance is the game room.** Use the WebSocket Hibernation API
+  (`ctx.acceptWebSocket`, `webSocketMessage`, `webSocketClose`; never `ws.accept()` or
+  `addEventListener` inside the DO). It supports thousands of sockets per object, so 80
+  phones plus a host and a TV are nothing. Use `serializeAttachment` so a player's
+  identity survives hibernation. Persist all state (players, answers, scores, phase) in
+  the DO's SQLite storage so a deploy or an eviction loses nothing.
+- **The server owns time and truth.** Round timers are DO alarms: when a round starts
+  the DO writes `endsAt` and sets an alarm; when it fires the DO locks the round, scores
+  it with `src/scoring.js`, computes ranks and deltas, and broadcasts. Phones only render
+  countdowns from `endsAt` minus a measured clock offset (ping/pong on connect). Phones
+  never compute scores. The host phone can lock, die or lose signal mid-round and the
+  round still ends and scores on time.
+- Messages are small JSON. Server → everyone: `state` snapshots `{ phase, gameId,
+  round, roundId, endsAt, serverNow, playerCount, content }` on every change. Server →
+  one player: `you { playerId, points, rank, prevRank, roundPoints, roundRank }`. Server
+  → everyone on results: `results { mvp[3], callouts[], top10[], everyone[] }` (80 rows
+  of `{id, name, sprite, points, rank, delta}` is still a tiny payload). Client → server:
+  `join`, `hello` (resume), `answer`, `ping`, and host-only commands with the host token.
+- **Auth.** Host PIN is a Worker secret (`HOST_PIN`, set with `wrangler secret put`,
+  never committed). The host page exchanges the PIN for a signed host token stored in
+  localStorage. Players get a random id on first join, kept in localStorage; `hello
+  {playerId}` resumes the same player after a refresh, a lock-screen, or a network drop.
+  Rate-limit joins and answers per socket; cap names at 16 chars; strip markup.
 - Late joiners can join at any phase with 0 points and play from the next round.
-- Identity persists in localStorage (Firebase anon uid plus chosen name and sprite) so
-  a refresh does not create a new player.
+- Cost: with the hibernation API and this traffic the evening stays inside the plan's
+  included allowance. Confirm the estimate in the README.
 
-**Alternative, only if I ask for it:** Cloudflare Workers + Durable Objects with
-WebSockets. Server-authoritative and tamper-proof but more code. Default to Firebase.
+## The three pages (all in `public/`)
+
+- `index.html` (**player**): what the QR opens. Join, play, results, leaderboard. This
+  is where the hype engine lives in full.
+- `host.html` (**host**): PIN-gated remote. A giant "NEXT" button that always does the
+  obvious next thing, plus "+15 s", "END ROUND NOW", "SKIP ROUND", "SKIP GAME",
+  "REPLAY REVEAL", "PAUSE", "KICK PLAYER", "ADD/REMOVE BOTS", and a long-press
+  "RESET GAME" with confirmation (clears answers and scores, keeps players). It mirrors
+  the current phase, round, timer and answer count so the host never needs another
+  screen. It has a **STAGE toggle** that turns the host phone into a big-text version of
+  the TV view for passing around or plugging into a speaker (this view carries the
+  audio). The host can also play from a second phone; the host page itself does not play.
+- `tv.html` (**stage, optional**): the same components scaled for 1080p, with the QR and
+  the join URL in the lobby, audio on, and a wake lock. Works whenever it is open; nothing
+  depends on it.
+
+## Character select (player avatars)
+
+Players pick from a **roster of 40 or more popular video game characters**, not just the
+ten on the invite, so 80 guests rarely double up. Rules:
+
+- Never draw, generate or recreate characters. Source each one as a PNG sprite file from
+  sprite archives (The Spriters Resource, the character's fandom wiki, and similar; these
+  are fetchable from the build environment). Put them in `public/assets/avatars/`,
+  normalised to the same height, transparent background, crisp pixels. The ten existing
+  sprites in `assets/sprites/` are part of the roster.
+- Roster to aim for (skip any you can't source cleanly): Mario, Luigi, Peach, Toad,
+  Yoshi, Bowser, Donkey Kong, Diddy Kong, Wario, Link, Zelda, Samus, Kirby, Meta Knight,
+  Pikachu, Charmander, Squirtle, Bulbasaur, Eevee, Jigglypuff, Snorlax, Sonic, Tails,
+  Knuckles, Shadow, Pac-Man, the four Pac-Man ghosts (Blinky, Pinky, Inky, Clyde), Mega
+  Man, Ryu, Chun-Li, Cloud, Chocobo, Crash Bandicoot, Spyro, Frogger, Q*bert, Space
+  Invader, Tetris blocks, Minecraft Steve, Creeper, Among Us crewmate (several colours),
+  Fall Guy, Master Chief, Lara Croft, Kratos, Sackboy, Isabelle, Tom Nook, Pikmin, Slime
+  (Dragon Quest), Cuphead, Shovel Knight, Hollow Knight.
+- `data/avatars.js` is the data source: slug, display name, franchise, file, and which
+  signature move to play (one of the four coded moves or the generic jump + sparkle).
+- Pick screen: a scrollable "CHARACTER SELECT" grid grouped by franchise with a search
+  box and a random button; big tap targets; the chosen sprite does its move on pick.
+  Duplicates are allowed; a shared sprite gets a small numbered badge.
 
 ## Join flow and lobby
 
-1. Scan QR → `game/` → "PLAYER SELECT": enter a display name (max 16 chars, uniqueness
-   enforced with a friendly nudge), pick one of the ten sprites (duplicates allowed; the
-   sprite gets a small numbered badge when shared). Big tap targets, no zoom on input
-   focus (16px+ font on inputs).
-2. Phone shows "WAITING FOR PLAYER 1 TO PRESS START" with the player's sprite idling.
-3. TV lobby: the QR code huge on the left (generate the PNG into `print/qr-game.png`
-   and also render it inline with a small QR library inlined into the page, no CDN
-   dependency), player count, and the brick stage filling up with each joined sprite
-   bouncing in with their name, the same way the invite's stage looks. Theme music plays.
-4. The baby, "Player 3", is a phantom player on the stage with "LOADING.." over its head.
-   It does not score.
-
-## Host controls (`host.html`)
-
-- Enter PIN once; remembered on that phone.
-- Lobby: player list with a kick button, "START GAME".
-- During play: a big "NEXT" button that always does the obvious next thing, plus
-  "+15s", "END ROUND NOW", "SKIP ROUND", "SKIP GAME", "REPLAY REVEAL", "PAUSE",
-  "SHOW LEADERBOARD", "MUTE TV". Current phase, round and timer are mirrored on the
-  host screen so the host never has to look at the TV to know what's happening.
-- A "RESET GAME" under a long-press with confirmation that clears answers and scores
-  but keeps players.
-- The host can also be a player from a second phone; the host page itself does not
-  play.
+1. Scan QR (or type the short URL) → "PLAYER SELECT": display name (max 16, uniqueness
+   enforced with a friendly nudge), character select, "READY".
+2. Phone shows "WAITING FOR PLAYER 1 TO PRESS START" with the sprite idling and a live
+   "42 PLAYERS JOINED" counter.
+3. Host page lobby: player list with sprites, kick buttons, player count, "START GAME".
+4. TV lobby (if open): QR huge, join URL, and the brick stage filling with every joined
+   sprite bouncing in with its name, like the invite. Theme music plays.
+5. "Player 3", the baby, is a phantom on the stage with "LOADING.." over its head. It
+   does not score.
+6. Generate `print/qr-game.png` and a printable one-pager (`print/join-card.pdf`, A6
+   cards, four per page) with the QR and "SCAN TO JOIN" so cards can sit on every table.
 
 ## Round flow and timing
 
-Every round follows the same beat:
+Every round follows the same beat (phases: `lobby → intro(game) → howto(round) →
+playing → locked → reveal → results → leaderboard → …→ final → predictions → credits`):
 
-1. **How-to (5 s, auto):** TV and phones show the game name, one-line instructions, an
-   animated demo loop of the mechanic, and the point value. Round 1 of each game shows
-   it for 8 s; later rounds 4 s.
-2. **Playing (timed, per game below):** TV shows the shared content and a big pixel
-   countdown bar (green → red in the last 5 s with a ticking sound). Phones show the
-   input. Submitting early locks the phone with "LOCKED IN ✓" and a "waiting" idle.
-3. **Locked (1 s):** input disabled, "TIME!" stamp slams on, TV plays a buzzer.
-4. **Reveal:** the correct answer with an animation specific to the game (below).
+1. **How-to (auto):** game name, one-line instructions, an animated demo loop of the
+   mechanic, and the point value. 8 s for round 1 of a game, 4 s after.
+2. **Playing (timed, per game):** phones show the input and a pixel countdown bar
+   (green → red in the last 5 s). Submitting early locks the phone with "LOCKED IN ✓".
+3. **Locked (1 s, server):** "TIME!" stamp slams on.
+4. **Reveal:** the correct answer with a game-specific animation.
 5. **Results (host presses NEXT):** see *Hype engine*.
 6. **Leaderboard (host presses NEXT):** see *Hype engine*.
 
-Timing rule: anything a guest could Google gets **10–15 s**. Anything that is hands-on
-(finding, sorting, swiping, catching, drawing) gets **30–45 s**.
+Timing rule: anything a guest could Google gets **10–15 s**. Anything hands-on
+(finding, sorting, swiping, catching) gets **30–45 s**.
 
-## Hype engine (after every round)
+## Hype engine (after every round, on every phone)
 
-This is the heart of the build; spend real effort here. All numbers are driven by
-the ranks the authority writes, with each phone comparing its previous rank to its new
-rank.
+This is the heart of the build; spend real effort here. Phones carry the whole show
+because there may be no TV. The TV and the host's STAGE view show the same sequence
+larger, with sound.
 
-**TV: round results**
-- "ROUND MVP" podium: the top three for *this round* appear in order 3 → 2 → 1 with
-  their sprite, name, and round points counting up. The #1 sprite plays its signature
-  move (Thunderbolt, Cross Slash, Spin Attack, Kirby transform; the other six sprites
-  get a jump + sparkle burst). Coin sound per 100 points.
-- Callouts, shown one at a time with a slam-in animation, only when true:
-  "PERFECT ROUND" (max points), "SPEED DEMON" (fastest correct), "PHOTO FINISH" (top two
-  within 50 points), "FIRST BLOOD" (first ever points for a player).
+**Round results (every phone, same timing, driven by one server message)**
+- "ROUND MVP" podium: the top three for *this round* enter 3 → 2 → 1 with sprite, name
+  and round points counting up. The #1 sprite plays its signature move. Coin tick per
+  100 points.
+- Callouts, one at a time with a slam-in, only when true: "PERFECT ROUND", "SPEED DEMON"
+  (fastest correct), "PHOTO FINISH" (top two within 50 points), "FIRST BLOOD" (first
+  points ever for a player).
 
-**TV: leaderboard**
-- The top ten rows animate from their old positions to their new ones (FLIP animation,
-  rows sliding past each other, 600 ms). Rows that climbed get a green "▲3" badge,
-  rows that fell a red "▼2". The list then scrolls once through 11..N at reading speed
-  so everyone sees their name on the big screen.
+**Personal card (each phone)**
+- Your round points count up: "YOU PLACED 4TH THIS ROUND".
+- Then "YOU'RE #7 OF 80" in big type with "▲ UP 3 SPOTS" / "▼ DOWN 1" / "HOLDING
+  STEADY". Haptic buzz on Android.
+- Then the gap, phrased to motivate: "120 PTS BEHIND #6 · 40 PTS AHEAD OF #8"; for #1
+  "YOU'RE WINNING BY 210 PTS"; for last "NOWHERE TO GO BUT UP".
+- Your sprite celebrates on climbing, sulks with a "..." bubble on falling.
+
+**Leaderboard (each phone)**
+- Top 10 rows animate from old to new positions (FLIP animation, rows sliding past each
+  other, 600 ms), green "▲3" / red "▼2" badges, totals counting up with a slot-machine
+  tick. Then your own row with the three above and below you, highlighted. Then a
+  "FIND ME" button that scrolls the full 80-row list to you.
 - "NEW HIGH SCORE" banner with hearts and sparkles when #1 changes hands. "BIGGEST
-  CLIMB" callout for the largest rank jump of the round (≥3 places). "COMEBACK" when
-  someone from the bottom half enters the top five.
-- Point totals count up with a slot-machine tick.
-
-**Phone: personal results**
-- First: your round points count up, with "YOU PLACED 4TH THIS ROUND".
-- Then: "YOU'RE #7 OF 42" in big type, with an arrow and "▲ UP 3 SPOTS" or "▼ DOWN 1"
-  or "HOLDING STEADY". Haptic buzz on Android (`navigator.vibrate`); iOS ignores it.
-- Then: the gap, phrased to motivate: "120 PTS BEHIND #6 · 40 PTS AHEAD OF #8". For #1:
-  "YOU'RE WINNING BY 210 PTS". For last place: "NOWHERE TO GO BUT UP".
-- Then a compact leaderboard: top five plus the three rows around you, with your row
-  highlighted and your old → new position animated.
-- The player's own sprite reacts: celebration on climbing, a sad "..." bubble on falling.
+  CLIMB" for the largest jump of the round (≥3 places). "COMEBACK" when someone from
+  the bottom half enters the top five.
 - Respect `prefers-reduced-motion`: keep the information, drop the motion.
 
-## Scoring (shared `scoring.js`, deterministic, unit-tested)
+## Scoring (`src/scoring.js`, pure functions, unit-tested with `node --test`)
 
-Every round is worth **up to 1000 points** so games are comparable; the boss round is
-worth up to 2000. Formulas:
+Every round is worth **up to 1000 points**; the boss round up to 2000.
+- Closeness (slider): `1000 × clamp(1 − |guess − answer| / answer, 0, 1)^2`, +150 if
+  within ±10%.
+- Correct with speed: `600 + 400 × (timeLeft / roundTime)`, else 0.
+- Per-item (find, swipe): item value × count + a completion speed bonus.
+- Relative (reflex): `1000 × yours / best`.
+- Ordering: `1000 × (concordant pairs / total pairs)`, +200 for perfect.
+Ties share a rank (1, 1, 3). Ranks recompute from totals after every round.
 
-- Closeness (slider/number): `1000 × clamp(1 − |guess − answer| / answer, 0, 1)^2`,
-  plus 150 bonus inside ±10%.
-- Correct/incorrect with speed: `600 + 400 × (timeLeft / roundTime)` if correct, 0
-  otherwise.
-- Per-item games (find, swipe): item value × count + a speed bonus on completion.
-- Relative games (reflex, doodle votes): `1000 × yours / best` so the best player
-  always gets 1000.
-- Ordering: `1000 × (concordant pairs / total pairs)`, +200 for a perfect order.
+## The games (5 games × 3 rounds + a 3-question boss = 18 rounds)
 
-Ties keep the same rank (1, 1, 3). Ranks are recomputed from totals after every round.
+All content lives in `public/data/*.js` as plain objects I can edit without touching
+code. Write all copy in the playful game voice already used on the site.
 
-## The games
+### 1. PRICE IS RIGHT: BABY EDITION  (slider · 15 s · Googleable, so short)
+Guess the Canadian retail price of a real baby item. Phone: a big pixel slider with the
+value in a price tag above the thumb; range and step per item. Round 1: one everyday
+item that is surprisingly pricey. Round 2: a "STARTER BUNDLE" of three mid-priced items
+shown together; guess the total. Round 3: one big-ticket item. Reveal: a price line with
+every player's guess as a tiny sprite marker, then the real price tag drops in and the
+closest three markers light up; the phone shows your guess vs the real price.
 
-Each game has 3 rounds unless noted. All content lives in `game/data/*.js` as plain
-objects I can edit without touching code. Write the copy in the playful game voice
-already used on the site.
-
-### 1. PRICE IS RIGHT: BABY EDITION  (slider · 15 s per round · Googleable, so short)
-Guess the Canadian retail price of a baby item. Phone: a big pixel slider with the
-value in a price tag above the thumb; the range and step are per item (e.g. $0–$600
-step $5). Round 1: one item (e.g. a convertible car seat). Round 2: a "starter bundle"
-of three items shown together (e.g. bottle set + bath tub + baby monitor); guess the
-total. Round 3: "A YEAR OF DIAPERS" (quantity + price estimate, wide range, big swings).
-Do not use items from my registry; pick common generic items and propose realistic
-Canadian prices in `data/prices.js` for me to confirm. Reveal: the TV shows a price
-line with every player's guess as a tiny sprite marker, then the real price tag drops
-in and the closest three markers light up. Phone shows your guess vs the real price.
+**You do the price research; it is part of this build.** Rules:
+- Prices are current **Canadian** sticker prices in CAD, verified on a live retailer page
+  (well.ca, indigo.ca, snugglebugz.ca, westcoastkids.ca, toysrus.ca, bestbuy.ca,
+  canadiantire.ca, walmart.ca, amazon.ca, costco.ca, or the brand's Canadian store).
+  Record for each item: exact product name and variant, retailer, price, regular vs sale
+  price, URL, and the date checked, in `public/data/prices.js`. No prices from memory or
+  from search snippets.
+- Candidates (do not use anything on my registry; I will strike those from this list):
+  Sophie la Girafe teether · Frida Baby NoseFrida · Pampers Swaddlers Size 1, largest
+  box (and price per diaper) · Enfamil A+ 942 g · Dr. Brown's Options+ newborn gift set ·
+  Diaper Genie Complete or Munchkin Step pail · Boppy Original · Hatch Rest 2nd Gen ·
+  Owlet Dream Sock · Nanit Pro · BabyBjörn Bouncer Bliss · Ergobaby Omni Breeze · Stokke
+  Tripp Trapp · Baby Brezza Formula Pro Advanced · Skip Hop 3-Stage Activity Center ·
+  4moms MamaRoo Multi-Motion · SNOO Smart Sleeper (buy and monthly rental) · Doona Car
+  Seat & Stroller · UPPAbaby Vista V3 · Bugaboo Fox 5 · Nuna PIPA rx · Elvie Stride ·
+  IKEA SNIGLAR crib · Keekaroo Peanut changer · Graco 4Ever DLX.
+- Pick the three rounds for maximum surprise (a cheap thing that costs more than people
+  think, a bundle whose total is hard to eyeball, a big-ticket item with a wide range)
+  and keep four spares in the data file so I can swap. Add an optional bonus reveal line
+  for round 3: "that's N boxes of diapers" using the per-diaper price.
+- Present the final list to me for confirmation before the party, and note in the README
+  that prices should be re-checked the week of the party.
 
 ### 2. WHERE'S THE BINKY?  (tap to find · 45 s · hands-on, so long)
-A busy pixel scene with hidden baby items. Phones show the scene full-screen with
-pinch-zoom disabled and a tap-to-find hit test (generous radius). Found items get a
-pixel ring and a coin sound; a found counter "3/5" sits at the top. The TV shows the
-same scene with no answers, plus a live "found" tally per player streaming in.
-Build scenes procedurally so every phone gets the identical layout: a seeded scatter of
-a few hundred small pixel glyphs (toys, blocks, clouds, fruit, emoji rendered as
-images at the site's pixel scale) with the five targets (pacifier, bottle, rattle, sock,
-rubber duck) placed by the seed. Round 1: nursery clutter. Round 2: "diaper bag
-explosion", denser, targets partly overlapped. Round 3: "NIGHT FEED": the scene is
-dark and your finger is a flashlight; only a circle around your touch is visible.
-200 points per item, +speed bonus for finding all five. Reveal: the TV zooms to each
-hidden item in turn.
+A busy pixel scene with five hidden baby items. Phones show it full-screen with pinch
+zoom disabled and a generous tap hit radius; found items get a pixel ring and a coin
+sound; a "3/5" counter sits on top. Build scenes procedurally so every phone gets the
+identical layout: a seeded scatter of a few hundred small pixel glyphs (toys, blocks,
+clouds, fruit, emoji rendered as images at the site's pixel scale) with the targets
+(pacifier, bottle, rattle, sock, rubber duck) placed by the seed. Round 1: nursery
+clutter. Round 2: "DIAPER BAG EXPLOSION", denser, targets partly overlapped. Round 3:
+"NIGHT FEED": the scene is dark and your finger is a flashlight. 200 points per item
+plus a speed bonus for all five. Reveal: zoom to each hidden item in turn; the host
+STAGE view and TV show the live found tally streaming in during play.
 
 ### 3. MOM OR DAD?  (swipe left/right · 6 s per card, 5 cards per round · not Googleable)
-Cards swipe Tinder-style: left = Mom, right = Dad. Round 1: baby photos (if I provide
-them in `game/assets/babyphotos/`; otherwise skip this round): "WHO IS THIS BABY?".
-Round 2: "WHO WAS THIS BABY?" statements like "Cried every night until age two",
-"Walked at 9 months", with the answers I supply in `data/momordad.js`. Round 3:
-"WHO WILL…?" predictions the parents answered in advance: "…be the softie?", "…do the
-3 AM feed?", "…cry first at daycare drop-off?". 200 points per correct card, +100 for a
-five-card streak. Reveal: each card flips on the TV with a photo or the parent's sprite
-(let me assign a sprite to each parent in config) and the room's split percentage.
+Cards swipe Tinder-style: left = Mom, right = Dad. Round 1: "WHO IS THIS BABY?" using my
+baby photos from `public/assets/babyphotos/` (I will supply them; build a template
+folder with `mom-1.jpg … dad-5.jpg` naming and a README line). Show photos inside a
+pixel frame; do not pixelate the photos themselves. Round 2: "WHO WAS THIS BABY?"
+childhood facts. Round 3: "WHO WILL…?" predictions the parents answered in advance.
+Ship `public/data/momordad.js` with 15 draft questions and `answer: ""` for me to fill;
+skip any card left blank. 200 points per correct card, +100 for a five-card streak.
+Reveal: each card flips with the photo or the parent's sprite (assign each parent a
+sprite in config) and the room's split percentage.
 
 ### 4. DIAPER DASH  (reflex arcade · 20 s · hands-on)
-Things fall from the top of the phone screen; tap the good stuff, avoid the bad. Round
-1: catch pacifiers, avoid dirty diapers (−1 each). Round 2: faster, with golden bottles
-worth 3. Round 3: "TWINS": the screen splits and two streams fall at once. Pure pointer
-events, 60 fps, no device-motion permissions. The TV shows a live bar race of
-everyone's catch counts. Relative scoring (best = 1000). Reveal: the TV replays the
-top player's final seconds as a highlight.
+Things fall from the top of the phone; tap the good stuff, avoid the bad. Round 1:
+catch pacifiers, avoid dirty diapers (−1 each). Round 2: faster, with golden bottles
+worth 3. Round 3: "TWINS": the screen splits and two streams fall at once. Pure
+pointer events, 60 fps, no device-motion permissions. Relative scoring (best = 1000).
+Reveal: top five catch counts as a bar race; the host STAGE view and TV show the race
+live during play.
 
 ### 5. PUT IT IN ORDER  (drag to sort · 30 s · semi-Googleable)
-Five tiles, drag into the correct order. Round 1: diaper change steps. Round 2: baby
-milestones by typical age (first smile, rolls over, sits up, crawls, first word, walks:
-pick five). Round 3: baby gear by price, cheapest to priciest. Touch drag with
-auto-scroll disabled and a ghost tile; a "LOCK IN" button. Reveal: tiles snap into the
-right order on the TV one by one, with a check or cross per player position on the
-phone.
+Five tiles, drag into order. Round 1: diaper change steps. Round 2: milestones by
+typical age (first smile, rolls over, sits up, crawls, first word, walks: pick five).
+Round 3: baby gear cheapest to priciest (reuse the researched prices). Touch drag with
+page scroll disabled and a ghost tile; a "LOCK IN" button. Reveal: tiles snap into the
+right order one by one with a check or cross per position.
 
-### 6. DOODLE DUEL  (draw, then vote · 40 s draw + 25 s vote · 2 rounds)
-Everyone draws the prompt on a small pixel canvas (fixed 48×48 grid, 8 colours, pencil
-and eraser, undo). Round 1: "DRAW THE BABY". Round 2: "DRAW FAHAD & OYSHE AS A VIDEO
-GAME BOSS". Drawings upload as a compact string (run-length encoded) to
-`answers/{roundId}/{uid}`. Vote phase: the TV shows a gallery, phones show the same
-gallery and each player picks one that isn't their own. Points: `1000 × votes /
-maxVotes`. Reveal: the top three drawings enlarge on the TV with the artist's name.
-Keep the two rounds; if the state machine makes the vote phase hard, it is one extra
-phase (`voting`) between `locked` and `reveal`.
-
-### 7. BOSS BATTLE  (4-option quiz · 10 s per question · 3 questions · double points)
-The classic format, saved for last and framed as a boss fight: each correct answer
-deals damage to a pixel boss on the TV (a giant pacifier or a crying-baby boss drawn
-from the deco assets, no new characters). Questions are baby trivia with surprising
-answers; write ten in `data/trivia.js` and the host picks three at runtime. Up to 2000
-points per question with speed. The boss is defeated when the room's total damage
-crosses a threshold scaled to player count, triggering a big victory animation.
+### 6. BOSS BATTLE  (4-option quiz · 10 s per question · 3 questions · double points)
+The classic format, saved for last and framed as a boss fight: each correct answer deals
+damage to a pixel boss built from the deco assets (a giant pacifier or crying-baby boss;
+no new characters). Write ten baby-trivia questions with surprising answers in
+`public/data/trivia.js`; the host picks three at runtime. Up to 2000 points per question
+with speed. The boss falls when the room's total damage crosses a threshold scaled to
+player count, triggering a big victory animation on every phone.
 
 ### Finale
-- "PREDICTIONS" (not scored): due date guess, weight, who the baby looks like, first
-  word. Saved to the RSVP Google Sheet through the existing Apps Script endpoint
-  (add a `kind: "prediction"` branch to `doPost` and a "Predictions" tab) so we can
-  look at them after the birth.
-- "FINAL RANKINGS": drum roll, then 3rd, 2nd, 1st revealed with increasing suspense,
-  the winner's sprite doing its move under a confetti of falling blocks and hearts,
-  the full leaderboard scrollable on every phone, and a "THANKS FOR PLAYING" screen
-  with the site's victory stage.
+- "PREDICTIONS" (not scored): due date, weight, who the baby looks like, first word.
+  Stored in the DO and downloadable as CSV from the host page; also POST them to the
+  existing Apps Script endpoint with `kind: "prediction"` (add a branch to `doPost` and a
+  "Predictions" tab) so they land in the RSVP Sheet.
+- "FINAL RANKINGS": drum roll, then 3rd, 2nd, 1st revealed with rising suspense, the
+  winner's sprite doing its move under falling blocks and hearts, the full leaderboard
+  on every phone with "FIND ME", and a "THANKS FOR PLAYING" screen with the site's
+  victory stage.
 
 ## Rehearsal mode
 
-`tv.html?bots=25` spawns 25 fake players (random sprites and names) that answer every
-round with plausible randomness, so I can rehearse the whole evening alone and see
-every animation. Bots are clearly labelled and can be removed with one button on the
-host page. Also add `host.html?demo=1` that cycles every phase with bots on a timer.
+Bots live in the server: the host page has "ADD 80 BOTS" and "REMOVE BOTS". Bots join
+with random roster sprites and names and answer every round with plausible randomness
+and timing, so I can rehearse the whole evening alone from one phone and see every
+animation at full player count. Bots are labelled and never win ties against humans.
+Also `host.html?demo=1` auto-advances every phase on a timer.
 
-## Robustness checklist (test every item)
+## Robustness checklist (test every item, write the results in the README)
 
 - iOS Safari and Android Chrome at phone width; no horizontal scroll; `100dvh`;
   `touch-action: none` on game surfaces; pull-to-refresh and double-tap zoom disabled
   during play; inputs at 16px+ so iOS doesn't zoom.
-- Screen lock → unlock → correct phase shows within 1 s. Airplane mode for 20 s →
-  reconnect → correct phase, answer preserved if submitted.
-- Forty phones submitting in the same second: answers are individual writes, the
-  authority reads once on `locked`.
-- The TV requests a screen wake lock; the host page too.
-- Images for the next round preload during the leaderboard phase.
+- Screen lock → unlock → correct phase within 1 s. Airplane mode for 20 s → reconnect →
+  correct phase, submitted answer preserved. Host phone dies mid-round → round still
+  ends and scores on time.
+- 80 bots answering in the same second → scored once, correctly, in under 1 s.
+- Deploy mid-evening → players reconnect automatically with no lost state.
+- Wake lock on host and TV pages. Next round's images preload during the leaderboard.
 - Reduced motion honoured everywhere; every screen readable without colour.
-- The whole `game/` folder works offline-first for assets (no CDN scripts; the Firebase
-  SDK is vendored into `game/vendor/`).
 
-## Firebase setup (do as much as you can, tell me exactly what to click for the rest)
+## Deliverables
 
-1. If `firebase` CLI auth works, create the project, enable Realtime Database and
-   anonymous auth, deploy `database.rules.json`, and write the web config into
-   `game/firebase-config.js`. Otherwise give me numbered browser steps, one screen at a
-   time, and wait for the config.
-2. Tell me where to set `/hostPin` in the console and recommend restricting the API key
-   to the GitHub Pages domain.
+- `game/` Worker project: `wrangler.jsonc`, `src/` (Worker, Durable Object, scoring,
+  bots), `public/` (three pages, `game.css`, `engine/` for sync/hype/audio, `games/` one
+  module per game, `data/`, `assets/avatars/`, `assets/babyphotos/` template), tests,
+  and `game/README.md`: how to run the night step by step, what to edit, how to
+  rehearse, what to do if the wifi dies, how to redeploy, cost estimate.
+- Deployed to the subdomain with a custom domain binding; `HOST_PIN` set as a secret
+  (tell me how to change it).
+- `print/qr-game.png` and `print/join-card.pdf`.
+- Unit tests for scoring runnable with `node --test`; a rehearsal run with 80 bots
+  through every phase; screenshots at phone width of every player screen and at 1080p
+  of every TV screen in `game/docs/screens/`.
+- Finish with: the live game URL, the host URL and where the PIN lives, the Price Is
+  Right list for my confirmation, the list of data files I must fill in (baby photos,
+  Mom or Dad answers), and anything I need to do manually.
 
-## Deliverables and checks
+## Phasing (one session each; each ends with a deployed, working game)
 
-- `game/` with `index.html`, `tv.html`, `host.html`, `game.css`, `engine/` (state,
-  sync, scoring, hype, audio), `games/` (one module per game), `data/` (editable
-  content), `vendor/`, `database.rules.json`, `README.md` (how to run the night, what
-  to edit, how to rehearse, what to do if the wifi dies).
-- `print/qr-game.png` plus a printable one-pager with the QR and "SCAN TO JOIN".
-- Unit tests for `scoring.js` runnable with `node --test`.
-- A rehearsal run with 25 bots through every phase, screenshots at phone width of every
-  player screen and at 1080p of every TV screen, saved to `game/docs/screens/`.
-- Bump the version, push to `main`, confirm the live URL
-  https://fahadz.github.io/baby-shower-2026/game/ works from a real phone.
-- Finish with: the live game URL, the host URL and PIN location, the list of data files
-  I must fill in before the party, and anything I need to do manually.
-
-## Phasing (one session each; each ends with a pushed, working site)
-
-1. **Engine:** Firebase, join flow, lobby, host remote, TV, state machine, scoring,
-   hype engine, rehearsal bots, and one game (Price Is Right). Rehearse end to end.
+1. **Engine:** Worker + Durable Object, join flow, character select with the full
+   roster, lobby, host remote with STAGE view, TV page, state machine, scoring, hype
+   engine, bots, and one game (Price Is Right, including the price research).
+   Rehearse end to end with 80 bots.
 2. **Games:** Where's the Binky?, Mom or Dad?, Diaper Dash, Put It In Order, Boss Battle.
-3. **Polish:** Doodle Duel, predictions, finale, audio pass, robustness checklist,
-   printable QR, README.
+3. **Polish:** predictions, finale, audio pass, robustness checklist, printables,
+   README, final rehearsal.
