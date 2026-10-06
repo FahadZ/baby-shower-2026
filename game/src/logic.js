@@ -70,6 +70,8 @@ export function roundCtx(state, game, round) {
     round,
     seed: core.seed,
     rng: rngFor(core.seed, roundId),
+    // Fresh deterministic generators for score/reveal/bots, which share one ctx:
+    rngFor: (tag) => rngFor(core.seed, roundId + ":" + tag),
     data: game.data,
     roundTime: game.roundTime(round),
     players: publicPlayers(core),

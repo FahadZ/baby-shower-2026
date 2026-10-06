@@ -74,8 +74,11 @@ export default {
   },
 
   // Public content for this round. Sent to every phone; MUST NOT contain the answer.
-  // ctx = { roundId, round, seed, rng, data, roundTime, players, results, order }
-  //   rng is seeded per round: identical on the server and (if you reuse it client-side) every phone.
+  // ctx = { roundId, round, seed, rng, rngFor(tag), data, roundTime, players, results, order }
+  //   rng is seeded per round and content() is cached, so it is safe to use there. score(),
+  //   revealData() and every bot's botAnswer() share ONE ctx (and one rng object), so when you
+  //   need the same deterministic draw across those calls use ctx.rngFor("cards") for a fresh,
+  //   identically seeded generator each time.
   content(round, ctx) { return { ... }; },
 
   // answers: { playerId: { a: <whatever the client submitted>, t: msSinceRoundStart, final } }
