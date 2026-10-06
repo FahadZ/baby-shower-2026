@@ -197,7 +197,7 @@ export default {
   // A finger wanders over a few glyphs, taps the bottle, a ring pops. Loops.
   howtoDemo(el, content) {
     const night = content && content.mode === "night";
-    const canvas = h("canvas", { "aria-hidden": "true", style: { display: "block", width: "100%", height: "150px", border: "3px solid " + INK, background: night ? NIGHT : CREAM } });
+    const canvas = h("canvas", { "aria-hidden": "true", style: { display: "block", width: "100%", height: "clamp(150px, 30vh, 340px)", border: "3px solid " + INK, background: night ? NIGHT : CREAM } });
     el.appendChild(canvas);
     const ctx = canvas.getContext("2d");
     const rng = mulberry32(99);
