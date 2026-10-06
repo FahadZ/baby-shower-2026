@@ -11,31 +11,35 @@ export default {
     { key: "duck", ch: "🦆", name: "DUCK" },
     { key: "rattle", ch: "🔔", name: "RATTLE" }
   ],
-  // Everything else in the scene. None of these may equal a target glyph.
+  // Everything else in the scene. None of these may equal a target glyph, and none
+  // should look like one (no other bottles, pins, socks, yellow birds or bells).
+  // Only emoji from 2018 or earlier so older phones never show empty boxes.
   distractors: [
-    "🧸", "🪀", "🎈", "🎁", "🪁", "🧩", "🪆", "🎲", "🍎", "🍌", "🍇", "🥕", "🧁", "🍪",
-    "🐣", "🐥", "🐤", "🦋", "🐞", "🐟", "🌼", "🌸", "🍄", "⭐", "🌙", "☁️", "🧢", "👟",
-    "🎀", "🧵", "🪄", "🎺", "🥁", "🧃", "🥛", "🍭", "🪥", "🧴", "🧼", "🪣", "🧹", "🛼",
-    "🛷", "🐢", "🐸", "🐰", "🐻", "🐼", "🦊", "🐱", "🐶", "🐭", "🐹", "🍓", "🍊", "🍋",
-    "🍉", "🍒", "🥑", "🌽", "🎂", "🍩", "🍬", "🎵", "🎶", "💡", "📚", "✏️", "🧊", "🧶",
-    "🎨", "🖍️", "🚂", "🚗", "🚲", "🛹", "⚽", "🏀", "🎾", "🎯", "🎪", "🎠", "🪅"
+    "🧸", "🎈", "🎁", "🧩", "🎲", "🍎", "🍌", "🍇", "🥕", "🧁", "🍪", "🦋", "🐞", "🐟",
+    "🌼", "🌸", "🍄", "⭐", "🌙", "🧢", "👟", "🎀", "🎺", "🥁", "🍭", "🧼", "🐢", "🐸",
+    "🐰", "🐻", "🐼", "🦊", "🐱", "🐶", "🐭", "🐹", "🍓", "🍊", "🍋", "🍉", "🍒", "🥑",
+    "🌽", "🎂", "🍩", "🍬", "🎵", "💡", "📚", "✏️", "🧊", "🧶", "🎨", "🚂", "🚗", "🚲",
+    "⚽", "🏀", "🎾", "🎯", "🎪", "🎠", "🐙", "🦀", "🐬", "🍕", "🥨", "🥐", "🍿", "🎃",
+    "🧲", "🔑", "⏰", "📷", "🎧", "🎮", "🧭", "🛸", "🚀", "🌈", "🔥", "💎", "👑"
   ],
-  // Plain coloured pixel shapes mixed in for variety (they take the glyph colour).
-  shapes: ["■", "●", "▲", "◆", "★", "♥"],
+  // Plain coloured shapes are off: they read as "rectangles" on a phone.
+  shapes: [],
   shapeColors: ["#e0283a", "#8cc523", "#5aa7e8", "#ffd84a", "#c26ad6", "#ff8c42", "#2bb3a0"],
   rounds: [
-    { title: "ROUND 1: NURSERY", subtitle: "FIVE THINGS WENT MISSING IN THE TOY PILE", density: 220, mode: "normal", after: 0.35, overlappers: 1, cover: 2 },
-    { title: "ROUND 2: DIAPER BAG EXPLOSION", subtitle: "SAME FIVE, WAY MORE STUFF", density: 380, mode: "normal", after: 0.5, overlappers: 2, cover: 3 },
-    { title: "ROUND 3: NIGHT FEED", subtitle: "LIGHTS OFF. FEEL AROUND.", density: 220, mode: "night", after: 0.35, overlappers: 1, cover: 2 }
+    { title: "ROUND 1: NURSERY", subtitle: "FIVE THINGS WENT MISSING IN THE TOY PILE", density: 95, mode: "normal", after: 0.3, overlappers: 1, cover: 1 },
+    { title: "ROUND 2: DIAPER BAG EXPLOSION", subtitle: "SAME FIVE, WAY MORE STUFF", density: 150, mode: "normal", after: 0.4, overlappers: 1, cover: 2 },
+    { title: "ROUND 3: NIGHT FEED", subtitle: "LIGHTS OFF. FEEL AROUND.", density: 95, mode: "night", after: 0.3, overlappers: 1, cover: 1 }
   ],
   // Virtual canvas size and gameplay constants (units, not pixels).
   w: 1000,
   h: 1400,
-  sizeMin: 28,
-  sizeMax: 60,
-  targetSizeMin: 38,
-  targetSizeMax: 50,
-  targetGap: 230,
-  hitRadius: 60,
-  flashlight: 140
+  sizeMin: 62,
+  sizeMax: 100,
+  targetSizeMin: 72,
+  targetSizeMax: 86,
+  targetGap: 300,
+  hitRadius: 85,
+  // Flashlight radius in units; on the phone the light floats this far above the finger.
+  flashlight: 270,
+  lightOffset: 190
 };

@@ -14,7 +14,7 @@ export function roundSpec(round) {
 // Five target spots, spread out so no two are within data.targetGap of each other
 // (the tap radius is far smaller, so a tap is never ambiguous).
 function placeTargets(rng, W, H) {
-  const margin = 90;
+  const margin = 110;
   for (let attempt = 0; attempt < 400; attempt++) {
     const pts = [];
     let ok = true;
@@ -35,7 +35,7 @@ function glyph(rng, x, y, ch, size, color) {
 }
 
 function distractorGlyph(rng, W, H, sizeLo, sizeHi) {
-  const useShape = rng() < 0.12;
+  const useShape = rng() < 0.12 && data.shapes.length > 0;
   const ch = useShape ? rng.pick(data.shapes) : rng.pick(data.distractors);
   const color = useShape ? rng.pick(data.shapeColors) : "#1d1b18";
   const size = useShape ? sizeLo * 0.7 + rng() * (sizeHi - sizeLo) * 0.5 : sizeLo + rng() * (sizeHi - sizeLo);
@@ -65,8 +65,8 @@ export function generateScene(seed, round) {
   const coverCount = targets.map(() => 0);
   targets.forEach((t, i) => {
     for (let k = 0; k < spec.overlappers; k++) {
-      const a = rng() * TAU, d = 34 + rng() * 16;
-      const size = data.sizeMin + rng() * 12;
+      const a = rng() * TAU, d = t.size * 0.62 + rng() * t.size * 0.25;
+      const size = data.sizeMin + rng() * 14;
       after.push(glyph(rng, Math.min(W - 10, Math.max(10, t.x + Math.cos(a) * d)), Math.min(H - 10, Math.max(10, t.y + Math.sin(a) * d)), rng.pick(data.distractors), size, "#1d1b18"));
       coverCount[i]++;
     }
@@ -77,11 +77,12 @@ export function generateScene(seed, round) {
     let ok = true;
     for (let i = 0; i < targets.length && ok; i++) {
       const d = dist(g.x, g.y, targets[i].x, targets[i].y);
-      if (d < 46) ok = false;
-      else if (d < 72 && coverCount[i] >= spec.cover) ok = false;
+      const near = targets[i].size * 0.9, around = targets[i].size * 1.5;
+      if (d < near) ok = false;
+      else if (d < around && coverCount[i] >= spec.cover) ok = false;
     }
     if (!ok) continue;
-    targets.forEach((t, i) => { if (dist(g.x, g.y, t.x, t.y) < 72) coverCount[i]++; });
+    targets.forEach((t, i) => { if (dist(g.x, g.y, t.x, t.y) < t.size * 1.5) coverCount[i]++; });
     after.push(g);
   }
 

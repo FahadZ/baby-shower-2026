@@ -119,10 +119,14 @@ function createView(canvas, scene, { night = false } = {}) {
         ctx.save();
         ctx.beginPath(); ctx.arc(lx, ly, r, 0, TAU); ctx.clip();
         drawScene();
-        ctx.fillStyle = "rgba(255,216,74,.12)";
+        // Warm centre, darker rim: a torch beam rather than a hard porthole.
+        const g = ctx.createRadialGradient(lx, ly, r * 0.55, lx, ly, r);
+        g.addColorStop(0, "rgba(255,216,74,.10)");
+        g.addColorStop(1, "rgba(0,0,0,.55)");
+        ctx.fillStyle = g;
         ctx.fillRect(0, 0, cssW, cssH);
         ctx.restore();
-        ctx.strokeStyle = "rgba(255,216,74,.6)"; ctx.lineWidth = 3;
+        ctx.strokeStyle = "rgba(255,216,74,.7)"; ctx.lineWidth = 3;
         ctx.beginPath(); ctx.arc(lx, ly, r, 0, TAU); ctx.stroke();
       }
     } else {
@@ -258,7 +262,7 @@ export default {
       h("h2", { class: "title", style: { fontSize: "1.2em", margin: "4px 0" } }, content.title || "WHERE'S THE BINKY?"),
       content.subtitle ? h("p", { class: "sub", style: { marginBottom: "8px" } }, content.subtitle) : null,
       counter, chips.row, canvas,
-      h("p", { class: "tiny center", style: { marginTop: "8px" } }, night ? "DRAG TO MOVE THE FLASHLIGHT. TAP TO GRAB." : "TAP AN ITEM WHEN YOU SPOT IT."),
+      h("p", { class: "tiny center", style: { marginTop: "8px" } }, night ? "DRAG TO SEARCH: THE LIGHT FLOATS ABOVE YOUR FINGER AND STAYS WHERE YOU LEAVE IT. TAP AN ITEM TO GRAB IT." : "TAP AN ITEM WHEN YOU SPOT IT."),
       after);
 
     const view = createView(canvas, scene, { night });
@@ -303,7 +307,6 @@ export default {
     // The one tap path: real taps and the rehearsal autoplay both come through here.
     function tapAt(x, y) {
       if (!view.isAlive()) return false;
-      if (night) view.st.light = { x, y };
       if (found.length >= keys.length) { view.request(); return false; }
       const hit = hitTest(scene, x, y, found);
       if (hit) { foundOne(hit); return true; }
@@ -313,11 +316,34 @@ export default {
       return false;
     }
 
-    const onDown = (e) => { e.preventDefault(); const [x, y] = view.toUnits(e); tapAt(x, y); };
-    const onMove = (e) => { if (!night) return; const [x, y] = view.toUnits(e); view.st.light = { x, y }; view.request(); };
+    // Night mode: the beam floats above the finger (fingers cover what they touch), it
+    // keeps shining where you leave it, a drag searches and a clean tap grabs.
+    const lightAt = (x, y) => { view.st.light = { x, y: Math.max(data.flashlight * 0.6, y - data.lightOffset) }; view.request(); };
+    let press = null;
+    const onDown = (e) => {
+      e.preventDefault();
+      const [x, y] = view.toUnits(e);
+      if (!night) { tapAt(x, y); return; }
+      press = { x, y, cx: e.clientX, cy: e.clientY, moved: false, id: e.pointerId };
+      try { canvas.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+      lightAt(x, y);
+    };
+    const onMove = (e) => {
+      if (!night || !press || e.pointerId !== press.id) return;
+      if (Math.hypot(e.clientX - press.cx, e.clientY - press.cy) > 10) press.moved = true;
+      const [x, y] = view.toUnits(e);
+      lightAt(x, y);
+    };
+    const onUp = (e) => {
+      if (!night || !press || e.pointerId !== press.id) return;
+      const was = press; press = null;
+      if (!was.moved) tapAt(was.x, was.y);
+    };
     const onResize = () => view.fit();
     canvas.addEventListener("pointerdown", onDown);
     canvas.addEventListener("pointermove", onMove);
+    canvas.addEventListener("pointerup", onUp);
+    canvas.addEventListener("pointercancel", onUp);
     window.addEventListener("resize", onResize);
 
     current = {
@@ -325,6 +351,8 @@ export default {
       destroy() {
         canvas.removeEventListener("pointerdown", onDown);
         canvas.removeEventListener("pointermove", onMove);
+        canvas.removeEventListener("pointerup", onUp);
+        canvas.removeEventListener("pointercancel", onUp);
         window.removeEventListener("resize", onResize);
         view.destroy();
       }
