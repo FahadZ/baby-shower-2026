@@ -1,6 +1,8 @@
 // Client-side game modules, in play order. The server decides the order; this
 // map just finds the module for a game id.
 import price from "./price.js";
+import order from "./order.js";
+import boss from "./boss.js";
 
-export const GAMES = { [price.id]: price };
+export const GAMES = { [price.id]: price, [order.id]: order, [boss.id]: boss };
 export const getGame = (id) => GAMES[id] || null;
