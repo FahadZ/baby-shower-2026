@@ -9,7 +9,7 @@ function itemCards(items) {
     h("div", null, h("div", { class: "nm" }, it.name), it.detail ? h("div", { class: "dt" }, it.detail) : null)));
 }
 
-let demoTimer = null;
+let demoTimer = null, softTimer = null;
 
 export default {
   id: "price",
@@ -32,13 +32,24 @@ export default {
     const btn = h("button", { class: "btn primary", type: "button" }, h("i", { class: "tri" }), "LOCK IN");
     let touched = false;
     const read = () => Number(range.value);
-    range.addEventListener("input", () => { touched = true; tag.textContent = fmtMoney(read(), { cents: false }); api.sfx("blip"); });
+    // The slider position always counts: it is sent as a soft (non-final) answer while it
+    // moves, so when time runs out nobody is left without a guess. LOCK IN makes it final.
+    let lastSoft = 0;
+    const sendSoft = () => { softTimer = null; lastSoft = Date.now(); api.submit(read(), { final: false }); };
+    range.addEventListener("input", () => {
+      touched = true;
+      tag.textContent = fmtMoney(read(), { cents: false });
+      api.sfx("blip");
+      if (Date.now() - lastSoft > 300) sendSoft(); else if (!softTimer) softTimer = setTimeout(sendSoft, 320);
+    });
     btn.addEventListener("click", () => {
+      if (softTimer) { clearTimeout(softTimer); softTimer = null; }
       api.submit(read(), { label: fmtMoney(read(), { cents: false }) });
       btn.textContent = "UPDATE GUESS";
     });
     const prev = api.you && api.you() && api.you().myAnswer;
     if (typeof prev === "number") { range.value = String(prev); tag.textContent = fmtMoney(prev, { cents: false }); btn.textContent = "UPDATE GUESS"; }
+    else setTimeout(sendSoft, 400);
     appendTo(el, 
       h("h2", { class: "title" }, content.title),
       content.subtitle ? h("p", { class: "sub" }, content.subtitle) : null,
@@ -50,7 +61,7 @@ export default {
     setTimeout(() => { if (!touched) tag.classList.add("blink"); setTimeout(() => tag.classList.remove("blink"), 1200); }, 2500);
   },
 
-  unmount() { clearInterval(demoTimer); },
+  unmount() { clearInterval(demoTimer); if (softTimer) { clearTimeout(softTimer); softTimer = null; } },
 
   // Rehearsal only: a plausible guess, submitted like a tap would.
   autoplay(el, content, api) {

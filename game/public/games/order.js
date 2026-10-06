@@ -265,23 +265,32 @@ export default {
     const btn = h("button", { class: "btn primary ord-lock", type: "button" }, h("i", { class: "tri" }), prev ? "UPDATE ORDER" : "LOCK IN");
     const prompt = h("p", { class: "sub ord-prompt" }, content.prompt || "");
     let touched = !!prev;
+    // The current order counts even without LOCK IN: every change is sent as a soft
+    // (non-final) answer so time running out locks people in where they are.
+    let softTimer = null, lastSoft = 0;
+    const soft = () => {
+      const send = () => { softTimer = null; lastSoft = Date.now(); api.submit(ctl.order.slice(), { final: false }); };
+      if (Date.now() - lastSoft > 300) send(); else if (!softTimer) softTimer = setTimeout(send, 320);
+    };
     appendTo(el, h("h2", { class: "title ord-title" }, content.title || ""), prompt);
     appendTo(root, endLabel(content.topLabel || "FIRST"));
-    const ctl = makeList(root, startItems, { arrows: true, grip: true, onChange: (user) => { if (user) { touched = true; api.sfx("thunk"); api.vibrate(12); } } });
+    const ctl = makeList(root, startItems, { arrows: true, grip: true, onChange: (user) => { if (user) { touched = true; api.sfx("thunk"); api.vibrate(12); soft(); } } });
     appendTo(root, endLabel(content.bottomLabel || "LAST"));
     appendTo(el, root, btn);
 
     const inst = { ctl, cleanups: [] };
     inst.lockIn = () => {
+      if (softTimer) { clearTimeout(softTimer); softTimer = null; }
       api.submit(ctl.order.slice(), { label: "ORDER LOCKED" });
       btn.textContent = "UPDATE ORDER";
     };
+    inst.cleanups.push(() => { if (softTimer) clearTimeout(softTimer); });
     inst.moveBy = (key, d) => ctl.moveBy(key, d, false);
     btn.addEventListener("click", inst.lockIn);
     inst.cleanups.push(attachDrag(ctl, {
       onLift: () => api.sfx("blip"),
       onSlot: () => api.sfx("tick", 0.03),
-      onDrop: () => { touched = true; api.sfx("thunk"); api.vibrate(15); }
+      onDrop: () => { touched = true; api.sfx("thunk"); api.vibrate(15); soft(); }
     }));
     const onResize = () => ctl.relayout();
     window.addEventListener("resize", onResize);
