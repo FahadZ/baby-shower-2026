@@ -9,9 +9,9 @@ Like `PROMPT.md`, keep personal details (PIN, tokens) out of committed files.
 |---|---|
 | Model | **Claude Opus 5.5** (Fable 5.1 if your plan has it; it is the stronger model for the server state machine and the animation work) |
 | Effort | **high** for the whole build. Go to **max** only if a session gets stuck on sync bugs or timing drift. Lower effort will cut corners on the leaderboard animations and reconnect handling, the two things that make or break this on the day. |
-| Mode | Start in **plan mode**, approve the plan, then let it run. Three sessions, one per phase (see *Phasing* at the end). Each phase ends with a deployed, working game. |
+| Mode | Start in **plan mode**, approve the plan, then let it run. One engine session, then six game sessions in parallel, then integration and polish (see *Phasing* and *Expected timeline* at the end). Every session ends with pushed, working code. |
 | Before session 1 | Add two values to the Claude Code cloud environment (cloud environment menu in the session title bar → Edit → API credentials, or environment variables): `CLOUDFLARE_API_TOKEN` (a token with Workers Scripts: Edit, Workers Routes: Edit, DNS: Edit for thenerdnextdoor.ca) and `CLOUDFLARE_ACCOUNT_ID`. Never paste them into the chat. A new session picks them up. |
-| Still open | (a) Which subdomain for the game, e.g. `baby.thenerdnextdoor.ca` or `play.thenerdnextdoor.ca`. (b) Strike any Price Is Right candidate that is on your registry (see game 1). (c) Trim or extend the character roster list (see *Character select*). |
+| Still open | (a) Which subdomain for the game, e.g. `baby.thenerdnextdoor.ca` or `play.thenerdnextdoor.ca`. (b) Strike any Price Is Right candidate that is on your registry (see game 1). (c) Trim or extend the character roster list (see *Character select*). (d) Commit your Fit the Diaper Bag design (images, sketches or notes) to `game/docs/diaper-bag-design/` before the game sessions start. |
 
 ---
 
@@ -119,9 +119,21 @@ ten on the invite, so 80 guests rarely double up. Rules:
   (Dragon Quest), Cuphead, Shovel Knight, Hollow Knight.
 - `data/avatars.js` is the data source: slug, display name, franchise, file, and which
   signature move to play (one of the four coded moves or the generic jump + sparkle).
+- **Every avatar is unique: no two players share the same character in the same
+  colour.** Give each character four palette variants (P1 is the original, P2–P4 are
+  "alternate costume" colours like a fighting game's colour select), so the roster
+  offers 160+ unique picks for 80 guests. Generate the variants offline with a script
+  (`scripts/make-avatar-palettes.mjs`, Node + pngjs) that hue-shifts the saturated
+  colours of each sprite while preserving black outlines, whites, greys and skin tones;
+  write the results as `mario-p2.png` etc. and review every variant by eye, replacing
+  any that looks wrong with a hand-picked palette in the script's overrides table. Do
+  this at build time, not in the browser, so every phone shows identical pixels.
 - Pick screen: a scrollable "CHARACTER SELECT" grid grouped by franchise with a search
-  box and a random button; big tap targets; the chosen sprite does its move on pick.
-  Duplicates are allowed; a shared sprite gets a small numbered badge.
+  box and a random button; big tap targets; tapping a character cycles its colours
+  (P1 → P2 → P3 → P4) and the sprite does its move on confirm. The server owns the
+  taken list: a taken character+colour is greyed with "TAKEN" and the next free colour
+  is offered automatically. Bots take real slots too so rehearsals reflect a full room.
+  A player can change avatar from the lobby until the host presses START.
 
 ## Join flow and lobby
 
@@ -197,7 +209,7 @@ Every round is worth **up to 1000 points**; the boss round up to 2000.
 - Ordering: `1000 × (concordant pairs / total pairs)`, +200 for perfect.
 Ties share a rank (1, 1, 3). Ranks recompute from totals after every round.
 
-## The games (5 games × 3 rounds + a 3-question boss = 18 rounds)
+## The games (6 games × 3 rounds + a 3-question boss = 21 rounds; any round can be skipped from the host page)
 
 All content lives in `public/data/*.js` as plain objects I can edit without touching
 code. Write all copy in the playful game voice already used on the site.
@@ -271,7 +283,31 @@ Round 3: baby gear cheapest to priciest (reuse the researched prices). Touch dra
 page scroll disabled and a ghost tile; a "LOCK IN" button. Reveal: tiles snap into the
 right order one by one with a check or cross per position.
 
-### 6. BOSS BATTLE  (4-option quiz · 10 s per question · 3 questions · double points)
+### 6. FIT THE DIAPER BAG  (grid packing · 45 s · hands-on)
+Pack as much as you can into the diaper bag before time runs out. **My own design for
+this game is in `game/docs/diaper-bag-design/`; follow it for look and item list, and
+apply the mechanics below so it stays crisp on every phone.**
+- Mechanics: the bag's interior is a grid (about 8 × 10 cells) in a bag-shaped
+  silhouette, drawn at the site's pixel scale. Items are Tetris-like shapes drawn from
+  the item list (pacifier 1×1, bottle 1×3, wipes 2×2, diaper pack 3×3, onesie L-shape,
+  blanket 4×2, teddy T-shape, snack pouch 1×2, and so on), each with a pixel icon.
+  Items sit in a tray below the bag; drag one into the bag, it snaps to the grid, tap it
+  to rotate 90°, drag it back out to remove. Invalid placement (overlap or outside the
+  silhouette) shakes red and bounces back. Use pointer events with `touch-action:
+  none`, a ghost preview under the finger, and a pixel "thunk" sound on snap. Snapping
+  to a grid is what keeps this from looking sloppy: never free-form or physics-based
+  placement.
+- Scoring: cells covered, plus item values (essentials like diapers, wipes and a bottle
+  are worth more; forgetting any essential costs 100). Relative scoring: best packer
+  gets 1000.
+- Round 1: the everyday bag. Round 2: "DAY TRIP", a bigger, oddly shaped bag with more
+  items than can fit, so choices matter. Round 3: "TWINS": two of every essential and a
+  30 s timer.
+- Reveal: the winner's packed bag is shown with its items dropping in one by one; then a
+  fill-percentage bar race for the top five. The host STAGE view and TV show live fill
+  percentages during play.
+
+### 7. BOSS BATTLE  (4-option quiz · 10 s per question · 3 questions · double points)
 The classic format, saved for last and framed as a boss fight: each correct answer deals
 damage to a pixel boss built from the deco assets (a giant pacifier or crying-baby boss;
 no new characters). Write ten baby-trivia questions with surprising answers in
@@ -327,12 +363,67 @@ Also `host.html?demo=1` auto-advances every phase on a timer.
   Right list for my confirmation, the list of data files I must fill in (baby photos,
   Mom or Dad answers), and anything I need to do manually.
 
-## Phasing (one session each; each ends with a deployed, working game)
+## Phasing
 
 1. **Engine:** Worker + Durable Object, join flow, character select with the full
    roster, lobby, host remote with STAGE view, TV page, state machine, scoring, hype
    engine, bots, and one game (Price Is Right, including the price research).
    Rehearse end to end with 80 bots.
-2. **Games:** Where's the Binky?, Mom or Dad?, Diaper Dash, Put It In Order, Boss Battle.
-3. **Polish:** predictions, finale, audio pass, robustness checklist, printables,
+   Write `game/README.md#game-module-contract` (below) and ship Price Is Right as the
+   reference implementation of it, so the game sessions in phase 2 can run in parallel.
+2. **Games, in parallel:** one session per game, each on its own branch from the
+   phase 1 branch, using the *Game session prompt* below: Where's the Binky?, Mom or
+   Dad?, Diaper Dash, Put It In Order, Fit the Diaper Bag, Boss Battle.
+3. **Integration:** one session merges the six branches, resolves conflicts, runs the
+   80-bot rehearsal through all 21 rounds, fixes what breaks, deploys.
+4. **Polish:** predictions, finale, audio pass, robustness checklist, printables,
    README, final rehearsal.
+
+## Game module contract (phase 1 writes this; every game follows it)
+
+A game is three files plus tests, and touches nothing else:
+- `public/games/<id>.js` exports `{ id, title, tagline, rounds, howto(round),
+  mount(el, content, api), unmount(), reveal(el, revealData, api) }`. `api` gives
+  `submit(answer)`, `timeLeft()`, `sfx(name)`, `me()`, and `players()`. Mount renders
+  the round's input; reveal renders the answer animation. No game talks to the socket
+  directly.
+- `src/games/<id>.js` exports `{ id, content(round, data), score(answersById, round,
+  data) → pointsById, revealData(answersById, round, data), botAnswer(round, data,
+  bot) }`. Pure functions, no I/O, unit-tested.
+- `public/data/<id>.js`: the editable content.
+- The engine registers games from `src/games/index.js` and `public/games/index.js` in
+  play order. Live-tally hooks (`liveStat(answersById)`) are optional and feed the host
+  STAGE view and TV during play.
+
+## Game session prompt (paste one per game, in parallel sessions)
+
+> You are implementing the game **<NAME>** for the party game in this repo. Start from
+> branch `<phase-1 branch>` and work on branch `game/<id>`. Read `game/README.md`,
+> especially the game module contract, and read `src/games/price.js` and
+> `public/games/price.js` as the reference implementation. Then read the spec for
+> <NAME> in `GAME-PROMPT.md`. Build the three files, bot answers, unit tests for
+> scoring, and the how-to demo loop. Do not edit engine files; if the contract is
+> missing something you need, add the smallest possible extension and document it in
+> the README under "contract changes" so the integration session can reconcile it.
+> Test on a local `wrangler dev` with 30 bots at phone width, save screenshots of every
+> screen of this game to `game/docs/screens/<id>/`, commit and push the branch. Do not
+> deploy.
+
+## Expected timeline (wall-clock, assuming you answer questions within the hour)
+
+These are estimates for autonomous Claude Code sessions. Sessions vary; the real risks
+are the first Cloudflare deploy and iOS quirks that only show up on real phones.
+
+| Step | Sessions | Agent time | Your time |
+|---|---|---|---|
+| Your prep: Cloudflare token, subdomain choice, baby photos, Mom or Dad answers, registry strike-through | – | – | 1–1.5 h |
+| Phase 1: engine + Price Is Right + research + first deploy | 1 | 4–6 h | 30 min (plan approval, deploy hiccups) |
+| Phase 2: six game sessions in parallel | 6 | longest one 3–4 h (Diaper Bag and Binky are the big ones; Boss Battle is about 1.5 h) | 30 min |
+| Phase 3: integration + 80-bot rehearsal | 1 | 2–3 h | 15 min |
+| Phase 4: polish, finale, printables, README | 1 | 3–4 h | 15 min |
+| Real-phone rehearsal with 5–10 friends, then one fix session | 1 | 1–2 h | 1.5 h |
+
+Total agent time about 15–20 hours; **wall-clock about 3 working days** with the game
+sessions in parallel (about 5 days if run one at a time). With the party on October 17,
+aim for: engine by day 1, games and integration by day 2, polish by day 3, real-phone
+rehearsal by October 13, and code freeze on October 15.
