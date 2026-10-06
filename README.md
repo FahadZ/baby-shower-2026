@@ -43,7 +43,9 @@ The guest confirmation email text is in `apps-script/Code.gs` (the `EVENT` objec
 
 Each RSVP is a row in the **"Baby Shower 2026 RSVPs"** Google Sheet:
 
-`Timestamp | Name | Email | Attending | Adults | Kids | Message | Last Updated`
+`Timestamp | Name | Email | Attending | Adults | Kids | Guest Names | Message | Last Updated`
+
+A **Guest List** tab is rebuilt after every RSVP: one row per person attending (Adult or Kid), with who RSVP'd for them, plus totals. Attending guests must enter a name for every extra player and kid.
 
 A **Summary** tab shows total RSVPs, attending RSVPs, adults attending, kids attending (for toys and food), total headcount, declines, and the last response time.
 

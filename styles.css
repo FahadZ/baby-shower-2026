@@ -349,6 +349,10 @@ strong { font-weight: 400; color: var(--cream-2); }
 .player-option.is-disabled span { opacity: .35; }
 .player-option input:disabled { cursor: not-allowed; }
 
+.party.is-empty { display: none; }
+.party .help { margin: 0 0 12px !important; }
+.party-names { display: flex; flex-direction: column; gap: 12px; }
+.party-row label { font-size: .85em; }
 .hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
 .form-status:empty { display: none; }
 .form-status { margin: 0; text-align: center; font-size: .9em; }
@@ -372,13 +376,7 @@ strong { font-weight: 400; color: var(--cream-2); }
 
 /* Signature moves */
 .fx { position: absolute; z-index: 6; pointer-events: none; overflow: visible; }
-.fx-ghost { pointer-events: none; z-index: 1; filter: brightness(1.6) drop-shadow(0 0 4px #7fdcff); }
 .speech-poke { background: #fffaf0; border-radius: 0; }
-.speech-ff {
-  background: linear-gradient(#2a46c8, #0f1f77); color: #fff; border: 3px solid #e8e8f0;
-  box-shadow: 0 0 0 2px #1d1b18, 4px 4px 0 2px rgba(0,0,0,.35); letter-spacing: .08em;
-}
-.speech-ff::after { display: none; }
 
 /* Kirby's copy ability */
 .kirby-fx { position: absolute; z-index: 3; height: auto; max-width: none; pointer-events: none; image-rendering: pixelated; }

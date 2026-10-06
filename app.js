@@ -355,16 +355,48 @@
       var label = document.createElement("label");
       label.className = "player-option";
       label.innerHTML = '<input type="radio" name="' + name + '" value="' + i + '"' + (i === from ? " checked" : "") + ">" +
-        "<span><b>" + (i === to && name === "kids" ? i + "+" : i) + "</b>" + labelFor(i) + "</span>";
+        "<span><b>" + i + "</b>" + labelFor(i) + "</span>";
       wrap.appendChild(label);
     }
-    wrap.addEventListener("change", function () { sfx("blip"); });
+    wrap.addEventListener("change", function () { sfx("blip"); renderParty(); });
   }
 
   function buildPlayerOptions() {
     var n = P.maxPlayers || 5;
     buildOptions($("#playerOptions"), "guests", 1, n, function (i) { return i === 1 ? "PLAYER" : "PLAYERS"; });
     buildOptions($("#kidOptions"), "kids", 0, n, function (i) { return i === 0 ? "NO KIDS" : (i === 1 ? "KID" : "KIDS"); });
+  }
+
+  // One required name field per extra player and per kid.
+  function partyCounts() {
+    var g = Number(($('input[name="guests"]:checked') || {}).value || 1);
+    var k = Number(($('input[name="kids"]:checked') || {}).value || 0);
+    return { adults: Math.max(0, g - 1), kids: k };
+  }
+  function renderParty() {
+    var wrap = $("#partyNames");
+    var keep = {};
+    $$("input", wrap).forEach(function (i) { keep[i.id] = i.value; });
+    var c = partyCounts();
+    var rows = [];
+    for (var a = 2; a <= c.adults + 1; a++) rows.push({ id: "pA" + a, label: "PLAYER " + a + " NAME", kind: "adult" });
+    for (var k = 1; k <= c.kids; k++) rows.push({ id: "pK" + k, label: "KID " + k + " NAME", kind: "kid" });
+    wrap.innerHTML = "";
+    rows.forEach(function (r) {
+      var f = document.createElement("div");
+      f.className = "field party-row";
+      f.innerHTML = '<label for="' + r.id + '">' + r.label + ' <span class="req" aria-hidden="true">*</span></label>' +
+        '<input id="' + r.id + '" type="text" data-kind="' + r.kind + '" autocomplete="off" maxlength="100" required aria-describedby="e' + r.id + '">' +
+        '<p class="error" id="e' + r.id + '" role="alert"></p>';
+      wrap.appendChild(f);
+      var inp = f.querySelector("input");
+      inp.value = keep[r.id] || "";
+      inp.addEventListener("input", function () { if (this.getAttribute("aria-invalid")) setError(this, ""); });
+    });
+    $("#partyField").classList.toggle("is-empty", rows.length === 0);
+  }
+  function partyNames(kind) {
+    return $$('#partyNames input[data-kind="' + kind + '"]').map(function (i) { return i.value.trim(); });
   }
 
   function setMode(m) {
@@ -406,6 +438,12 @@
     if (!ev) { setError(email, "We need an email to save your game."); ok = false; }
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(ev)) { setError(email, "Hmm, that email looks glitched. Try again?"); ok = false; }
     else setError(email, "");
+    if (mode === "yes") {
+      $$("#partyNames input").forEach(function (i) {
+        if (!i.value.trim()) { setError(i, "Please add this " + (i.dataset.kind === "kid" ? "kid's" : "player's") + " name."); ok = false; }
+        else setError(i, "");
+      });
+    }
     if (!ok) {
       sfx("error");
       var first = $('[aria-invalid="true"]');
@@ -416,6 +454,7 @@
 
   function initForm() {
     buildPlayerOptions();
+    renderParty();
     var saved = store("rsvp");
     if (saved) {
       try {
@@ -441,6 +480,8 @@
         attending: mode,
         guests: mode === "yes" ? Number((f.querySelector('input[name="guests"]:checked') || {}).value || 1) : 0,
         kids: mode === "yes" ? Number((f.querySelector('input[name="kids"]:checked') || {}).value || 0) : 0,
+        adultNames: mode === "yes" ? partyNames("adult") : [],
+        kidNames: mode === "yes" ? partyNames("kid") : [],
         message: f.message.value.trim(),
         website: f.website.value
       };
@@ -822,7 +863,7 @@
   }
 
   // ---------------------------------------------------------------
-  //  Signature moves: Pikachu's Thunderbolt, Cloud's Cross Slash and
+  //  Signature moves: Pikachu's Thunderbolt, Cloud's sword swing and
   //  Link's Spin Attack. The sprites are the invite's; the lightning,
   //  slashes and sword arc are drawn effects layered on top.
   // ---------------------------------------------------------------
@@ -896,49 +937,33 @@
     aura.cancel();
   }
 
-  async function crossSlash(img) {
+  // Cloud: one clean swing of the Buster Sword, a wave of light trailing the blade.
+  async function swordSwing(img) {
     var parent = img.offsetParent, b = box(img);
-    say(img, "LIMIT BREAK! CROSS SLASH", 2600, "ff", "hero");
-    sfx("charge");
-    // Glow up, then lunge left with afterimages.
-    await play(img, [{ filter: "none" }, { filter: "brightness(1.6) drop-shadow(0 0 8px #9fe8ff)" }, { filter: "brightness(1.2)" }], { duration: 500, easing: "steps(3)" });
-    var ghosts = [1, 2, 3].map(function (n) {
-      var g = img.cloneNode(); g.removeAttribute("role"); g.removeAttribute("tabindex"); g.setAttribute("aria-hidden", "true");
-      g.className = "sprite fx-ghost"; g.style.opacity = String(0.45 - n * 0.12);
-      parent.insertBefore(g, img);
-      return g;
+    var size = b.w * 1.15;
+    var wave = fxSvg(parent, b.x + b.w * 0.42 - size * 0.9, b.y + b.h * 0.04, size, size, "0 0 100 100",
+      '<path d="M88 14 A58 58 0 0 0 14 84" fill="none" stroke="#9fe8ff" stroke-opacity=".55" stroke-width="12" stroke-linecap="round" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1"/>' +
+      '<path d="M88 14 A58 58 0 0 0 14 84" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1"/>');
+    wave.style.opacity = "0";
+    img.style.transformOrigin = "50% 100%";
+    // Wind up...
+    await play(img, [{ transform: "rotate(0deg)" }, { transform: "rotate(6deg) translateY(1%)" }], { duration: 260, easing: "steps(2)" });
+    // ...swing, with the light wave drawn along the blade's path.
+    sfx("slash");
+    wave.style.opacity = "1";
+    var paths = wave.querySelectorAll("path");
+    var draw = Array.prototype.map.call(paths, function (p) {
+      return p.animate([{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }], { duration: 220, easing: "ease-out", fill: "forwards" }).finished;
     });
-    var lunge = -b.w * 0.55;
-    ghosts.forEach(function (g, i) {
-      g.animate([{ transform: "translateX(0)" }, { transform: "translateX(" + lunge * (1 - (i + 1) * 0.25) + "px)" }], { duration: 220, easing: "steps(3)", fill: "forwards" });
-    });
-    await play(img, [{ transform: "translateX(0)", filter: "brightness(1.2)" }, { transform: "translateX(" + lunge + "px)", filter: "none" }], { duration: 220, easing: "steps(3)" });
-
-    // Three strokes carve the Cross Slash mark: \ then / then the bracket.
-    var size = b.h * 0.95;
-    var sx = b.x + lunge - size * 0.85, sy = b.y + b.h * 0.05;
-    var strokes = ["M18 20 L82 80", "M82 20 L18 80", "M16 30 L16 88 L84 88 L84 30"];
-    var mark = fxSvg(parent, sx, sy, size, size, "0 0 100 100",
-      '<g fill="none" stroke-linecap="square" stroke-linejoin="miter">' +
-      strokes.map(function (d, i) {
-        return '<path class="slash-glow" d="' + d + '" stroke="#7fdcff" stroke-width="9" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1"/>' +
-               '<path class="slash-core" d="' + d + '" stroke="#ffffff" stroke-width="3.5" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1"/>';
-      }).join("") + "</g>");
-    var paths = mark.querySelectorAll("path");
-    for (var i = 0; i < strokes.length; i++) {
-      sfx("slash");
-      img.animate([{ transform: "translateX(" + lunge + "px) scale(1.04,.96)" }, { transform: "translateX(" + lunge + "px)" }], { duration: 160, easing: "steps(2)" });
-      await Promise.all([paths[i * 2], paths[i * 2 + 1]].map(function (p) {
-        return p.animate([{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }], { duration: 170, easing: "linear", fill: "forwards" }).finished;
-      }));
-      await wait(110);
-    }
-    // The mark flashes, then fades; Cloud steps back.
-    await play(mark, [{ opacity: 1, filter: "none" }, { opacity: 1, filter: "brightness(2) drop-shadow(0 0 8px #7fdcff)", offset: 0.3 }, { opacity: 0 }], { duration: 700, easing: "steps(4)" });
-    mark.remove();
-    ghosts.forEach(function (g) { g.remove(); });
-    await play(img, [{ transform: "translateX(" + lunge + "px)" }, { transform: "translateX(0)" }], { duration: 260, easing: "steps(3)" });
+    await Promise.all([play(img, [{ transform: "rotate(6deg) translateY(1%)" }, { transform: "rotate(-7deg) translateX(-4%)" }], { duration: 220, easing: "steps(3)" })].concat(draw));
+    // Let the wave fade out as he settles back.
+    await Promise.all([
+      play(wave, [{ opacity: 1 }, { opacity: 0, transform: "translateX(-6%)" }], { duration: 450, easing: "ease-out" }),
+      play(img, [{ transform: "rotate(-7deg) translateX(-4%)" }, { transform: "rotate(0deg)" }], { duration: 450, easing: "steps(3)" })
+    ]);
+    wave.remove();
     img.getAnimations().forEach(function (a) { a.cancel(); });
+    img.style.transformOrigin = "";
   }
 
   async function spinAttack(img) {
@@ -970,7 +995,7 @@
     img.getAnimations().forEach(function (a) { a.cancel(); });
   }
 
-  var MOVES = { pikachu: thunderbolt, cloud: crossSlash, link: spinAttack };
+  var MOVES = { pikachu: thunderbolt, cloud: swordSwing, link: spinAttack };
 
   async function runMove(img, name) {
     img.dataset.busy = "1";
@@ -978,7 +1003,7 @@
     try { await MOVES[name](img); }
     catch (e) { img.getAnimations().forEach(function (a) { a.cancel(); }); }
     finally {
-      $$(".fx, .fx-ghost", img.offsetParent || document).forEach(function (n) { n.remove(); });
+      $$(".fx", img.offsetParent || document).forEach(function (n) { n.remove(); });
       img.style.filter = "";
       delete img.dataset.busy;
     }

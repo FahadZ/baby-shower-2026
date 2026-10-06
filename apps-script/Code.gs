@@ -22,7 +22,8 @@ var EVENT = {
 
 var SHEET_NAME = "RSVPs";
 var SUMMARY_NAME = "Summary";
-var HEADERS = ["Timestamp", "Name", "Email", "Attending", "Adults", "Kids", "Message", "Last Updated"];
+var GUESTS_NAME = "Guest List";
+var HEADERS = ["Timestamp", "Name", "Email", "Attending", "Adults", "Kids", "Guest Names", "Message", "Last Updated"];
 
 // ------------------------------------------------------------------
 //  One-time setup: run this from the Apps Script editor (▶ Run).
@@ -44,8 +45,9 @@ function setup() {
     .setFontWeight("bold").setBackground("#ead7b8");
   sheet.setFrozenRows(1);
   sheet.getRange("A:A").setNumberFormat("yyyy-mm-dd hh:mm");
-  sheet.getRange("H:H").setNumberFormat("yyyy-mm-dd hh:mm");
+  sheet.getRange("I:I").setNumberFormat("yyyy-mm-dd hh:mm");
   sheet.setColumnWidth(7, 320);
+  sheet.setColumnWidth(8, 320);
 
   var summary = ss.getSheetByName(SUMMARY_NAME) || ss.insertSheet(SUMMARY_NAME);
   summary.clear();
@@ -57,11 +59,13 @@ function setup() {
     ["Kids attending (toys & food)", '=SUMIF(RSVPs!D2:D,"Yes",RSVPs!F2:F)'],
     ["Total headcount", "=B4+B5"],
     ["Declines", '=COUNTIF(RSVPs!D2:D,"No")'],
-    ["Last response", '=IF(COUNTA(RSVPs!H2:H)=0,"—",MAX(RSVPs!H2:H))']
+    ["Last response", '=IF(COUNTA(RSVPs!I2:I)=0,"—",MAX(RSVPs!I2:I))']
   ]);
   summary.getRange("A1:B1").setFontWeight("bold").setBackground("#ead7b8");
   summary.getRange("B8").setNumberFormat("yyyy-mm-dd hh:mm");
   summary.setColumnWidth(1, 200);
+
+  rebuildGuestList_();
 
   if (!props.getProperty("NOTIFY_EMAIL")) {
     props.setProperty("NOTIFY_EMAIL", Session.getEffectiveUser().getEmail());
@@ -128,13 +132,22 @@ function validate(d) {
   var attending = String(d.attending || "").toLowerCase() === "yes" ? "Yes" : "No";
   if (!name) throw new Error("Name is required");
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email) || email.length > 200) throw new Error("A valid email is required");
-  var guests = 0, kids = 0;
+  var guests = 0, kids = 0, adultNames = [], kidNames = [];
   if (attending === "Yes") {
     guests = parseInt(d.guests, 10);
     if (!(guests >= 1 && guests <= EVENT.maxGuests)) guests = 1;
     kids = parseInt(d.kids, 10);
     if (!(kids >= 0)) kids = 0;
     kids = Math.min(kids, EVENT.maxGuests);
+    var list = function (v, n) {
+      return (Array.isArray(v) ? v : []).slice(0, n).map(function (x) { return clean(x, 100); });
+    };
+    adultNames = list(d.adultNames, guests - 1);
+    kidNames = list(d.kidNames, kids);
+    if (adultNames.length < guests - 1 || kidNames.length < kids ||
+        adultNames.concat(kidNames).some(function (x) { return !x; })) {
+      throw new Error("Please add a name for every guest");
+    }
   }
   return {
     name: name,
@@ -142,6 +155,11 @@ function validate(d) {
     attending: attending,
     guests: guests,
     kids: kids,
+    adultNames: adultNames,
+    kidNames: kidNames,
+    guestNames: attending === "Yes"
+      ? [name].concat(adultNames).concat(kidNames.map(function (k) { return k + " (kid)"; })).join("; ")
+      : "",
     message: clean(d.message, 1000)
   };
 }
@@ -168,14 +186,46 @@ function upsert(r) {
     }
     if (rowIndex > 0) {
       // Keep the original timestamp; refresh everything else.
-      sheet.getRange(rowIndex, 2, 1, 7).setValues([[r.name, r.email, r.attending, r.guests, r.kids, r.message, now]]);
+      sheet.getRange(rowIndex, 2, 1, 8).setValues([[r.name, r.email, r.attending, r.guests, r.kids, r.guestNames, r.message, now]]);
+      rebuildGuestList_();
       return { updated: true, row: rowIndex };
     }
-    sheet.appendRow([now, r.name, r.email, r.attending, r.guests, r.kids, r.message, now]);
+    sheet.appendRow([now, r.name, r.email, r.attending, r.guests, r.kids, r.guestNames, r.message, now]);
+    rebuildGuestList_();
     return { updated: false, row: sheet.getLastRow() };
   } finally {
     lock.releaseLock();
   }
+}
+
+// One row per person attending, rebuilt from the RSVPs tab after every save.
+function rebuildGuestList_() {
+  var ss = SpreadsheetApp.openById(PropertiesService.getScriptProperties().getProperty("SHEET_ID"));
+  var src = ss.getSheetByName(SHEET_NAME);
+  var out = ss.getSheetByName(GUESTS_NAME) || ss.insertSheet(GUESTS_NAME);
+  var rows = [];
+  var last = src.getLastRow();
+  if (last > 1) {
+    src.getRange(2, 1, last - 1, HEADERS.length).getValues().forEach(function (row) {
+      if (row[3] !== "Yes") return;
+      String(row[6] || row[1]).split(/;\s*/).forEach(function (g) {
+        if (!g) return;
+        var kid = / \(kid\)$/.test(g);
+        rows.push([g.replace(/ \(kid\)$/, "").replace(/^'/, ""), kid ? "Kid" : "Adult", String(row[1]).replace(/^'/, ""), row[2]]);
+      });
+    });
+  }
+  out.clear();
+  out.getRange(1, 1, 1, 4).setValues([["Guest", "Type", "RSVP'd by", "RSVP email"]])
+    .setFontWeight("bold").setBackground("#ead7b8");
+  out.setFrozenRows(1);
+  if (rows.length) out.getRange(2, 1, rows.length, 4).setValues(rows);
+  out.getRange(rows.length + 3, 1, 3, 2).setValues([
+    ["Adults", '=COUNTIF(B2:B' + (rows.length + 1) + ',"Adult")'],
+    ["Kids", '=COUNTIF(B2:B' + (rows.length + 1) + ',"Kid")'],
+    ["Total guests", rows.length]
+  ]).setFontWeight("bold");
+  out.setColumnWidth(1, 220); out.setColumnWidth(3, 220); out.setColumnWidth(4, 220);
 }
 
 // ------------------------------------------------------------------
@@ -200,7 +250,8 @@ function notifyHosts(r, updated) {
   var sheetUrl = "https://docs.google.com/spreadsheets/d/" + PropertiesService.getScriptProperties().getProperty("SHEET_ID");
   var rows = [
     ["Name", r.name], ["Email", r.email], ["Attending", r.attending],
-    ["Adults", yes ? r.guests : "—"], ["Kids", yes ? r.kids : "—"], ["Message", r.message || "—"]
+    ["Adults", yes ? r.guests : "—"], ["Kids", yes ? r.kids : "—"],
+    ["Guests", yes ? r.guestNames : "—"], ["Message", r.message || "—"]
   ];
   var html = '<div style="font-family:Arial,sans-serif;font-size:15px">' +
     "<p><b>" + (updated ? "An RSVP was updated." : "A new RSVP just came in!") + "</b></p>" +
@@ -234,6 +285,7 @@ function confirmGuest(r, updated) {
     ? "<p style=\"background:#ead7b8;border:3px solid #1d1b18;padding:12px\">" +
       "📅 <b>" + EVENT.dateText + "</b><br>🕑 <b>" + EVENT.timeText + "</b><br>📍 <b>" + EVENT.address + "</b><br>" +
       '<a href="' + mapUrl() + '">Open in Google Maps</a></p>' +
+      "<p><b>Your party:</b> " + esc(r.guestNames) + "</p>" +
       "<p><b>Optional side quest:</b> come dressed as any character you love — games, movies, TV, anime, cartoons &amp; beyond.</p>"
     : "";
   var html = '<div style="font-family:Arial,sans-serif;font-size:15px;color:#1d1b18;max-width:520px">' +
@@ -257,9 +309,9 @@ function json(obj) {
 function testSubmit() {
   var email = Session.getEffectiveUser().getEmail();
   var send = function (d) { return doPost({ postData: { contents: JSON.stringify(d) } }).getContent(); };
-  Logger.log(send({ name: "Test Attending", email: email, attending: "yes", guests: 3, kids: 1, message: "Test RSVP" }));
+  Logger.log(send({ name: "Test Attending", email: email, attending: "yes", guests: 3, kids: 1, adultNames: ["Test Partner", "Test Friend"], kidNames: ["Test Kid"], message: "Test RSVP" }));
   Logger.log(send({ name: "Test Decline", email: "decline+test@example.com", attending: "no", message: "Test decline" }));
-  Logger.log(send({ name: "Test Attending (edited)", email: email, attending: "yes", guests: 2, message: "Updated" }));
+  Logger.log(send({ name: "Test Attending (edited)", email: email, attending: "yes", guests: 2, adultNames: ["Test Partner"], message: "Updated" }));
 }
 
 function removeTestRows() {
