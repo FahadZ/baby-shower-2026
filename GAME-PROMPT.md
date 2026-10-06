@@ -11,7 +11,7 @@ Like `PROMPT.md`, keep personal details (PIN, tokens) out of committed files.
 | Effort | **high** for the whole build. Go to **max** only if a session gets stuck on sync bugs or timing drift. Lower effort will cut corners on the leaderboard animations and reconnect handling, the two things that make or break this on the day. |
 | Mode | Start in **plan mode**, approve the plan, then let it run. One engine session, then six game sessions in parallel, then integration and polish (see *Phasing* and *Expected timeline* at the end). Every session ends with pushed, working code. |
 | Before session 1 | Add two values to the Claude Code cloud environment (cloud environment menu in the session title bar → Edit → API credentials, or environment variables): `CLOUDFLARE_API_TOKEN` (a token with Workers Scripts: Edit, Workers Routes: Edit, DNS: Edit for thenerdnextdoor.ca) and `CLOUDFLARE_ACCOUNT_ID`. Never paste them into the chat. A new session picks them up. |
-| Still open | (a) Which subdomain for the game, e.g. `baby.thenerdnextdoor.ca` or `play.thenerdnextdoor.ca`. (b) Strike any Price Is Right candidate that is on your registry (see game 1). (c) Trim or extend the character roster list (see *Character select*). (d) Commit your Fit the Diaper Bag design (images, sketches or notes) to `game/docs/diaper-bag-design/` before the game sessions start. |
+| Still open | (a) Strike any Price Is Right candidate that is on your registry (see game 1). (b) Trim or extend the character roster list (see *Character select*). (c) Commit your Fit the Diaper Bag design (images, sketches or notes) to `game/docs/diaper-bag-design/` before the game sessions start. |
 
 ---
 
@@ -53,9 +53,9 @@ in the environment as `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`).
 
 - The whole game is one Worker project in `game/`: `wrangler.jsonc`, `src/` (Worker +
   Durable Object), `public/` (static front end served with Workers Static Assets). One
-  `wrangler deploy` ships both. Bind a custom domain (I'll tell you which subdomain;
-  default to `baby.thenerdnextdoor.ca`). Vendor nothing from CDNs; all front-end code is
-  plain JS modules in `public/`.
+  `wrangler deploy` ships both. Bind the custom domain **baby.thenerdnextdoor.ca**
+  (the zone is already on my Cloudflare account). Vendor nothing from CDNs; all
+  front-end code is plain JS modules in `public/`.
 - **One Durable Object instance is the game room.** Use the WebSocket Hibernation API
   (`ctx.acceptWebSocket`, `webSocketMessage`, `webSocketClose`; never `ws.accept()` or
   `addEventListener` inside the DO). It supports thousands of sockets per object, so 80
