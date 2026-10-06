@@ -126,6 +126,9 @@
     coin: [[988, 0.07], [1319, 0.25]],
     start: [[523, 0.08], [659, 0.08], [784, 0.08], [1047, 0.2]],
     jump: [[440, 0.04], [660, 0.04], [880, 0.06]],
+    inhale: [[1046, 0.06], [880, 0.06], [740, 0.06], [622, 0.06], [523, 0.06], [440, 0.06], [370, 0.08]],
+    swallow: [[196, 0.07], [392, 0.07], [784, 0.12]],
+    spit: [[784, 0.04], [1175, 0.1]],
     win: [[523, 0.1], [659, 0.1], [784, 0.1], [1047, 0.12], [784, 0.08], [1047, 0.3]],
     over: [[392, 0.18], [370, 0.18], [349, 0.18], [330, 0.4]],
     error: [[196, 0.12], [147, 0.2]]
@@ -525,6 +528,7 @@
     bubble.style.top = "0px";
   }
   function hop(img) {
+    if (img.dataset.busy) return; // Kirby mid-inhale
     img.classList.remove("hop");
     void img.offsetWidth;
     img.classList.add("hop");
@@ -617,7 +621,7 @@
       if (document.hidden) return;
       var visible = $$(".screen.is-active .sprite").filter(function (i) {
         var r = i.getBoundingClientRect();
-        return r.bottom > 0 && r.top < window.innerHeight && spriteName(i) !== "pacman";
+        return r.bottom > 0 && r.top < window.innerHeight && spriteName(i) !== "pacman" && !i.dataset.busy;
       });
       if (!visible.length) return;
       var img = visible[Math.floor(Math.random() * visible.length)];
@@ -627,6 +631,151 @@
         setTimeout(function () { img.classList.remove("glance"); }, 900);
       }
     }, 2600);
+  }
+
+  // ---------------------------------------------------------------
+  //  Kirby's copy ability: something falls, he inhales it, wears it,
+  //  then spits it out as a star and goes back to pink. Uses only art
+  //  cropped from the invite (mushroom, Tetris blocks, sparkle).
+  // ---------------------------------------------------------------
+  var ABILITIES = [
+    { name: "MUSHROOM KIRBY!", src: "assets/sprites/mushroom.png", size: 0.48, hat: 0.46,
+      filter: "hue-rotate(-42deg) saturate(2.2) brightness(.95)" },
+    { name: "BLOCK KIRBY!", src: "assets/deco/block-s.png", size: 0.66, hat: 0.56,
+      filter: "hue-rotate(150deg) saturate(1.2) brightness(.95)" },
+    { name: "STAR KIRBY!", src: "assets/deco/sparkle.png", size: 0.62, hat: 0.56,
+      filter: "sepia(1) saturate(5) hue-rotate(8deg) brightness(1.15) drop-shadow(0 0 6px rgba(255,220,90,.9))" }
+  ];
+
+  function wait(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+  function play(el, frames, opts) {
+    var a = el.animate(frames, Object.assign({ fill: "forwards" }, opts));
+    return a.finished.catch(function () {});
+  }
+
+  function initKirby() {
+    var kirby = $('.ledge-right .sprite[data-at="kirby"]');
+    if (!kirby || reduceMotion || !kirby.animate) return;
+    var ledge = kirby.parentNode;
+    var last = -1;
+
+    function pick() {
+      var i;
+      do { i = Math.floor(Math.random() * ABILITIES.length); } while (i === last && ABILITIES.length > 1);
+      last = i;
+      return ABILITIES[i];
+    }
+
+    function make(src, w, cls) {
+      var img = document.createElement("img");
+      img.src = src; img.alt = ""; img.className = "kirby-fx " + (cls || "");
+      img.setAttribute("aria-hidden", "true");
+      img.style.width = w + "px";
+      ledge.appendChild(img);
+      return img;
+    }
+
+    async function cycle() {
+      var ab = pick();
+      kirby.dataset.busy = "1";
+      kirby.classList.remove("hop", "glance");
+      var kw = kirby.offsetWidth, kh = kirby.offsetHeight;
+      var kx = kirby.offsetLeft, ky = kirby.offsetTop;
+      var mouthX = kx + kw * 0.5, mouthY = ky + kh * 0.55;
+
+      // 1. Something falls from the sky, wobbling.
+      var iw = Math.round(kw * ab.size);
+      var item = make(ab.src, iw);
+      var startX = mouthX - iw / 2 - kw * 0.15;
+      item.style.left = startX + "px";
+      item.style.top = (ky - kh * 2.6) + "px";
+      await play(item, [
+        { transform: "translate(0,-40px) rotate(0deg)", opacity: 0 },
+        { transform: "translate(6px,10px) rotate(20deg)", opacity: 1, offset: 0.25 },
+        { transform: "translate(-6px,50px) rotate(-15deg)", offset: 0.6 },
+        { transform: "translate(0," + Math.round(kh * 1.25) + "px) rotate(10deg)", opacity: 1 }
+      ], { duration: 1800, easing: "linear" });
+
+      // 2. Inhale: Kirby stretches wide, wind streaks rush in, item gets pulled into his mouth.
+      sfx("inhale");
+      var streaks = [0, 1, 2].map(function (n) {
+        var d = document.createElement("i");
+        d.className = "kirby-wind";
+        d.style.left = (mouthX - kw * 0.35 + n * kw * 0.35) + "px";
+        d.style.top = (ky - kh * 0.6) + "px";
+        d.style.height = (kh * 0.5) + "px";
+        ledge.appendChild(d);
+        d.animate([{ transform: "translateY(-10px)", opacity: 0 }, { opacity: 1, offset: 0.4 }, { transform: "translateY(" + kh * 0.5 + "px)", opacity: 0 }],
+          { duration: 260, iterations: 3, delay: n * 80 });
+        return d;
+      });
+      var inhale = play(kirby, [
+        { transform: "scale(1,1)" }, { transform: "scale(1.22,.86) translateY(4%)", offset: 0.2 },
+        { transform: "scale(1.18,.9) translateY(3%)", offset: 0.8 }, { transform: "scale(1.18,.9) translateY(3%)" }
+      ], { duration: 900, easing: "steps(6)" });
+      var ir = item.getBoundingClientRect(), lr = ledge.getBoundingClientRect();
+      var dx = mouthX - (ir.left - lr.left + ir.width / 2), dy = mouthY - (ir.top - lr.top + ir.height / 2);
+      item.getAnimations().forEach(function (a) { a.commitStyles && a.commitStyles(); a.cancel(); });
+      var cur = getComputedStyle(item).transform; if (cur === "none") cur = "";
+      await play(item, [
+        { transform: cur + " translate(0,0) scale(1)", opacity: 1 },
+        { transform: cur + " translate(" + dx + "px," + dy + "px) scale(.15) rotate(540deg)", opacity: 0.9 }
+      ], { duration: 650, easing: "cubic-bezier(.6,0,1,1)" });
+      item.remove();
+      await inhale;
+      streaks.forEach(function (d) { d.remove(); });
+
+      // 3. Gulp! Puff up, flash, and transform.
+      sfx("swallow");
+      await play(kirby, [
+        { transform: "scale(1.18,.9) translateY(3%)" }, { transform: "scale(1.28,1.2)", filter: "brightness(2)", offset: 0.35 },
+        { transform: "scale(.94,1.06)", filter: "brightness(1.6)", offset: 0.7 }, { transform: "scale(1,1)", filter: ab.filter }
+      ], { duration: 600, easing: "steps(5)" });
+      kirby.getAnimations().forEach(function (a) { a.cancel(); });
+      kirby.style.filter = ab.filter;
+      var hw = Math.round(kw * ab.hat);
+      var hat = make(ab.src, hw, "kirby-hat");
+      hat.style.left = (mouthX - hw / 2) + "px";
+      hat.style.top = (ky - hw * 0.55) + "px";
+      play(hat, [{ transform: "translateY(-12px) scale(.6)", opacity: 0 }, { transform: "none", opacity: 1 }], { duration: 300, easing: "steps(3)" });
+      say(kirby, ab.name);
+      var bob = kirby.animate([{ transform: "translateY(0)" }, { transform: "translateY(-6%)" }], { duration: 500, iterations: Infinity, direction: "alternate", easing: "steps(2)" });
+      var hatBob = hat.animate([{ transform: "translateY(0)" }, { transform: "translateY(-6%)" }], { duration: 500, iterations: Infinity, direction: "alternate", easing: "steps(2)" });
+      await wait(3200);
+      bob.cancel(); hatBob.cancel();
+
+      // 4. Release: squash, spit a star out to the left, back to pink.
+      await play(kirby, [{ transform: "scale(1,1)" }, { transform: "scale(1.2,.85)" }], { duration: 160, easing: "steps(2)" });
+      sfx("spit");
+      hat.remove();
+      kirby.style.filter = "";
+      var star = make("assets/deco/sparkle.png", Math.round(kw * 0.45), "kirby-star");
+      star.style.left = (kx - kw * 0.1) + "px";
+      star.style.top = (mouthY - kw * 0.22) + "px";
+      var flyX = -Math.max(240, ledge.closest(".frame").offsetWidth * 0.75);
+      play(kirby, [{ transform: "scale(1.2,.85)" }, { transform: "scale(.92,1.08)", offset: 0.5 }, { transform: "scale(1,1)" }], { duration: 300, easing: "steps(3)" });
+      await play(star, [
+        { transform: "translate(0,0) rotate(0deg) scale(.6)", opacity: 1 },
+        { transform: "translate(" + flyX * 0.5 + "px,-30px) rotate(360deg) scale(1)", opacity: 1, offset: 0.6 },
+        { transform: "translate(" + flyX + "px,-10px) rotate(720deg) scale(.8)", opacity: 0 }
+      ], { duration: 1100, easing: "linear" });
+      star.remove();
+      kirby.getAnimations().forEach(function (a) { a.cancel(); });
+      delete kirby.dataset.busy;
+    }
+
+    async function loop() {
+      await wait(2500);
+      for (;;) {
+        if (!document.hidden && current === "title") {
+          try { await cycle(); } catch (e) { delete kirby.dataset.busy; kirby.style.filter = ""; }
+          await wait(4000 + Math.random() * 3000);
+        } else {
+          await wait(1000);
+        }
+      }
+    }
+    loop();
   }
 
   function announce(msg) { $("#liveRegion").textContent = msg; }
@@ -647,6 +796,7 @@
     initFalling();
     initScore();
     initSprites();
+    initKirby();
     tickCountdown();
     setInterval(tickCountdown, 1000);
     if (isClosed()) {
