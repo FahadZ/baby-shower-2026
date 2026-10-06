@@ -50,7 +50,9 @@ html[data-screen="tv"] .md-rlist { grid-template-columns: repeat(5, 1fr); gap: 2
 .md-flip.in { transform: rotateY(180deg); }
 .md-face { grid-area: 1 / 1; backface-visibility: hidden; -webkit-backface-visibility: hidden; padding: 12px; border: 4px solid var(--ink); box-shadow: 4px 4px 0 #000; min-height: 120px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 8px; }
 .md-face.front { background: var(--cream); color: var(--ink); }
-.md-face.back { background: var(--bg-dark); color: var(--text); transform: rotateY(180deg); }
+.md-face.back { background: var(--bg-dark); color: var(--text); transform: rotateY(180deg); padding-top: 0; }
+.md-face.back.mom { background: #3d1a20; border-color: #ff6b78; }
+.md-face.back.dad { background: #16304a; border-color: var(--blue); }
 html[data-screen="tv"] .md-face { min-height: 320px; }
 .md-thumb { max-height: 150px; }
 .md-thumb.small { max-height: 70px; }
@@ -58,16 +60,26 @@ html[data-screen="tv"] .md-thumb { max-height: 230px; }
 html[data-screen="tv"] .md-thumb.small { max-height: 110px; }
 .md-q { font-size: .8em; line-height: 1.6; overflow-wrap: anywhere; }
 .md-face.back .md-q { font-size: .6em; color: var(--muted); }
-.md-who { display: flex; align-items: center; gap: 10px; font-size: 1.05em; color: var(--cream-2); }
-.md-who .av { height: 56px; }
-.md-who.mom span { color: #ff6b78; } .md-who.dad span { color: var(--blue); }
+.md-ans { align-self: stretch; margin: 0 -12px 2px; padding: 10px 12px; display: flex; align-items: center; justify-content: center; gap: 14px; color: #fff; text-shadow: 2px 2px 0 #000; border-bottom: 4px solid var(--ink); animation: md-ans .35s steps(4) 1; }
+.md-ans.mom { background: var(--red); } .md-ans.dad { background: #2b6fb0; }
+.md-ans .av { height: calc(var(--av) * 1.15); flex: none; }
+.md-ans-txt { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+.md-ans-lbl { font-size: .6em; opacity: .9; }
+.md-ans-big { font-size: 2em; line-height: 1; letter-spacing: 1px; }
+.md-ans-nm { font-size: .75em; }
+@keyframes md-ans { from { transform: scale(.7); } to { transform: none; } }
 .md-split { width: 100%; height: 16px; border: 3px solid var(--ink); background: var(--cream-2); display: flex; overflow: hidden; box-shadow: 2px 2px 0 #000; }
 .md-split i { display: block; height: 100%; width: 0; transition: width .6s; }
 .md-split .m { background: var(--red); } .md-split .d { background: var(--blue); }
-.md-pct { font-size: .7em; color: var(--muted); }
+.md-split.mom .d, .md-split.dad .m { opacity: .35; }
+.md-pct { font-size: .7em; color: var(--muted); width: 100%; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 4px 10px; }
+.md-pct span { white-space: nowrap; }
 .md-pct .m { color: #ff6b78; } .md-pct .d { color: var(--blue); }
-.md-mine { font-size: .75em; }
-.md-mine.ok { color: var(--green); } .md-mine.no { color: #ff6b78; } .md-mine.none { color: var(--muted); }
+.md-pct.mom .d, .md-pct.dad .m { opacity: .5; }
+.md-mine { font-size: .8em; padding: 7px 10px; border: 3px solid; box-shadow: 3px 3px 0 #000; }
+.md-mine.ok { color: var(--ink); background: var(--green); border-color: var(--green-dark); }
+.md-mine.no { color: #fff; background: #8a2430; border-color: var(--red); text-shadow: 1px 1px 0 #000; }
+.md-mine.none { color: var(--muted); border-color: var(--muted); }
 .md-you { font-size: 1.6em; color: var(--cream-2); line-height: 1.3; }
 .md-vs { display: flex; align-items: center; justify-content: center; gap: 40px; margin: 24px 0; }
 .md-vs .side { display: flex; flex-direction: column; align-items: center; gap: 10px; }
@@ -305,12 +317,23 @@ export default {
       const q = () => (c.kind === "photo"
         ? h("div", { class: "md-thumb" }, h("img", { src: photoSrc(c), alt: "A BABY PHOTO" }))
         : h("div", { class: "md-q" }, c.text || ""));
-      const back = h("div", { class: "md-face back" },
+      const side = SIDES.includes(c.answer) ? c.answer : "";
+      // The back face is the answer: a banner in the parent's colour, their sprite,
+      // the word MOM or DAD as big as the card allows, and the card tinted to match.
+      const back = h("div", { class: "md-face back " + side },
+        h("div", { class: "md-ans " + side, role: "status" },
+          p.avatar ? spriteEl(p.avatar, { cls: "hop" }) : null,
+          h("div", { class: "md-ans-txt" },
+            h("div", { class: "md-ans-lbl" }, "ANSWER"),
+            h("div", { class: "md-ans-big" }, side ? side.toUpperCase() : "?"),
+            p.name ? h("div", { class: "md-ans-nm" }, p.name) : null)),
         c.kind === "photo" ? h("div", { class: "md-thumb small" }, h("img", { src: photoSrc(c), alt: "" })) : h("div", { class: "md-q" }, c.text || ""),
-        h("div", { class: "md-who " + (c.answer || "") }, p.avatar ? spriteEl(p.avatar, { cls: "hop" }) : null, h("span", null, String(c.answer || "?").toUpperCase() + (p.name ? " · " + p.name : ""))),
-        h("div", { class: "md-split", "aria-hidden": "true" }, h("i", { class: "m" }), h("i", { class: "d" })),
-        h("div", { class: "md-pct" }, h("span", { class: "m" }, (c.momPct || 0) + "% MOM"), " · ", h("span", { class: "d" }, (c.dadPct || 0) + "% DAD")),
-        you ? h("div", { class: "md-mine " + (my ? (my === c.answer ? "ok" : "no") : "none") }, my ? "YOU: " + my.toUpperCase() + (my === c.answer ? " ✓" : " ✗") : "YOU: NO SWIPE ✗") : null);
+        h("div", { class: "md-split " + side, "aria-hidden": "true" }, h("i", { class: "m" }), h("i", { class: "d" })),
+        h("div", { class: "md-pct " + side },
+          h("span", { class: "m" }, (c.momPct || 0) + "% MOM" + (side === "mom" ? " ✓" : "")),
+          h("span", { class: "d" }, (c.dadPct || 0) + "% DAD" + (side === "dad" ? " ✓" : ""))),
+        you ? h("div", { class: "md-mine " + (my ? (my === side ? "ok" : "no") : "none") },
+          my ? (my === side ? "✓ YOU SAID " : "✗ YOU SAID ") + my.toUpperCase() : "✗ YOU DIDN'T SWIPE") : null);
       const f = h("div", { class: "md-flip" }, h("div", { class: "md-face front" }, q(), h("div", { class: "tiny" }, "CARD " + (k + 1))), back);
       list.appendChild(f);
       return { f, c };
