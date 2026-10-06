@@ -212,3 +212,13 @@ test("bots: every greedy placement is valid, lands inside the round, and is spre
   assert.ok(fillStats(roundMask(1), gp, roundItems(1)).fillPct >= 40);
   assert.deepEqual(firstFit(roundMask(1), [], roundItems(1).diapers, 0, roundItems(1)), { x: 1, y: 0 }, "reading order skips the cut corner");
 });
+
+test("practice: a small bag the six practice items all fit in", () => {
+  const c = bag.practice();
+  assert.match(c.title, /PRACTICE/);
+  assert.equal(c.cellsTotal, 36);
+  assert.equal(c.essentialsTotal, 4);
+  assert.equal(c.items.length, 6);
+  const used = c.items.reduce((n, it) => n + it.shape.join("").split("#").length - 1, 0);
+  assert.ok(used <= c.cellsTotal, "everything fits with room to spare");
+});

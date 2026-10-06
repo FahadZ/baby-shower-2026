@@ -135,3 +135,13 @@ test("sprites: every pixel map is 11x11 and uses palette colours", () => {
     });
   }
 });
+
+test("practice: one slow lane, no gold, fewer items than round 1", () => {
+  const c = dash.practice(ctxFor(1));
+  assert.match(c.title, /PRACTICE/);
+  assert.equal(c.twins, false);
+  const items = buildSchedule(c);
+  assert.ok(items.length > 5);
+  assert.ok(items.every((it) => it.kind !== "gold" && it.lane === 0));
+  assert.ok(items.length < buildSchedule({ round: 1, seed: c.seed }).length);
+});

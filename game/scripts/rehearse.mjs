@@ -121,6 +121,16 @@ while (Date.now() < deadline) {
       await host.click("text=EXIT");
       await sleep(400);
     }
+    // On each game's first how-to, flip the host's PRACTICE toggle where the game has one
+    // and screenshot the phones running the practice level; START ROUND then clears it.
+    if (s.phase === "howto" && s.round === 1) {
+      const pr = await host.$("[data-f=practice]");
+      if (pr && !(await pr.isDisabled())) {
+        await pr.click();
+        await sleep(FAST ? 2500 : 4500);
+        await shot(tag + "-practice");
+      }
+    }
     if (s.phase === "credits") break;
     if (["howto", "intro", "reveal", "results", "leaderboard", "final", "predictions", "lobby"].includes(s.phase)) {
       if (s.phase === "predictions") { await p1.fill("#firstWord", "PIKACHU").catch(() => {}); await p1.click("text=SAVE PREDICTION").catch(() => {}); await sleep(600); }

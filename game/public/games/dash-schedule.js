@@ -12,7 +12,8 @@ export function roundSpec(round) {
 // { id, t (ms), lane, x (0..1 of the lane), kind, speed (canvas heights/s), phase, wobble }
 export function buildSchedule(content) {
   const round = (content && content.round) || 1;
-  const spec = roundSpec(round);
+  // content.spec (the practice round) overrides the round's rate, speed and shares.
+  const spec = content && content.spec ? { ...roundSpec(round), ...content.spec } : roundSpec(round);
   const twins = content && content.twins != null ? !!content.twins : !!spec.twins;
   const duration = (content && content.duration) || data.duration;
   const rng = rngFor(content && content.seed != null ? content.seed : 0, "dash-" + round + ":schedule");

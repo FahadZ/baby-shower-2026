@@ -70,6 +70,23 @@ export default {
     };
   },
 
+  // PRACTICE: five numbers to drag into order before round 1. Carries `correct`
+  // (nothing is scored) so the phone can grade the try.
+  practice(ctx) {
+    const items = [["one", "ONE", "1️⃣"], ["two", "TWO", "2️⃣"], ["three", "THREE", "3️⃣"], ["four", "FOUR", "4️⃣"], ["five", "FIVE", "5️⃣"]]
+      .map(([key, label, emoji]) => ({ key, label, emoji }));
+    const correct = items.map((it) => it.key);
+    const byKey = Object.fromEntries(items.map((it) => [it.key, it]));
+    return {
+      title: "PRACTICE: COUNT TO FIVE",
+      prompt: "DRAG THE NUMBERS INTO ORDER, ONE AT THE TOP",
+      items: shuffledKeys({ items, correct }, ctx.rng).map((key) => byKey[key]),
+      topLabel: "FIRST",
+      bottomLabel: "LAST",
+      correct
+    };
+  },
+
   // answers: { playerId: { a: [key, key, key, key, key], t } }
   score(answers, round) {
     const spec = roundSpec(round);

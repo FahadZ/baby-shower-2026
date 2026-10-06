@@ -124,3 +124,14 @@ test("botAnswer: valid distinct keys, ascending times, lands with the last find"
   assert.ok(binky.howto(3).text.includes("FLASHLIGHT"));
   assert.ok(!binky.howto(1).text.includes("FLASHLIGHT"));
 });
+
+test("practice: a sparse daytime scene with nothing covering the targets", () => {
+  const c = binky.practice({ ...ctx(7), seed: 7 });
+  assert.match(c.title, /PRACTICE/);
+  assert.equal(c.mode, "normal");
+  assert.ok(c.spec.density < data.rounds[0].density);
+  const scene = generateScene(c.seed, c.round, c.spec);
+  assert.equal(scene.targets.length, 5);
+  assert.equal(scene.mode, "normal");
+  assert.ok(scene.glyphs.length < generateScene(c.seed, 1).glyphs.length, "fewer distractors than round 1");
+});

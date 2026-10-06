@@ -70,7 +70,7 @@ function nextLabel(s) {
 
 function phaseLabel(s) {
   const map = { lobby: "LOBBY", intro: "GAME INTRO", howto: "HOW TO PLAY", playing: "PLAYING", locked: "LOCKED", reveal: "ANSWER REVEAL", results: "ROUND RESULTS", leaderboard: "LEADERBOARD", final: "FINAL RANKINGS", predictions: "PREDICTIONS", credits: "CREDITS" };
-  return map[s.phase] || s.phase;
+  return (map[s.phase] || s.phase) + (s.phase === "howto" && s.practice ? " · PRACTICE ON" : "");
 }
 
 // ------------------------------------------------------------- render
@@ -123,7 +123,8 @@ function mountControls() {
     h("button", { class: "btn small", type: "button", disabled: !["reveal", "results", "leaderboard"].includes(s.phase), onclick: () => cmd("replay") }, "REPLAY REVEAL"),
     h("button", { class: "btn small", type: "button", disabled: !["reveal", "results"].includes(s.phase), onclick: () => cmd("showLeaderboard") }, "LEADERBOARD"),
     h("button", { class: "btn small", type: "button", onclick: () => { muted = !muted; store("bl.hostMute", muted ? "on" : "off"); audio.enable(!muted); toast(muted ? "THIS PHONE IS MUTED" : "SOUND ON (PLUG INTO A SPEAKER)"); } }, muted ? "UNMUTE" : "MUTE"),
-    h("button", { class: "btn small", type: "button", dataset: { f: "autoend" }, title: "End a round early once every connected player has locked in", onclick: () => cmd("autoEnd", { on: !(snap.settings && snap.settings.autoEnd) }) }, "AUTO-END: " + (s.settings && s.settings.autoEnd ? "ON" : "OFF")));
+    h("button", { class: "btn small", type: "button", dataset: { f: "autoend" }, title: "End a round early once every connected player has locked in", onclick: () => cmd("autoEnd", { on: !(snap.settings && snap.settings.autoEnd) }) }, "AUTO-END: " + (s.settings && s.settings.autoEnd ? "ON" : "OFF")),
+    h("button", { class: "btn small", type: "button", dataset: { f: "practice" }, disabled: !(s.phase === "howto" && s.practiceAvailable), title: "On the how-to screen: everyone tries the game's simplest level on their own phone, nothing scored, until START ROUND", onclick: () => cmd("practice", { on: !snap.practice }) }, "PRACTICE: " + (s.practice ? "ON" : "OFF")));
   const stageBtn = h("button", { class: "btn", type: "button", onclick: () => { stageMode = true; lastKey = null; render(true); } }, "STAGE VIEW (BIG SCREEN)");
 
   // Jump to any game.
@@ -163,6 +164,7 @@ function updateControls() {
   f("answers").textContent = s.phase === "playing" || s.phase === "locked" ? s.answerCount + "/" + s.playerCount : "—";
   const cdWrap = f("cd");
   const ae = f("autoend"); if (ae) ae.textContent = "AUTO-END: " + (s.settings && s.settings.autoEnd ? "ON" : "OFF");
+  const pr = f("practice"); if (pr) { pr.textContent = "PRACTICE: " + (s.practice ? "ON" : "OFF"); pr.disabled = !(s.phase === "howto" && s.practiceAvailable); }
   if (["playing", "locked"].includes(s.phase) && s.endsAt) {
     if (!cd) { cd = countdown(cdWrap, { endsAt: s.endsAt, roundTime: s.phase === "playing" ? s.roundTime : 1200, now: net.now, paused: s.paused, sound: false }); }
     else cd.update({ endsAt: s.endsAt, paused: s.paused, pauseLeft: s.pauseLeft });

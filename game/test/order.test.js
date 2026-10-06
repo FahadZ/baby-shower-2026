@@ -121,3 +121,12 @@ test("howto text and points", () => {
   assert.equal(hw.points, "UP TO 1200 PTS");
   assert.equal(hw.title, roundSpec(1).title);
 });
+
+test("practice: five numbers, shuffled, with the correct order attached", () => {
+  const c = game.practice(ctxFor(1));
+  assert.match(c.title, /PRACTICE/);
+  assert.equal(c.items.length, 5);
+  assert.deepEqual(c.correct, ["one", "two", "three", "four", "five"]);
+  assert.ok(!same(c.items.map((it) => it.key), c.correct), "never handed out already in order");
+  assert.ok(validAnswer(c.items.map((it) => it.key), { correct: c.correct }));
+});

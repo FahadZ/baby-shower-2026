@@ -110,7 +110,7 @@ document.addEventListener("visibilitychange", () => { if (!document.hidden && jo
 // ------------------------------------------------------------ render
 function render(force) {
   if (!snap) return;
-  const key = !joined || editing ? "join" : [snap.phase, snap.roundId, snap.revealNonce, snap.gameIndex].join("|");
+  const key = !joined || editing ? "join" : [snap.phase, snap.roundId, snap.revealNonce, snap.gameIndex, snap.practice ? "practice" : ""].join("|");
   // If this screen was built before our own "you" message arrived (reload mid-game), build it again with it.
   if (!force && key === screenKey && you && you.id && cur.youId !== you.id && key !== "join") force = true;
   if (hudTag) hudTag.textContent = snap.game && snap.phase !== "lobby" ? "G" + (snap.gameIndex + 1) + "/" + snap.gameCount + (snap.round ? " R" + snap.round : "") : (snap.playerCount || 0) + " PLAYERS";
@@ -171,6 +171,81 @@ function hudLine(text) {
   return h("p", { class: "sub" }, text);
 }
 
+// The practice round: the host flipped PRACTICE on the how-to screen, so this phone
+// runs the game's simplest level on its own clock. Nothing goes to the server. A final
+// answer or the clock ends a try; TRY AGAIN starts another, with a fresh scene where
+// the game builds one from the seed.
+function mountPractice(g) {
+  const me = cur;
+  const base = snap.practiceContent;
+  const ms = base.practiceMs || snap.roundTime || 30000;
+  const wrap = h("div", { class: "screen" });
+  app.appendChild(wrap);
+  let run = 0, timer = null;
+  const dropOverlay = () => { const ov = $(".locked-in"); if (ov) ov.remove(); };
+  me.game = { progressive: true, unmount() { clearTimeout(timer); dropOverlay(); try { if (g.unmount) g.unmount(); } catch (e) { /* ignore */ } } };
+
+  function start() {
+    const thisRun = ++run;
+    clearTimeout(timer);
+    dropOverlay();
+    if (me.cd) { me.cd.stop(); me.cd = null; }
+    try { if (g.unmount) g.unmount(); } catch (e) { /* ignore */ }
+    clear(wrap);
+    const content = { ...base };
+    if (base.seed != null) content.seed = (base.seed + thisRun - 1) >>> 0;
+    const endsAt = net.now() + ms;
+    const cdWrap = h("div", null);
+    const body = h("div", { class: "game-surface" });
+    appendTo(wrap,
+      h("div", { class: "callout blue", style: { margin: "0 0 10px" } }, "PRACTICE ROUND", h("small", null, "NOTHING COUNTS. TRY THE CONTROLS.")),
+      cdWrap, body,
+      h("div", { class: "center mt" },
+        h("button", { class: "btn small", type: "button", onclick: start }, "RESTART PRACTICE"),
+        h("p", { class: "blink gold mt" }, "THE REAL ROUND STARTS WHEN PLAYER 1 SAYS GO")));
+    me.cd = countdown(cdWrap, { endsAt, roundTime: ms, now: net.now, paused: false, sound: false });
+    let over = false;
+    const finish = (why, label, verdict) => {
+      if (over || thisRun !== run || me.cancel) return;
+      over = true;
+      clearTimeout(timer);
+      if (me.cd) { me.cd.stop(); me.cd = null; }
+      const bad = !!(verdict && verdict.ok === false);
+      audio.sfx(bad ? "thunk" : why === "time" ? "buzzer" : "win");
+      // Let the game's own finish (ALL FOUND!, TIME!) show for a beat first.
+      setTimeout(() => {
+        if (thisRun !== run || me.cancel) return;
+        const ov = h("div", { class: "locked-in" },
+          h("div", { class: "stamp", style: bad ? { borderColor: "var(--gold)", color: "var(--gold)" } : null }, bad ? "NOT YET" : why === "time" ? "TIME!" : "NICE ✓"),
+          label ? h("p", { class: "mt", style: { fontSize: "1.2em" } }, label) : null,
+          verdict && verdict.text ? h("p", { class: "sub mt" }, verdict.text) : null,
+          h("p", { class: "sub mt" }, "THAT WAS PRACTICE. NOTHING COUNTED."),
+          h("button", { class: "btn primary mt", type: "button", onclick: () => { ov.remove(); start(); } }, "TRY AGAIN"),
+          h("p", { class: "tiny mt" }, "THE REAL ROUND STARTS WHEN PLAYER 1 SAYS GO"));
+        app.appendChild(ov);
+      }, 900);
+    };
+    const api = {
+      ...gameApi(),
+      submit(a, opts = {}) {
+        if (opts.final === false) return;
+        finish("done", opts.label || null, g.practiceResult ? g.practiceResult(a, content) : null);
+      },
+      timeLeft: () => Math.max(0, endsAt - net.now()),
+      roundTime: ms,
+      you: () => (you ? { ...you, myAnswer: null, answered: false, answerFinal: false } : null),
+      players: () => [],
+      live: () => null,
+      results: null,
+      content
+    };
+    timer = setTimeout(() => finish("time", null, null), ms);
+    try { g.mount(body, content, api); } catch (e) { console.error(e); body.appendChild(h("p", { class: "error" }, "SOMETHING BROKE. REFRESH!")); }
+    if (AUTO && g.autoplay) setTimeout(() => { if (!me.cancel && thisRun === run) { try { g.autoplay(body, content, api); } catch (e) { console.error(e); } } }, 800 + Math.random() * 1500);
+  }
+  start();
+}
+
 function mount() {
   const me = cur;
   me.youId = you && you.id ? you.id : null;
@@ -191,6 +266,7 @@ function mount() {
     }
     case "howto": {
       const g = getGame(snap.game.id);
+      if (snap.practice && snap.practiceContent && g) return mountPractice(g);
       const demo = h("div", { class: "panel dark" });
       appendTo(app, h("div", { class: "screen" },
         h("h2", { class: "title" }, (snap.howto && snap.howto.title) || snap.game.title),

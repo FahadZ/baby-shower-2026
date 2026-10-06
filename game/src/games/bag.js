@@ -21,6 +21,14 @@ export function roundItems(round) {
   return expandItems(data, roundSpec(round).items);
 }
 
+// The item fields a phone needs (shape, look, value, essential flag).
+function publicItems(ids, itemsById) {
+  return ids.filter((id) => itemsById[id]).map((id) => {
+    const it = itemsById[id];
+    return { id, base: it.base, name: it.name, emoji: it.emoji, color: it.color, value: it.value, essential: !!it.essential, shape: it.shape };
+  });
+}
+
 // Raw packing score: cells covered + item values, minus PENALTY per missing essential.
 export function rawScore(stats) {
   return Math.max(0, stats.cellsUsed + stats.value - PENALTY * stats.missingEssentials);
@@ -57,11 +65,7 @@ export default {
   // Everything a phone needs to run the round. There is no hidden answer.
   content(round) {
     const spec = roundSpec(round);
-    const itemsById = roundItems(round);
-    const items = spec.items.filter((id) => itemsById[id]).map((id) => {
-      const it = itemsById[id];
-      return { id, base: it.base, name: it.name, emoji: it.emoji, color: it.color, value: it.value, essential: !!it.essential, shape: it.shape };
-    });
+    const items = publicItems(spec.items, roundItems(round));
     return {
       title: spec.title,
       subtitle: spec.subtitle || "",
@@ -70,6 +74,23 @@ export default {
       items,
       essentialsTotal: items.filter((it) => it.essential).length,
       cellsTotal: parseMask(roundMask(round)).count
+    };
+  },
+
+  // PRACTICE: a small square bag and six items that all fit, so people can try
+  // dragging and rotating before round 1. Nothing is scored.
+  practice() {
+    const mask = ["######", "######", "######", "######", "######", "######"];
+    const ids = ["diapers", "wipes", "bottle", "pacifier", "teddy", "snack"];
+    const items = publicItems(ids, expandItems(data, ids));
+    return {
+      title: "PRACTICE: PACK THE ESSENTIALS",
+      subtitle: "NOTHING COUNTS. DRAG, DROP, TAP TO ROTATE.",
+      seconds: 45,
+      mask,
+      items,
+      essentialsTotal: items.filter((it) => it.essential).length,
+      cellsTotal: parseMask(mask).count
     };
   },
 

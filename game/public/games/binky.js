@@ -252,7 +252,7 @@ export default {
 
   mount(el, content, api) {
     const round = content.round || 1;
-    const scene = generateScene(content.seed, round);
+    const scene = generateScene(content.seed, round, content.spec || null);
     const night = content.mode === "night";
     const keys = content.targetKeys || data.targets.map((t) => t.key);
     const names = content.targetNames || {}, chars = content.targetChars || {};
@@ -472,7 +472,7 @@ export default {
   // TV / host STAGE: the scene (no rings) beside a live bar race of found counts.
   stageView(el, content, api) {
     const round = content.round || 1;
-    const scene = generateScene(content.seed, round);
+    const scene = generateScene(content.seed, round, content.spec || null);
     const night = content.mode === "night";
     const keys = content.targetKeys || data.targets.map((t) => t.key);
     const canvas = sceneCanvas({ big: true, night, cap: "68vh" });

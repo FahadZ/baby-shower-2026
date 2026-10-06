@@ -86,6 +86,22 @@ export default {
     };
   },
 
+  // PRACTICE: a sparse daytime scene with nothing on top of the targets, so people
+  // can try tapping before round 1. `spec` overrides the round's density on the phone.
+  practice(ctx) {
+    return {
+      round: 1,
+      title: "PRACTICE: SPOT THE FIVE",
+      subtitle: "NOTHING COUNTS. TAP WHAT YOU SEE.",
+      seed: ctx.seed,
+      mode: "normal",
+      spec: { density: 40, after: 0.2, overlappers: 0, cover: 0, mode: "normal" },
+      targetKeys: data.targets.map((t) => t.key),
+      targetNames: Object.fromEntries(data.targets.map((t) => [t.key, t.name])),
+      targetChars: Object.fromEntries(data.targets.map((t) => [t.key, t.ch]))
+    };
+  },
+
   // answers: { playerId: { a: { found: [keys], t: [msPerFind] }, t, final } }
   score(answers, round, ctx) {
     const { rows, roundMs } = summarize(answers, round, ctx);

@@ -61,6 +61,13 @@ export default {
     return contentFor(round, ctx.seed);
   },
 
+  // PRACTICE: one slow lane, no gold, so people can try tapping before round 1.
+  // `spec` overrides the round's rate and speed on the phone.
+  practice(ctx) {
+    const spec = { rate: 0.9, speed: 0.8, goldShare: 0, badShare: 0.25 };
+    return { ...contentFor(1, ctx.seed), title: "PRACTICE: WARM-UP", subtitle: "NOTHING COUNTS. TAP THE PACIFIERS, SKIP THE DIAPERS.", rate: spec.rate, speed: spec.speed, spec };
+  },
+
   // answers: { playerId: { a: { caught, gold, bad, score }, t, final } }
   score(answers, round, ctx) {
     const { out } = cleaned(answers, round, ctx.seed);

@@ -29,7 +29,7 @@ export function createStageView(root, { now, tv = false }) {
   function render(snap, live) {
     lastSnap = snap;
     if (live !== undefined) lastLive = live;
-    const k = [snap.phase, snap.roundId, snap.revealNonce, snap.gameIndex].join("|");
+    const k = [snap.phase, snap.roundId, snap.revealNonce, snap.gameIndex, snap.practice ? "practice" : ""].join("|");
     if (k !== key) { teardown(); key = k; mount(snap); }
     else update(snap);
   }
@@ -82,7 +82,8 @@ export function createStageView(root, { now, tv = false }) {
             h("div", { class: "panel" }, (snap.howto && snap.howto.text) || ""),
             demo));
         if (g && g.howtoDemo) { try { g.howtoDemo(demo, snap.content || {}); } catch (e) { /* ignore */ } }
-        root.appendChild(h("p", { class: "blink gold center mt" }, "WAITING FOR PLAYER 1 TO START THE ROUND"));
+        if (snap.practice) root.appendChild(h("div", { class: "callout blue", style: { maxWidth: "760px" } }, "PRACTICE ROUND", h("small", null, "TRY THE CONTROLS ON YOUR OWN PHONE. NOTHING COUNTS.")));
+        root.appendChild(h("p", { class: "blink gold center mt" }, snap.practice ? "PRACTICE UNTIL PLAYER 1 STARTS THE REAL ROUND" : "WAITING FOR PLAYER 1 TO START THE ROUND"));
         break;
       }
       case "playing": {

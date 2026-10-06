@@ -162,3 +162,36 @@ test("final phase after the last round of the last game", () => {
   L.command(st, "next", null, 0);
   assert.equal(st.core.phase, "predictions");
 });
+
+test("practice round: a host toggle on the how-to screen, off again once the round starts", () => {
+  const st = fresh();
+  L.join(st, { name: "Me", avatar: av("kirby") }, 1000);
+  assert.ok(L.command(st, "practice", { on: true }, 1100).error, "not in the lobby");
+  L.command(st, "goto", { gameIndex: st.core.order.indexOf("binky"), round: 1 }, 2000);
+  L.command(st, "next", null, 2100);
+  assert.equal(st.core.phase, "howto");
+  let snap = L.publicState(st, 2200);
+  assert.equal(snap.practiceAvailable, true);
+  assert.equal(snap.practice, false);
+  assert.equal(snap.practiceContent, undefined);
+  assert.ok(L.command(st, "practice", { on: true }, 2300).ok);
+  snap = L.publicState(st, 2400);
+  assert.equal(snap.practice, true);
+  assert.match(snap.practiceContent.title, /PRACTICE/);
+  assert.equal(snap.practiceContent.practiceMs, 45000);
+  assert.ok(snap.practiceContent.spec.density < 95, "simpler than round 1");
+  assert.notEqual(snap.practiceContent.seed, st.core.seed, "its own seed, so it never matches round 1");
+  assert.ok(L.command(st, "practice", { on: false }, 2450).ok);
+  assert.equal(L.publicState(st, 2460).practice, false);
+  L.command(st, "practice", { on: true }, 2470);
+  L.command(st, "next", null, 2500);
+  assert.equal(st.core.phase, "playing");
+  assert.equal(st.core.practice, false, "cleared when the round starts");
+  assert.equal(L.publicState(st, 2600).practice, undefined);
+  // Games without a practice level refuse the toggle.
+  L.command(st, "goto", { gameIndex: st.core.order.indexOf("price"), round: 1 }, 3000);
+  L.command(st, "next", null, 3100);
+  assert.equal(st.core.phase, "howto");
+  assert.ok(L.command(st, "practice", { on: true }, 3200).error);
+  assert.equal(L.publicState(st, 3300).practiceAvailable, false);
+});

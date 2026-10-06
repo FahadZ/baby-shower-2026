@@ -91,6 +91,11 @@ export default {
   // Optional: a small object for the host STAGE view / TV during play (throttled to ~2/s).
   liveStat(answers, round, ctx) { return { answered: Object.keys(answers).length, bars: [...] }; },
 
+  // Optional: content for the PRACTICE ROUND the host can switch on from the how-to
+  // screen. The game's simplest level. Phones run it on their own clock and nothing
+  // reaches the server, so it may carry the answer. practiceMs defaults to roundTime(1).
+  practice(ctx) { return { ...simplestContent, practiceMs: 30000 }; },
+
   // A plausible bot answer. rng is seeded. Return { a, delayMs } (delayMs within the round).
   botAnswer(round, ctx, bot, rng) { ... }
 };
@@ -118,6 +123,9 @@ export default {
 
   // Optional: called with each liveStat broadcast while playing (phones too).
   onLive(stat) { ... },
+
+  // Optional: grade a practice try (the practice content may carry the answer).
+  practiceResult(answer, content) { return { ok: true, text: "PERFECT!" }; },
 
   // The answer reveal. reveal = revealData() from the server; api.results.board has every
   // player row ({id,name,avatar,points,rank,roundPoints}); api.content is the round's
@@ -169,8 +177,12 @@ Plain `export default { ... }` the host can edit. Imported by both sides.
    always run the full clock.
 7. Price Is Right and Put It In Order count whatever a player's slider or tile order
    shows when time runs out, so slow lockers-in still score.
-8. After the last game: **FINAL RANKINGS**, then **PREDICTIONS**, then **ROLL CREDITS**.
-9. Download the leaderboard and the predictions as CSV from the host page.
+8. If a room looks confused on a how-to screen, tap **PRACTICE**: every phone runs the
+   game's simplest level (Where's the Binky, Diaper Dash, Put It In Order and Fit the
+   Diaper Bag have one) with nothing scored, as many tries as they like, until you press
+   **START ROUND**. Tap it again to go back to the how-to card.
+9. After the last game: **FINAL RANKINGS**, then **PREDICTIONS**, then **ROLL CREDITS**.
+10. Download the leaderboard and the predictions as CSV from the host page.
 
 Rehearse beforehand: **+80 BOTS**, **START GAME**, and tap through. **HOLD TO RESET**
 wipes scores and answers (players stay) when you are done.

@@ -42,7 +42,8 @@ export function createState(now = Date.now(), seed) {
       botCounter: 0,
       scoredRounds: [],
       firstRank: {},
-      settings: { autoEnd: true }
+      settings: { autoEnd: true },
+      practice: false   // the host's PRACTICE toggle on the how-to screen
     },
     answers: {},     // roundId -> { playerId: { a, t, final } }
     results: {},     // roundId -> result record (see lockRound)
@@ -87,6 +88,37 @@ function contentFor(state, game, round) {
   return state.cache[roundId];
 }
 
+// The practice round: the game's simplest level, generated once per game from a
+// seed of its own so it never matches round 1. Phones run it on their own clock and
+// nothing reaches the server, so unlike content() it may carry the answer.
+export function practiceCtx(state, game) {
+  const core = state.core;
+  const roundId = game.id + "-practice";
+  const seed = (core.seed + 104729) >>> 0;
+  return {
+    roundId,
+    round: 1,
+    practice: true,
+    seed,
+    rng: rngFor(seed, roundId),
+    rngFor: (tag) => rngFor(seed, roundId + ":" + tag),
+    data: game.data,
+    roundTime: game.roundTime(1),
+    players: publicPlayers(core),
+    results: state.results,
+    order: core.order
+  };
+}
+
+function practiceContentFor(state, game) {
+  const key = "practice:" + game.id;
+  if (!state.cache[key]) {
+    const c = game.practice(practiceCtx(state, game)) || {};
+    state.cache[key] = { ...c, practice: true, practiceMs: c.practiceMs || game.roundTime(1) };
+  }
+  return state.cache[key];
+}
+
 const cleanName = (raw) => String(raw || "").replace(/[<>&"'`]/g, "").replace(/\s+/g, " ").trim().slice(0, NAME_MAX);
 
 export function validAvatar(av) {
@@ -120,6 +152,7 @@ function setPhase(state, phase, now, endsAt = null) {
   core.paused = false;
   core.pauseLeft = 0;
   core.pausedAt = null;
+  if (phase !== "howto") core.practice = false;
   state.dirty.add("core");
 }
 
@@ -272,6 +305,7 @@ function enterHowto(state, round, now) {
   core.startedAt = null;
   core.botQueue = [];
   core.nextBot = 0;
+  core.practice = false;
   // The how-to screen waits for the host: only "NEXT" / "START ROUND" begins play.
   setPhase(state, "howto", now, null);
   contentFor(state, game, round);
@@ -578,6 +612,15 @@ export function command(state, cmd, arg, now = Date.now()) {
       state.dirty.add("core");
       return { ok: true };
     }
+    case "practice": {
+      // A sandbox on the how-to screen: every phone runs the game's simplest level, nothing is scored.
+      if (phase !== "howto") return { error: "ONLY ON THE HOW-TO SCREEN" };
+      const game = currentGame(core);
+      if (!game || typeof game.practice !== "function") return { error: "NO PRACTICE LEVEL FOR THIS GAME" };
+      core.practice = !!(arg && arg.on);
+      state.dirty.add("core");
+      return { ok: true, practice: core.practice };
+    }
     case "autoEnd":
       core.settings = { ...(core.settings || {}), autoEnd: !!(arg && arg.on) };
       state.dirty.add("core");
@@ -632,6 +675,11 @@ export function publicState(state, now = Date.now()) {
   if (game && core.round && ["howto", "playing", "locked", "reveal", "results"].includes(core.phase)) {
     snap.content = contentFor(state, game, core.round);
     snap.howto = game.howto ? game.howto(core.round, snap.content) : null;
+  }
+  if (core.phase === "howto" && game) {
+    snap.practiceAvailable = typeof game.practice === "function";
+    snap.practice = snap.practiceAvailable && !!core.practice;
+    if (snap.practice) snap.practiceContent = practiceContentFor(state, game);
   }
   if (core.phase === "lobby") snap.players = publicPlayers(core);
   if (core.roundId && ["reveal", "results", "leaderboard"].includes(core.phase)) {

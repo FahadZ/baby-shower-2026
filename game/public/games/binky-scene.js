@@ -42,8 +42,9 @@ function distractorGlyph(rng, W, H, sizeLo, sizeHi) {
   return glyph(rng, 10 + rng() * (W - 20), 10 + rng() * (H - 20), ch, size, color);
 }
 
-export function generateScene(seed, round) {
-  const spec = roundSpec(round);
+// `override` (the practice round) replaces fields of the round's spec, e.g. a lower density.
+export function generateScene(seed, round, override) {
+  const spec = override ? { ...roundSpec(round), ...override } : roundSpec(round);
   const rng = mulberry32(hashSeed(String(seed) + ":" + round));
   const W = data.w, H = data.h;
   const spots = placeTargets(rng, W, H);

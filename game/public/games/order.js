@@ -306,6 +306,14 @@ export default {
     if (demoStop) demoStop();
   },
 
+  // Practice only: the practice content carries `correct`, so the phone can grade the try.
+  practiceResult(answer, content) {
+    const c = content && Array.isArray(content.correct) ? content.correct : null;
+    if (!c) return null;
+    const ok = Array.isArray(answer) && answer.length === c.length && answer.every((k, i) => k === c[i]);
+    return ok ? { ok: true, text: "PERFECT ORDER!" } : { ok: false, text: "NOT QUITE: ONE AT THE TOP, FIVE AT THE BOTTOM." };
+  },
+
   // Rehearsal only: a few ▲/▼ moves, then LOCK IN through the same path as a tap.
   autoplay(el, content, api) {
     const inst = current;
