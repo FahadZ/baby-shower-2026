@@ -272,14 +272,26 @@ function createDash(canvas, content, opts = {}) {
     window.removeEventListener("resize", resize);
   }
 
-  return { state, tap, targets, stop, time: gt, canvas };
+  return { state, tap, targets, stop, time: gt, canvas, spec };
 }
 
 // --------------------------------------------------------------- module
 let game = null, stageGame = null, demoGame = null, submitTimer = null, finish = null, bestEl = null, roomBest = "";
 
-function hudText(st) {
-  return ["CAUGHT ", h("strong", null, String(st.caught + st.gold)), " · OOPS ", h("strong", null, String(st.bad + (st.vomit || 0))), " · SCORE ", h("strong", null, String(st.score))];
+const plural = (n, one, many) => n + " " + (n === 1 ? one : many);
+// Poopies and vomit are counted apart (they cost 1 and 5), with the points they cost.
+function oopsText(bad, vomit) {
+  bad = bad | 0; vomit = vomit | 0;
+  const parts = [plural(bad, "POOPY", "POOPIES")];
+  if (vomit) parts.push(plural(vomit, "VOMIT", "VOMITS"));
+  const cost = bad * -data.points.bad + vomit * -data.points.vomit;
+  return parts.join(", ") + (cost ? " (−" + cost + ")" : "");
+}
+function hudText(st, spec) {
+  const out = ["CAUGHT ", h("strong", null, String(st.caught + st.gold)), " · ", spriteNode("bad", 16), " ", h("strong", null, String(st.bad))];
+  if (spec && spec.vomitShare > 0) out.push(" · ", spriteNode("vomit", 16), " ", h("strong", null, String(st.vomit || 0)));
+  out.push(" · SCORE ", h("strong", null, String(st.score)));
+  return out;
 }
 
 function stopAll() {
@@ -331,7 +343,7 @@ export default {
       api.submit({ caught: st.caught, gold: st.gold, bad: st.bad, vomit: st.vomit, score: st.score }, { final });
       if (final) finalSent = true;
     };
-    const updateHud = () => { if (me) hud.replaceChildren(...hudText(me.state)); };
+    const updateHud = () => { if (me) hud.replaceChildren(...hudText(me.state, me.spec)); };
     // Where is the round on the server clock? Late joiners pick the stream up mid-fall.
     const elapsed = clamp((api.roundTime || content.duration) - api.timeLeft(), 0, content.duration);
     me = game = createDash(canvas, content, {
@@ -422,21 +434,21 @@ export default {
       hop(bestSprite);
       api.sfx("win");
       const p = byId[top[0].id];
-      el.appendChild(h("div", { class: "callout" }, "TOP CATCHER: " + p.name, h("small", null, (top[0].caught + top[0].gold) + " CAUGHT · " + top[0].gold + " GOLD · " + (top[0].bad + (top[0].vomit || 0)) + " OOPS")));
+      el.appendChild(h("div", { class: "callout" }, "TOP CATCHER: " + p.name, h("small", null, (top[0].caught + top[0].gold) + " CAUGHT · " + top[0].gold + " GOLD · " + oopsText(top[0].bad, top[0].vomit))));
     } else {
       el.appendChild(h("p", { class: "sub" }, "NOBODY CAUGHT A THING. THE POOPIES WIN."));
     }
     el.appendChild(h("div", { class: "panel center", style: { marginTop: "14px" } },
       h("div", { style: { fontSize: "1.8em", color: "#6b3510", lineHeight: "1.3" } }, spriteNode("good", 30), " ", String(reveal.totalCaught || 0)),
       h("div", { class: "tiny", style: { color: "#6b3510" } }, "PACIFIERS CAUGHT BY THE ROOM"),
-      reveal.totalBad ? h("div", { class: "tiny", style: { color: "#6b3510", marginTop: "4px" } }, spriteNode("bad", 18), " " + reveal.totalBad + " POOPIES TAPPED. EW.") : null,
-      reveal.totalVomit ? h("div", { class: "tiny", style: { color: "#6b3510", marginTop: "4px" } }, spriteNode("vomit", 18), " " + reveal.totalVomit + " VOMITS TAPPED. OH NO.") : null,
+      reveal.totalBad ? h("div", { class: "tiny", style: { color: "#6b3510", marginTop: "4px" } }, spriteNode("bad", 18), " " + plural(reveal.totalBad, "POOPY", "POOPIES") + " TAPPED. EW.") : null,
+      reveal.totalVomit ? h("div", { class: "tiny", style: { color: "#6b3510", marginTop: "4px" } }, spriteNode("vomit", 18), " " + plural(reveal.totalVomit, "VOMIT", "VOMITS") + " TAPPED. OH NO.") : null,
       reveal.avg ? h("div", { class: "tiny", style: { color: "#6b3510" } }, "AVERAGE SCORE " + reveal.avg) : null));
     if (you) {
       const mine = you.myAnswer && typeof you.myAnswer === "object" ? you.myAnswer : null;
-      const caught = mine ? (mine.caught | 0) + (mine.gold | 0) : 0, bad = mine ? (mine.bad | 0) + (mine.vomit | 0) : 0;
+      const caught = mine ? (mine.caught | 0) + (mine.gold | 0) : 0, bad = mine ? mine.bad | 0 : 0, vomit = mine ? mine.vomit | 0 : 0;
       const meRow = byId[you.id];
-      el.appendChild(h("div", { class: "panel dark center" }, "YOU: ", h("strong", null, caught + " CAUGHT, " + bad + " OOPS"), h("br"),
+      el.appendChild(h("div", { class: "panel dark center" }, "YOU: ", h("strong", null, caught + " CAUGHT, " + oopsText(bad, vomit)), h("br"),
         h("span", { class: "tiny" }, mine ? "SCORE " + (Number(mine.score) || 0) + (meRow ? " → " + meRow.roundPoints + " PTS" : "") : "YOU SAT THIS ONE OUT")));
     }
   },
