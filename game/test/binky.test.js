@@ -13,11 +13,12 @@ test("scene: deterministic per seed and round, five spread-out targets in bounds
   for (const round of [1, 2, 3]) {
     const s1 = generateScene(42, round), s2 = generateScene(42, round);
     assert.deepEqual(s1, s2, "same seed + round gives the same scene");
-    assert.equal(s1.w, 1000); assert.equal(s1.h, 1400);
+    const spec0 = data.rounds[round - 1];
+    assert.equal(s1.w, 1000); assert.equal(s1.h, spec0.h || 1400);
     assert.equal(s1.targets.length, 5);
     assert.deepEqual(new Set(s1.targets.map((t) => t.key)), new Set(ALL));
     for (const t of s1.targets) {
-      assert.ok(t.x > 0 && t.x < 1000 && t.y > 0 && t.y < 1400, "target in bounds");
+      assert.ok(t.x > 0 && t.x < s1.w && t.y > 0 && t.y < s1.h, "target in bounds");
       assert.ok(t.size >= data.sizeMin && t.size <= data.sizeMax, "target at distractor size");
     }
     for (let i = 0; i < 5; i++) for (let j = i + 1; j < 5; j++) {

@@ -428,7 +428,7 @@ function mountJoin() {
   }
 
   const inProgress = snap.phase !== "lobby" && !editing;
-  appendTo(app, h("div", { class: "screen" },
+  appendTo(app, h("div", { class: "screen cs-screen" },
     h("h1", { class: "title" }, editing ? "CHANGE CHARACTER" : "PLAYER SELECT"),
     hudLine(inProgress ? "THE GAME IS ON. JOIN NOW AND PLAY FROM THE NEXT ROUND!" : "PICK A NAME AND A CHARACTER. EVERY CHARACTER + COLOUR IS ONE OF A KIND."),
     h("div", { class: "field" }, h("label", { for: "name" }, "YOUR NAME"), nameIn),
@@ -436,9 +436,9 @@ function mountJoin() {
     h("div", { class: "row", style: { marginBottom: "8px" } }, h("div", { class: "field grow", style: { marginBottom: 0 } }, search),
       h("button", { class: "btn small", type: "button", onclick: () => { joinState.avatar = randomFree([...taken]); audio.sfx("coin"); drawPreview(); drawGrid(); } }, "RANDOM")),
     grid,
-    err,
-    h("div", { class: "mt" }, ready),
-    editing ? h("button", { class: "link-btn", type: "button", onclick: () => { editing = false; render(true); } }, "NEVER MIND") : null
+    // READY rides along the bottom of the screen: the character grid is long.
+    h("div", { class: "cs-ready" }, err, ready,
+      editing ? h("button", { class: "link-btn", type: "button", onclick: () => { editing = false; render(true); } }, "NEVER MIND") : null)
   ));
   drawPreview(); drawGrid();
   cur.joinRedraw = () => { drawPreview(); drawGrid(); };

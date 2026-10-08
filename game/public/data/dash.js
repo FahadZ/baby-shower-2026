@@ -7,20 +7,24 @@ export default {
   maxLive: 12,            // cap of items on screen at once
   itemSize: 44,           // CSS px
   hitRadius: 34,          // CSS px from an item's centre
-  points: { good: 1, gold: 3, bad: -1 },
+  points: { good: 1, gold: 3, bad: -1, vomit: -5 },
+  // Every item falls at its own random speed: speedSpread is the width of the random
+  // factor around `speed` (1.0 = anywhere from half speed to one-and-a-half). `wind`
+  // (lane widths) blows the whole stream sideways in slow gusts.
   rounds: [
-    { title: "ROUND 1: WARM-UP", subtitle: "TAP THE PACIFIERS. SKIP THE DIAPERS.", rate: 1.3, speed: 1.0, goldShare: 0, badShare: 0.28, twins: false },
-    { title: "ROUND 2: RUSH HOUR", subtitle: "FASTER. GOLD BOTTLES ARE WORTH 3.", rate: 2.0, speed: 1.35, goldShare: 0.14, badShare: 0.3, twins: false },
-    { title: "ROUND 3: TWINS", subtitle: "TWO LANES. TWO HANDS. GOOD LUCK.", rate: 1.5, speed: 1.6, goldShare: 0.14, badShare: 0.32, twins: true }
+    { title: "ROUND 1: WARM-UP", subtitle: "TAP THE PACIFIERS. SKIP THE POOPIES.", rate: 1.3, speed: 1.0, speedSpread: 0.7, goldShare: 0, badShare: 0.28, vomitShare: 0, wind: 0 },
+    { title: "ROUND 2: RUSH HOUR", subtitle: "FASTER. GOLD BOTTLES ARE WORTH 3. VOMIT COSTS 5.", rate: 2.0, speed: 1.35, speedSpread: 0.9, goldShare: 0.14, badShare: 0.24, vomitShare: 0.06, wind: 0 },
+    { title: "ROUND 3: BLOWOUT", subtitle: "A STORM OF STUFF, AND THE WIND BLOWS IT SIDEWAYS.", rate: 2.7, speed: 1.55, speedSpread: 1.0, goldShare: 0.14, badShare: 0.26, vomitShare: 0.08, wind: 0.32 }
   ],
   // Text glyphs for places where a sprite cannot be drawn.
-  glyphs: { good: "🍼", gold: "✨", bad: "💩" },
-  names: { good: "PACIFIER", gold: "GOLD BOTTLE", bad: "DIRTY DIAPER" },
+  glyphs: { good: "🍼", gold: "✨", bad: "💩", vomit: "🤮" },
+  names: { good: "PACIFIER", gold: "GOLD BOTTLE", bad: "POOPY", vomit: "VOMIT" },
   // 11x11 pixel sprites, scaled x4 = 44 px. "." is transparent.
   palette: {
     K: "#1d1b18", R: "#e0283a", S: "#5aa7e8", D: "#3c7ec0", B: "#f2c9a0",
     T: "#f2c9a0", C: "#c99a12", G: "#ffd84a", L: "#fff2a8", M: "#c99a12",
-    P: "#8a5a2b", Q: "#5a3410", W: "#ffffff", E: "#1d1b18"
+    P: "#8a5a2b", Q: "#5a3410", W: "#ffffff", E: "#1d1b18",
+    V: "#9fd356", N: "#3f6e12"
   },
   sprites: {
     good: [
@@ -61,6 +65,19 @@ export default {
       "KPPQKKKQPPK",
       "KPPPPPPPPPK",
       ".KKKKKKKKK."
+    ],
+    vomit: [
+      "....NNN....",
+      "..NNVVVNN..",
+      ".NVVVVVVVN.",
+      ".NVKVVVKVN.",
+      "NVVVVVVVVVN",
+      "NVVKVKVKVVN",
+      "NVVVVVVVVVN",
+      ".NVVVVVVVN.",
+      ".NNVVNVVNN.",
+      "..N.NNN.N..",
+      "..........."
     ]
   }
 };

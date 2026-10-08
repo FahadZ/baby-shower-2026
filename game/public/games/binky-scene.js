@@ -46,7 +46,8 @@ function distractorGlyph(rng, W, H, sizeLo, sizeHi) {
 export function generateScene(seed, round, override) {
   const spec = override ? { ...roundSpec(round), ...override } : roundSpec(round);
   const rng = mulberry32(hashSeed(String(seed) + ":" + round));
-  const W = data.w, H = data.h;
+  // A round may be a taller map than the default canvas (round 2 scrolls on the phone).
+  const W = spec.w || data.w, H = spec.h || data.h;
   const spots = placeTargets(rng, W, H);
   const order = rng.shuffle(data.targets);
   const targets = order.map((t, i) => ({ key: t.key, x: spots[i].x, y: spots[i].y, size: Math.round(data.targetSizeMin + rng() * (data.targetSizeMax - data.targetSizeMin)) }));

@@ -61,9 +61,9 @@ function createDash(canvas, content, opts = {}) {
   const schedule = opts.demo ? [] : buildSchedule(content);
   const reduced = !!opts.reduced;
   const S = opts.size || SIZE;
-  const state = { caught: 0, gold: 0, bad: 0, score: 0, missed: 0, ended: false, dirty: false };
+  const state = { caught: 0, gold: 0, bad: 0, vomit: 0, score: 0, missed: 0, ended: false, dirty: false };
   if (opts.resume) {
-    state.caught = opts.resume.caught | 0; state.gold = opts.resume.gold | 0; state.bad = opts.resume.bad | 0;
+    state.caught = opts.resume.caught | 0; state.gold = opts.resume.gold | 0; state.bad = opts.resume.bad | 0; state.vomit = opts.resume.vomit | 0;
     state.score = Number(opts.resume.score) || 0;
   }
   const live = [];
@@ -90,7 +90,9 @@ function createDash(canvas, content, opts = {}) {
     const age = (t - it.born) / 1000;
     const lw = laneW();
     const wob = Math.sin(age * 3.4 + it.phase) * it.wobble * wobbleScale * lw;
-    const x = clamp(it.lane * lw + it.x * lw + wob, it.lane * lw + S / 2, (it.lane + 1) * lw - S / 2);
+    // Wind (round 3): slow gusts push the whole stream left and right.
+    const gust = spec.wind ? Math.sin(t / 1900 + 1.3) * spec.wind * lw : 0;
+    const x = clamp(it.lane * lw + it.x * lw + wob + gust, it.lane * lw + S / 2, (it.lane + 1) * lw - S / 2);
     return { x, y: (it.y0 + it.speed * age) * H };
   }
 
@@ -123,12 +125,15 @@ function createDash(canvas, content, opts = {}) {
     best.hit = true; best.hitAt = t;
     const p = pos(best, t);
     const pts = data.points[best.kind];
-    if (best.kind === "bad") {
-      state.bad++; state.score += pts;
-      fx.floats.push({ x: p.x, y: p.y, text: String(pts), color: "#ff6b78", born: t });
-      shakeUntil = t + 260; flashUntil = t + 180;
+    if (best.kind === "bad" || best.kind === "vomit") {
+      const sick = best.kind === "vomit";
+      if (sick) state.vomit++; else state.bad++;
+      state.score += pts;
+      fx.floats.push({ x: p.x, y: p.y, text: String(pts), color: sick ? "#9fd356" : "#ff6b78", born: t });
+      burst(p.x, p.y, sick ? "#9fd356" : "#8a5a2b", t);
+      shakeUntil = t + (sick ? 520 : 260); flashUntil = t + (sick ? 320 : 180);
       if (opts.sfx) opts.sfx("error");
-      if (opts.vibrate) opts.vibrate(30);
+      if (opts.vibrate) opts.vibrate(sick ? [40, 30, 40] : 30);
     } else {
       if (best.kind === "gold") state.gold++; else state.caught++;
       state.score += pts;
@@ -152,7 +157,7 @@ function createDash(canvas, content, opts = {}) {
   function demoTick(t) {
     if (t - lastDemoSpawn > 950) {
       lastDemoSpawn = t;
-      const cycle = spec.goldShare > 0 ? ["good", "bad", "good", "gold", "good", "bad"] : ["good", "bad", "good", "good", "bad", "good"];
+      const cycle = spec.goldShare > 0 ? ["good", "bad", "good", "gold", "good", spec.vomitShare > 0 ? "vomit" : "bad"] : ["good", "bad", "good", "good", "bad", "good"];
       const kind = cycle[demoN % cycle.length];
       const lane = twins ? demoN % 2 : 0;
       spawn({ id: demoN, lane, x: 0.2 + ((demoN * 7) % 5) * 0.15, kind, speed: 0.34, phase: demoN, wobble: 0.025 }, t);
@@ -160,7 +165,7 @@ function createDash(canvas, content, opts = {}) {
     }
     // A ghost finger taps the lowest good item once it is two thirds down.
     for (const o of targets()) {
-      if (o.it.kind !== "bad" && o.p.y > H * 0.62) { tap(o.p.x + 6, o.p.y + 6); break; }
+      if (o.it.kind !== "bad" && o.it.kind !== "vomit" && o.p.y > H * 0.62) { tap(o.p.x + 6, o.p.y + 6); break; }
     }
   }
 
@@ -187,6 +192,15 @@ function createDash(canvas, content, opts = {}) {
     if (twins) {
       g2.fillStyle = "#ead7b8"; g2.fillRect(W / 2 - 2, 0, 4, H);
       g2.fillStyle = "#1d1b18"; g2.fillRect(W / 2 - 4, 0, 2, H); g2.fillRect(W / 2 + 2, 0, 2, H);
+    }
+    // Wind streaks sway with the gusts so the sideways drift reads as weather.
+    if (spec.wind && !reduced) {
+      const span = W + 80, sway = Math.sin(t / 1900 + 1.3) * spec.wind * W * 1.6;
+      g2.fillStyle = "rgba(243,230,207,.16)";
+      for (let i = 0; i < 7; i++) {
+        const x = (((i * 137 + sway) % span) + span) % span - 40;
+        g2.fillRect(x, 30 + i * ((H - 60) / 7), 28, 2);
+      }
     }
     // Items.
     for (const it of live) {
@@ -244,7 +258,7 @@ function createDash(canvas, content, opts = {}) {
     for (let i = live.length - 1; i >= 0; i--) {
       const it = live[i];
       if (it.hit) { if (t - it.hitAt > 220) live.splice(i, 1); continue; }
-      if (pos(it, t).y > H + S) { if (it.kind !== "bad") state.missed++; live.splice(i, 1); }
+      if (pos(it, t).y > H + S) { if (it.kind !== "bad" && it.kind !== "vomit") state.missed++; live.splice(i, 1); }
     }
     draw(t);
     if (state.ended && t > duration + 3000) { running = false; return; }
@@ -265,7 +279,7 @@ function createDash(canvas, content, opts = {}) {
 let game = null, stageGame = null, demoGame = null, submitTimer = null, finish = null, bestEl = null, roomBest = "";
 
 function hudText(st) {
-  return ["CAUGHT ", h("strong", null, String(st.caught + st.gold)), " · OOPS ", h("strong", null, String(st.bad)), " · SCORE ", h("strong", null, String(st.score))];
+  return ["CAUGHT ", h("strong", null, String(st.caught + st.gold)), " · OOPS ", h("strong", null, String(st.bad + (st.vomit || 0))), " · SCORE ", h("strong", null, String(st.score))];
 }
 
 function stopAll() {
@@ -286,10 +300,12 @@ export default {
     const tv = document.documentElement.dataset.screen === "tv";
     const canvas = h("canvas", { class: "game-surface", "aria-hidden": "true", style: { display: "block", width: "100%", height: tv ? "240px" : "170px", border: "3px solid #1d1b18" } });
     const lg = tv ? 40 : 24;
+    const spec = { ...data.rounds[clamp((content.round || 1) - 1, 0, data.rounds.length - 1)], ...(content.spec || {}) };
     const legend = h("div", { class: "row", style: { justifyContent: "center", gap: "14px", marginTop: "8px", fontSize: ".65em", flexWrap: "wrap" } },
       h("span", null, spriteNode("good", lg), " +1"),
-      (content.round || 1) >= 2 ? h("span", null, spriteNode("gold", lg, true), " +3") : null,
-      h("span", null, spriteNode("bad", lg), " −1"));
+      spec.goldShare > 0 ? h("span", null, spriteNode("gold", lg, true), " +3") : null,
+      h("span", null, spriteNode("bad", lg), " −1"),
+      spec.vomitShare > 0 ? h("span", null, spriteNode("vomit", lg), " −5") : null);
     appendTo(el, canvas, legend);
     demoGame = createDash(canvas, { round: content.round || 1, twins: !!content.twins, duration: 1e9 }, { demo: true, reduced: reduceMotion(), size: tv ? 66 : SIZE });
     const mine = demoGame;
@@ -312,7 +328,7 @@ export default {
       if (finalSent || !me) return;
       const st = me.state;
       st.dirty = false;
-      api.submit({ caught: st.caught, gold: st.gold, bad: st.bad, score: st.score }, { final });
+      api.submit({ caught: st.caught, gold: st.gold, bad: st.bad, vomit: st.vomit, score: st.score }, { final });
       if (final) finalSent = true;
     };
     const updateHud = () => { if (me) hud.replaceChildren(...hudText(me.state)); };
@@ -364,8 +380,8 @@ export default {
     const tick = () => {
       if (game !== me || me.state.ended) return;
       const list = me.targets();
-      const good = list.filter((o) => o.it.kind !== "bad");
-      const bad = list.filter((o) => o.it.kind === "bad");
+      const good = list.filter((o) => o.it.kind !== "bad" && o.it.kind !== "vomit");
+      const bad = list.filter((o) => o.it.kind === "bad" || o.it.kind === "vomit");
       const pick = Math.random() < 0.85 ? (good[0] || null) : (bad[0] || good[0] || null);
       if (pick) me.tap(pick.p.x + (Math.random() - 0.5) * 16, pick.p.y + (Math.random() - 0.5) * 16);
       setTimeout(tick, 300 + Math.random() * 200);
@@ -406,18 +422,19 @@ export default {
       hop(bestSprite);
       api.sfx("win");
       const p = byId[top[0].id];
-      el.appendChild(h("div", { class: "callout" }, "TOP CATCHER: " + p.name, h("small", null, (top[0].caught + top[0].gold) + " CAUGHT · " + top[0].gold + " GOLD · " + top[0].bad + " OOPS")));
+      el.appendChild(h("div", { class: "callout" }, "TOP CATCHER: " + p.name, h("small", null, (top[0].caught + top[0].gold) + " CAUGHT · " + top[0].gold + " GOLD · " + (top[0].bad + (top[0].vomit || 0)) + " OOPS")));
     } else {
-      el.appendChild(h("p", { class: "sub" }, "NOBODY CAUGHT A THING. THE DIAPERS WIN."));
+      el.appendChild(h("p", { class: "sub" }, "NOBODY CAUGHT A THING. THE POOPIES WIN."));
     }
     el.appendChild(h("div", { class: "panel center", style: { marginTop: "14px" } },
       h("div", { style: { fontSize: "1.8em", color: "#6b3510", lineHeight: "1.3" } }, spriteNode("good", 30), " ", String(reveal.totalCaught || 0)),
       h("div", { class: "tiny", style: { color: "#6b3510" } }, "PACIFIERS CAUGHT BY THE ROOM"),
-      reveal.totalBad ? h("div", { class: "tiny", style: { color: "#6b3510", marginTop: "4px" } }, spriteNode("bad", 18), " " + reveal.totalBad + " DIAPERS TAPPED. EW.") : null,
+      reveal.totalBad ? h("div", { class: "tiny", style: { color: "#6b3510", marginTop: "4px" } }, spriteNode("bad", 18), " " + reveal.totalBad + " POOPIES TAPPED. EW.") : null,
+      reveal.totalVomit ? h("div", { class: "tiny", style: { color: "#6b3510", marginTop: "4px" } }, spriteNode("vomit", 18), " " + reveal.totalVomit + " VOMITS TAPPED. OH NO.") : null,
       reveal.avg ? h("div", { class: "tiny", style: { color: "#6b3510" } }, "AVERAGE SCORE " + reveal.avg) : null));
     if (you) {
       const mine = you.myAnswer && typeof you.myAnswer === "object" ? you.myAnswer : null;
-      const caught = mine ? (mine.caught | 0) + (mine.gold | 0) : 0, bad = mine ? mine.bad | 0 : 0;
+      const caught = mine ? (mine.caught | 0) + (mine.gold | 0) : 0, bad = mine ? (mine.bad | 0) + (mine.vomit | 0) : 0;
       const meRow = byId[you.id];
       el.appendChild(h("div", { class: "panel dark center" }, "YOU: ", h("strong", null, caught + " CAUGHT, " + bad + " OOPS"), h("br"),
         h("span", { class: "tiny" }, mine ? "SCORE " + (Number(mine.score) || 0) + (meRow ? " → " + meRow.roundPoints + " PTS" : "") : "YOU SAT THIS ONE OUT")));

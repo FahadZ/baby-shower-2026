@@ -44,7 +44,7 @@ test("full round flow with bots scores, ranks and produces results", () => {
   assert.equal(st.core.botQueue.length, 10);
   const snap = L.publicState(st, t);
   assert.equal(snap.content.items.length, 1);
-  assert.equal(snap.content.min, 0);
+  assert.equal(snap.content.max - snap.content.min, 100, "the slider spans the data's range, slid to a seeded spot");
   // Human answers mid-round; bots drip in via tick.
   const res = L.answer(st, me, "price-1", 40, t + 3000);
   assert.ok(res.ok);
@@ -194,4 +194,22 @@ test("practice round: a host toggle on the how-to screen, off again once the rou
   assert.equal(st.core.phase, "howto");
   assert.ok(L.command(st, "practice", { on: true }, 3200).error);
   assert.equal(L.publicState(st, 3300).practiceAvailable, false);
+});
+
+test("answerCount counts final answers only; a moved slider is just touched", () => {
+  const st = fresh();
+  const me = L.join(st, { name: "Me", avatar: av("kirby") }, 1000).playerId;
+  L.command(st, "start", null, 2000);
+  L.command(st, "next", null, 2100);
+  L.command(st, "next", null, 2200);
+  assert.equal(st.core.phase, "playing");
+  L.answer(st, me, st.core.roundId, 50, 2300, false);
+  let snap = L.publicState(st, 2400);
+  assert.equal(snap.answerCount, 0);
+  assert.equal(snap.touchedCount, 1);
+  assert.equal(snap.game.progressive, false);
+  L.answer(st, me, st.core.roundId, 50, 2500, true);
+  snap = L.publicState(st, 2600);
+  assert.equal(snap.answerCount, 1);
+  assert.equal(snap.touchedCount, 1);
 });

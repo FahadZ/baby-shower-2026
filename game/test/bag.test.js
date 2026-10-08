@@ -84,35 +84,36 @@ test("fillStats and validPlacement: counts, essentials, overlap dropped", () => 
   assert.equal(fillStats(mask, "not a list", items).cellsUsed, 0);
 });
 
-test("twins round: instance ids map to base items, essentials counted per instance", () => {
-  const items = roundItems(3);
+test("day trip round: instance ids map to base items, essentials counted per instance", () => {
+  const items = roundItems(2);
   assert.equal(items["diapers#2"].base, "diapers");
   assert.equal(items["diapers#2"].essential, true);
-  const st = fillStats(roundMask(3), [{ key: "diapers", x: 0, y: 1, rot: 0 }, { key: "diapers#2", x: 3, y: 1, rot: 0 }], items);
+  const st = fillStats(roundMask(2), [{ key: "diapers", x: 0, y: 2, rot: 0 }, { key: "diapers#2", x: 3, y: 2, rot: 0 }], items);
   assert.equal(st.essentialsTotal, 8);
   assert.equal(st.essentialsPlaced, 2);
   assert.equal(st.missingEssentials, 6);
-  assert.equal(bag.roundTime(3), 30000);
-  assert.equal(bag.roundTime(1), 45000);
-  assert.equal(bag.roundTime(2), 45000);
+  assert.equal(bag.rounds, 2);
+  assert.equal(bag.roundTime(1), 60000);
+  assert.equal(bag.roundTime(2), 75000);
 });
 
-test("rounds: round 2 offers more item cells than bag cells; round 1 fits", () => {
+test("rounds: both rounds offer more item cells than the bag holds, so packing is a puzzle", () => {
   const spec2 = data.rounds[1];
   const items2 = roundItems(2);
   const cellsOffered = spec2.items.reduce((s, id) => s + cells(items2[id].shape).length, 0);
-  assert.ok(cellsOffered > parseMask(roundMask(2)).count, "day trip: choices matter");
-  assert.equal(spec2.items.length, 18);
+  assert.ok(cellsOffered > parseMask(roundMask(2)).count * 1.2, "day trip: well over the bag");
+  assert.equal(spec2.items.length, 27);
   const spec1 = data.rounds[0];
   const items1 = roundItems(1);
-  assert.equal(spec1.items.length, 12);
-  assert.ok(spec1.items.reduce((s, id) => s + cells(items1[id].shape).length, 0) < parseMask(roundMask(1)).count);
-  for (const r of [1, 2, 3]) {
+  assert.equal(spec1.items.length, 21);
+  const offered1 = spec1.items.reduce((s, id) => s + cells(items1[id].shape).length, 0);
+  assert.ok(offered1 > parseMask(roundMask(1)).count, "everyday: more than fits");
+  for (const r of [1, 2]) {
     const its = roundItems(r);
     for (const e of data.essentials) assert.ok(Object.values(its).some((it) => it.base === e), "round " + r + " offers " + e);
   }
   const c = bag.content(1);
-  assert.equal(c.items.length, 12);
+  assert.equal(c.items.length, 21);
   assert.equal(c.essentialsTotal, 4);
   assert.deepEqual(c.mask, data.masks.everyday);
   assert.equal(bag.howto(1).text.includes("DRAG"), true);

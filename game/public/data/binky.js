@@ -27,7 +27,8 @@ export default {
   shapeColors: ["#e0283a", "#8cc523", "#5aa7e8", "#ffd84a", "#c26ad6", "#ff8c42", "#2bb3a0"],
   rounds: [
     { title: "ROUND 1: NURSERY", subtitle: "FIVE THINGS WENT MISSING IN THE TOY PILE", density: 95, mode: "normal", after: 0.3, overlappers: 1, cover: 1 },
-    { title: "ROUND 2: DIAPER BAG EXPLOSION", subtitle: "SAME FIVE, WAY MORE STUFF", density: 150, mode: "normal", after: 0.4, overlappers: 1, cover: 2 },
+    // Round 2's pile is a taller map (h) that the phone drags up and down to search.
+    { title: "ROUND 2: DIAPER BAG EXPLOSION", subtitle: "A BIGGER PILE. DRAG TO LOOK AROUND.", density: 230, h: 2600, mode: "normal", after: 0.4, overlappers: 1, cover: 2 },
     { title: "ROUND 3: NIGHT FEED", subtitle: "LIGHTS OFF. FEEL AROUND.", density: 95, mode: "night", after: 0.3, overlappers: 1, cover: 1 }
   ],
   // Virtual canvas size and gameplay constants (units, not pixels).

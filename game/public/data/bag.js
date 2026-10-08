@@ -62,27 +62,23 @@ export default {
     ]
   },
 
+  // Two rounds, both offering more stuff than fits: packing tight is the puzzle.
   rounds: [
     {
       title: "ROUND 1: THE EVERYDAY BAG",
-      subtitle: "EVERYTHING FITS IF YOU PACK SMART",
-      seconds: 45,
+      subtitle: "MORE STUFF THAN FITS. PACK TIGHT, LEAVE THE REST.",
+      seconds: 60,
       mask: "everyday",
-      items: ["diapers", "wipes", "bottle", "pacifier", "blanket", "outfit", "onesie", "teddy", "changepad", "book", "snack", "sunscreen"]
+      // 86 cells of stuff for a 78-cell bag.
+      items: ["diapers", "wipes", "bottle", "pacifier", "blanket", "blanket#2", "outfit", "outfit#2", "onesie", "onesie#2", "teddy", "changepad", "changepad#2", "book", "book#2", "snack", "sunscreen", "hat", "bib", "toycar", "socks"]
     },
     {
       title: "ROUND 2: DAY TRIP",
-      subtitle: "BIGGER BAG, MORE STUFF THAN FITS. CHOOSE!",
-      seconds: 45,
+      subtitle: "A BIGGER, WEIRDER BAG. EVEN MORE STUFF. CHOOSE!",
+      seconds: 75,
       mask: "daytrip",
-      items: ["diapers", "diapers#2", "wipes", "wipes#2", "bottle", "bottle#2", "pacifier", "blanket", "blanket#2", "outfit", "outfit#2", "changepad", "changepad#2", "book", "teddy", "onesie", "hat", "sunscreen"]
-    },
-    {
-      title: "ROUND 3: TWINS",
-      subtitle: "TWO OF EVERY ESSENTIAL. 30 SECONDS. GO!",
-      seconds: 30,
-      mask: "everyday",
-      items: ["diapers", "diapers#2", "wipes", "wipes#2", "bottle", "bottle#2", "pacifier", "pacifier#2", "blanket", "outfit", "onesie", "teddy", "changepad", "book", "snack", "sunscreen"]
+      // 109 cells of stuff for an 84-cell bag with a side pocket.
+      items: ["diapers", "diapers#2", "wipes", "wipes#2", "bottle", "bottle#2", "pacifier", "pacifier#2", "blanket", "blanket#2", "outfit", "outfit#2", "changepad", "changepad#2", "book", "book#2", "teddy", "teddy#2", "onesie", "onesie#2", "hat", "sunscreen", "sunscreen#2", "snack", "bib", "toycar", "socks"]
     }
   ]
 };

@@ -72,31 +72,60 @@ function drawCross(ctx, x, y, s, alpha) {
 
 // A canvas that shows one scene: fits itself to its CSS width, composites the
 // base image with the flashlight, rings, misses and an optional zoom camera.
-function createView(canvas, scene, { night = false } = {}) {
+// fitViewport: the canvas never reaches below the visible part of the window (phones, where
+// the address bar and touch-action: none would otherwise hide the bottom of the pile).
+// pan: on a map taller than that, keep the full width and scroll the scene under the finger
+// instead of shrinking it (day rounds; at night the finger is the torch, so no panning).
+function createView(canvas, scene, { night = false, fitViewport = false, pan = false } = {}) {
   const ctx = canvas.getContext("2d");
-  const st = { night, light: night ? { x: scene.w / 2, y: scene.h / 2 } : null, rings: [], marks: [], zoom: null };
+  const st = { night, light: night ? { x: scene.w / 2, y: scene.h / 2 } : null, rings: [], marks: [], zoom: null, panY: 0 };
   let base = null, cssW = 0, cssH = 0, dpr = 1, raf = 0, animUntil = 0, alive = true;
+
+  // Pixels from the canvas top to the bottom of the visible window, page scrolled to the top.
+  function availHeight() {
+    const vh = (window.visualViewport && window.visualViewport.height) || window.innerHeight || 800;
+    const top = canvas.getBoundingClientRect().top + (window.scrollY || 0);
+    return Math.max(300, Math.floor(vh - top - 14));
+  }
 
   function fit() {
     if (!alive) return false;
-    const w = canvas.clientWidth || canvas.getBoundingClientRect().width;
-    if (!w) { requestAnimationFrame(fit); return false; }
+    const parent = canvas.parentElement;
+    const w0 = fitViewport && parent ? parent.clientWidth : (canvas.clientWidth || canvas.getBoundingClientRect().width);
+    if (!w0) { requestAnimationFrame(fit); return false; }
     dpr = Math.min(2, window.devicePixelRatio || 1);
-    cssW = w; cssH = w * scene.h / scene.w;
+    let w = w0, hFull = w0 * scene.h / scene.w, hUse = hFull;
+    if (fitViewport) {
+      const avail = availHeight();
+      if (hFull > avail) {
+        if (pan) hUse = avail;                                              // keep the width, scroll the rest
+        else { w = Math.floor(avail * scene.w / scene.h); hUse = avail; }  // shrink to fit, whole map visible
+      }
+      canvas.style.width = w + "px";
+    }
+    cssW = w; cssH = hUse;
     canvas.style.height = cssH + "px";
-    const pxW = Math.round(cssW * dpr);
-    if (canvas.width !== pxW) {
-      canvas.width = pxW; canvas.height = Math.round(cssH * dpr);
+    const pxW = Math.round(cssW * dpr), pxH = Math.round(cssH * dpr);
+    if (canvas.width !== pxW || canvas.height !== pxH) {
+      canvas.width = pxW; canvas.height = pxH;
       base = renderBase(scene, pxW);
     }
+    setPan(st.panY);
     paint(performance.now());
     return true;
   }
 
   const scale = () => cssW / scene.w;
+  const maxPan = () => Math.max(0, scene.h * scale() - cssH);
+  const canPan = () => pan && maxPan() > 1;
+  function setPan(y) { st.panY = Math.max(0, Math.min(maxPan(), y || 0)); }
+  // The torch never shrinks below a thumb-friendly size on screen, whatever the scale.
+  const lightRadius = () => Math.max(data.flashlight, 100 / Math.max(0.01, scale()));
+
+  // Scene units -> canvas px, through the camera: a zoom (reveal tour) or the pan offset.
   function map(ux, uy) {
     const s = scale();
-    if (!st.zoom) return [ux * s, uy * s];
+    if (!st.zoom) return [ux * s, uy * s - st.panY];
     return [(ux - st.zoom.x) * s * st.zoom.k + cssW / 2, (uy - st.zoom.y) * s * st.zoom.k + cssH / 2];
   }
 
@@ -115,7 +144,7 @@ function createView(canvas, scene, { night = false } = {}) {
       ctx.fillRect(0, 0, cssW, cssH);
       if (st.light) {
         const [lx, ly] = map(st.light.x, st.light.y);
-        const r = data.flashlight * s;
+        const r = lightRadius() * s;
         ctx.save();
         ctx.beginPath(); ctx.arc(lx, ly, r, 0, TAU); ctx.clip();
         drawScene();
@@ -145,6 +174,13 @@ function createView(canvas, scene, { night = false } = {}) {
       const [x, y] = map(m.x, m.y);
       drawCross(ctx, x, y, Math.max(8, 26 * s), Math.min(1, (m.until - now) / 200));
     }
+    // A scroll thumb on the right while the map is taller than the canvas.
+    if (canPan() && !st.zoom) {
+      const trackH = cssH - 16, thumbH = Math.max(24, trackH * cssH / (scene.h * scale()));
+      const y = 8 + (trackH - thumbH) * (st.panY / Math.max(1, maxPan()));
+      ctx.fillStyle = "rgba(29,27,24,.22)"; ctx.fillRect(cssW - 11, 8, 6, trackH);
+      ctx.fillStyle = "rgba(29,27,24,.75)"; ctx.fillRect(cssW - 11, y, 6, thumbH);
+    }
   }
 
   function loop(now) {
@@ -156,21 +192,25 @@ function createView(canvas, scene, { night = false } = {}) {
     animUntil = Math.max(animUntil, performance.now() + ms);
     if (!raf && alive) raf = requestAnimationFrame(loop);
   }
+  // Pointer -> scene units, through the same camera.
   function toUnits(e) {
     const r = canvas.getBoundingClientRect();
-    const x = (e.clientX - r.left) / Math.max(1, r.width) * scene.w;
-    const y = (e.clientY - r.top) / Math.max(1, r.height) * scene.h;
+    const px = (e.clientX - r.left) * (cssW / Math.max(1, r.width)), py = (e.clientY - r.top) * (cssH / Math.max(1, r.height));
+    const s = scale();
+    let x, y;
+    if (!st.zoom) { x = px / s; y = (py + st.panY) / s; }
+    else { x = (px - cssW / 2) / (s * st.zoom.k) + st.zoom.x; y = (py - cssH / 2) / (s * st.zoom.k) + st.zoom.y; }
     return [Math.max(0, Math.min(scene.w, x)), Math.max(0, Math.min(scene.h, y))];
   }
   function destroy() { alive = false; if (raf) cancelAnimationFrame(raf); raf = 0; }
-  return { st, fit, request, toUnits, destroy, isAlive: () => alive };
+  return { st, fit, request, toUnits, destroy, isAlive: () => alive, scale, canPan, setPan, panY: () => st.panY, lightRadius };
 }
 
-// cap is a height budget on big screens; the width follows the 1000:1400 aspect.
-function sceneCanvas({ big = false, night = false, cap = "70vh" } = {}) {
+// cap is a height budget on big screens; the width follows the scene's aspect (h / w).
+function sceneCanvas({ big = false, night = false, cap = "70vh", aspect = 1.4 } = {}) {
   return h("canvas", {
     class: "game-surface", width: "10", height: "14", "aria-label": "The toy pile",
-    style: { display: "block", width: big ? "min(100%, calc(" + cap + " * 1000 / 1400))" : "100%", margin: "0 auto", border: "4px solid " + INK, boxShadow: "4px 4px 0 #000", background: night ? NIGHT : CREAM }
+    style: { display: "block", width: big ? "min(100%, calc(" + cap + " / " + aspect.toFixed(4) + "))" : "100%", margin: "0 auto", border: "4px solid " + INK, boxShadow: "4px 4px 0 #000", background: night ? NIGHT : CREAM }
   });
 }
 
@@ -261,16 +301,18 @@ export default {
 
     const counter = h("div", { class: "counter center", "aria-live": "polite", style: { fontSize: "1.6em", margin: "0 0 6px" } }, "FOUND 0/" + keys.length);
     const chips = chipRow(keys, names, chars);
-    const canvas = sceneCanvas({ night });
+    const canvas = sceneCanvas({ night, aspect: scene.h / scene.w });
     const after = h("div", { class: "center", style: { marginTop: "12px" } });
+    const hint = h("p", { class: "tiny center", style: { marginTop: "8px" } }, night ? "DRAG TO SEARCH: THE LIGHT FLOATS ABOVE YOUR FINGER AND STAYS WHERE YOU LEAVE IT. TAP AN ITEM TO GRAB IT." : "TAP AN ITEM WHEN YOU SPOT IT.");
     appendTo(el,
       h("h2", { class: "title", style: { fontSize: "1.2em", margin: "4px 0" } }, content.title || "WHERE'S THE BINKY?"),
       content.subtitle ? h("p", { class: "sub", style: { marginBottom: "8px" } }, content.subtitle) : null,
-      counter, chips.row, canvas,
-      h("p", { class: "tiny center", style: { marginTop: "8px" } }, night ? "DRAG TO SEARCH: THE LIGHT FLOATS ABOVE YOUR FINGER AND STAYS WHERE YOU LEAVE IT. TAP AN ITEM TO GRAB IT." : "TAP AN ITEM WHEN YOU SPOT IT."),
+      counter, chips.row, canvas, hint,
       after);
 
-    const view = createView(canvas, scene, { night });
+    // The whole canvas stays on screen. A map taller than that scrolls under the finger
+    // by day; at night the finger is the torch, so the night map shrinks to fit instead.
+    const view = createView(canvas, scene, { night, fitViewport: true, pan: !night });
     // A phone that reloaded mid-round keeps what it already found.
     const prev = api.you && api.you() && api.you().myAnswer;
     if (prev && Array.isArray(prev.found)) {
@@ -284,6 +326,7 @@ export default {
       counter.textContent = "FOUND " + found.length + "/" + keys.length;
     }
     view.fit();
+    if (view.canPan()) hint.textContent = "DRAG UP AND DOWN TO LOOK THROUGH THE PILE. TAP AN ITEM TO GRAB IT.";
 
     function celebrate() {
       api.sfx("win");
@@ -322,25 +365,32 @@ export default {
     }
 
     // Night mode: the beam floats above the finger (fingers cover what they touch), it
-    // keeps shining where you leave it, a drag searches and a clean tap grabs.
-    const lightAt = (x, y) => { view.st.light = { x, y: Math.max(data.flashlight * 0.6, y - data.lightOffset) }; view.request(); };
+    // keeps shining where you leave it, a drag searches and a clean tap grabs. The offset
+    // is at least 72 screen px however small the canvas got.
+    const lightAt = (x, y) => {
+      const off = Math.max(data.lightOffset, 72 / view.scale());
+      view.st.light = { x, y: Math.max(view.lightRadius() * 0.6, y - off) };
+      view.request();
+    };
+    // Day mode on a tall map: a drag scrolls the pile, a clean tap grabs. Small day maps
+    // grab on the way down, as before.
     let press = null;
     const onDown = (e) => {
       e.preventDefault();
       const [x, y] = view.toUnits(e);
-      if (!night) { tapAt(x, y); return; }
-      press = { x, y, cx: e.clientX, cy: e.clientY, moved: false, id: e.pointerId };
+      if (!night && !view.canPan()) { tapAt(x, y); return; }
+      press = { x, y, cx: e.clientX, cy: e.clientY, pan0: view.panY(), moved: false, id: e.pointerId };
       try { canvas.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
-      lightAt(x, y);
+      if (night) lightAt(x, y);
     };
     const onMove = (e) => {
-      if (!night || !press || e.pointerId !== press.id) return;
+      if (!press || e.pointerId !== press.id) return;
       if (Math.hypot(e.clientX - press.cx, e.clientY - press.cy) > 10) press.moved = true;
-      const [x, y] = view.toUnits(e);
-      lightAt(x, y);
+      if (night) { const [x, y] = view.toUnits(e); lightAt(x, y); return; }
+      if (press.moved) { view.setPan(press.pan0 + (press.cy - e.clientY)); view.request(); }
     };
     const onUp = (e) => {
-      if (!night || !press || e.pointerId !== press.id) return;
+      if (!press || e.pointerId !== press.id) return;
       const was = press; press = null;
       if (!was.moved) tapAt(was.x, was.y);
     };
@@ -394,16 +444,17 @@ export default {
     const myFound = new Set(you && you.myAnswer && Array.isArray(you.myAnswer.found) ? you.myAnswer.found : []);
     const mine = reveal.targets.filter((t) => myFound.has(t.key)).length;
 
-    const canvas = sceneCanvas({ big: api.big, cap: api.tv ? "80vh" : "60vh" });
+    const canvas = sceneCanvas({ big: api.big, cap: api.tv ? "80vh" : "60vh", aspect: scene.h / scene.w });
     const tally = h("div", null);
     appendTo(el, h("h2", { class: "title" }, "WHERE WERE THEY?"), api.tv ? h("div", { class: "tv-two", style: { alignItems: "center" } }, h("div", null, canvas), tally) : [canvas, tally]);
-    const view = createView(canvas, scene, { night: false });
+    const view = createView(canvas, scene, { night: false, fitViewport: !api.big });
     view.fit();
     const alive = () => el.isConnected && view.isAlive();
     const quick = reduceMotion();
 
     // Camera tour: dive onto the first item, glide to each of the others, pull back out.
-    const K = 3;
+    // A tall map is drawn smaller, so the dive goes proportionally deeper.
+    const K = 3 * Math.max(1, scene.h / data.h);
     const clampCenter = (x, y, k) => [Math.max(scene.w / (2 * k), Math.min(scene.w - scene.w / (2 * k), x)), Math.max(scene.h / (2 * k), Math.min(scene.h - scene.h / (2 * k), y))];
     const full = { x: scene.w / 2, y: scene.h / 2, k: 1 };
     async function glide(from, to, ms) {
@@ -475,7 +526,7 @@ export default {
     const scene = generateScene(content.seed, round, content.spec || null);
     const night = content.mode === "night";
     const keys = content.targetKeys || data.targets.map((t) => t.key);
-    const canvas = sceneCanvas({ big: true, night, cap: "68vh" });
+    const canvas = sceneCanvas({ big: true, night, cap: "68vh", aspect: scene.h / scene.w });
     const chips = chipRow(keys, content.targetNames || {}, content.targetChars || {}, { big: true });
     keys.forEach((k) => chips.light(k, true));
     const count = h("div", { class: "counter center", dataset: { role: "binky-count" } }, "0 SEARCHING");

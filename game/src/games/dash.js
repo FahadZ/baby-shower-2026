@@ -20,14 +20,15 @@ const num = (v) => (typeof v === "number" && isFinite(v) ? v : NaN);
 
 // One player's answer -> { caught, gold, bad, raw } with junk turned into zeros.
 function cleanAnswer(a, lim) {
-  if (!a || typeof a !== "object") return { caught: 0, gold: 0, bad: 0, raw: 0 };
+  if (!a || typeof a !== "object") return { caught: 0, gold: 0, bad: 0, vomit: 0, raw: 0 };
   const caught = clamp(Math.round(num(a.caught) || 0), 0, lim.good);
   const gold = clamp(Math.round(num(a.gold) || 0), 0, lim.gold);
   const bad = clamp(Math.round(num(a.bad) || 0), 0, lim.bad);
+  const vomit = clamp(Math.round(num(a.vomit) || 0), 0, lim.vomit || 0);
   const reported = num(a.score);
-  const fromCounts = caught * data.points.good + gold * data.points.gold + bad * data.points.bad;
+  const fromCounts = caught * data.points.good + gold * data.points.gold + bad * data.points.bad + vomit * data.points.vomit;
   const raw = clamp(Math.round(isNaN(reported) ? fromCounts : Math.min(reported, fromCounts)), 0, lim.max);
-  return { caught, gold, bad, raw };
+  return { caught, gold, bad, vomit, raw };
 }
 
 function cleaned(answers, round, seed) {
@@ -51,8 +52,10 @@ export default {
 
   howto(round) {
     const spec = roundSpec(round);
-    let text = "TAP THE FALLING PACIFIERS. DON'T TAP THE DIAPERS.";
-    if (round >= 2) text += " GOLD BOTTLES ARE WORTH 3.";
+    let text = "TAP THE FALLING PACIFIERS. DON'T TAP THE POOPIES.";
+    if (spec.goldShare > 0) text += " GOLD BOTTLES ARE WORTH 3.";
+    if (spec.vomitShare > 0) text += " VOMIT COSTS 5.";
+    if (spec.wind) text += " THE WIND BLOWS EVERYTHING SIDEWAYS.";
     if (spec.twins) text += " TWO LANES, TWO HANDS.";
     return { title: spec.title, text, demo: "tap", points: "UP TO 1000 PTS" };
   },
@@ -64,8 +67,8 @@ export default {
   // PRACTICE: one slow lane, no gold, so people can try tapping before round 1.
   // `spec` overrides the round's rate and speed on the phone.
   practice(ctx) {
-    const spec = { rate: 0.9, speed: 0.8, goldShare: 0, badShare: 0.25 };
-    return { ...contentFor(1, ctx.seed), title: "PRACTICE: WARM-UP", subtitle: "NOTHING COUNTS. TAP THE PACIFIERS, SKIP THE DIAPERS.", rate: spec.rate, speed: spec.speed, spec };
+    const spec = { rate: 0.9, speed: 0.8, speedSpread: 0.5, goldShare: 0, badShare: 0.25, vomitShare: 0, wind: 0 };
+    return { ...contentFor(1, ctx.seed), title: "PRACTICE: WARM-UP", subtitle: "NOTHING COUNTS. TAP THE PACIFIERS, SKIP THE POOPIES.", rate: spec.rate, speed: spec.speed, spec };
   },
 
   // answers: { playerId: { a: { caught, gold, bad, score }, t, final } }
@@ -78,7 +81,7 @@ export default {
 
   revealData(answers, round, ctx) {
     const { lim, out } = cleaned(answers, round, ctx.seed);
-    const rows = Object.keys(out).map((id) => ({ id, raw: out[id].raw, caught: out[id].caught, gold: out[id].gold, bad: out[id].bad }));
+    const rows = Object.keys(out).map((id) => ({ id, raw: out[id].raw, caught: out[id].caught, gold: out[id].gold, bad: out[id].bad, vomit: out[id].vomit }));
     rows.sort((a, b) => b.raw - a.raw || b.caught - a.caught || a.id.localeCompare(b.id));
     const n = rows.length;
     const sum = rows.reduce((s, r) => s + r.raw, 0);
@@ -91,6 +94,8 @@ export default {
       totalCaught: rows.reduce((s, r) => s + r.caught + r.gold, 0),
       totalGold: rows.reduce((s, r) => s + r.gold, 0),
       totalBad: rows.reduce((s, r) => s + r.bad, 0),
+      totalVomit: rows.reduce((s, r) => s + r.vomit, 0),
+      wind: !!roundSpec(round).wind,
       twins: !!roundSpec(round).twins
     };
   },
@@ -112,8 +117,9 @@ export default {
     const caught = clamp(Math.round(lim.good * skill * (0.85 + rng() * 0.3)), 0, lim.good);
     const gold = clamp(Math.round(lim.gold * skill * (0.5 + rng() * 0.6)), 0, lim.gold);
     const bad = clamp(Math.round(lim.bad * (1 - skill) * (sloppy ? 0.5 : 0.15) * rng() * 2), 0, lim.bad);
-    const score = caught * data.points.good + gold * data.points.gold + bad * data.points.bad;
+    const vomit = clamp(Math.round((lim.vomit || 0) * (1 - skill) * (sloppy ? 0.6 : 0.1) * rng() * 2), 0, lim.vomit || 0);
+    const score = caught * data.points.good + gold * data.points.gold + bad * data.points.bad + vomit * data.points.vomit;
     // Answers are progressive and only the last counts, so bots land late in the round.
-    return { a: { caught, gold, bad, score }, delayMs: 15000 + rng() * 4500 };
+    return { a: { caught, gold, bad, vomit, score }, delayMs: 15000 + rng() * 4500 };
   }
 };

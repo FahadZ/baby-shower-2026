@@ -10,6 +10,7 @@ function itemCards(items) {
 }
 
 let demoTimer = null, softTimer = null;
+let spinStop = null;   // stops the start-of-round slider spin on unmount
 
 export default {
   id: "price",
@@ -54,7 +55,24 @@ export default {
       tag.textContent = fmtMoney(value, { cents: false });
       native.value = String(value);
     }
+    // The thumb spins for a second and lands somewhere random, so nobody starts in the
+    // middle and the first nudge is a real decision. Any touch stops it early.
+    let spinT = null, spinEnd = null, spinning = false;
+    const stopSpin = () => { if (!spinning) return; spinning = false; clearInterval(spinT); clearTimeout(spinEnd); };
+    spinStop = stopSpin;
+    function spin() {
+      spinning = true;
+      spinT = setInterval(() => { if (spinning) { setValue(min + Math.random() * (max - min), { silent: true }); api.sfx("tick", 0.03); } }, 70);
+      spinEnd = setTimeout(() => {
+        if (!spinning) return;
+        stopSpin();
+        setValue(min + (0.08 + Math.random() * 0.84) * (max - min), { silent: true });
+        api.sfx("thunk");
+        sendSoft();
+      }, 1000);
+    }
     function setValue(v, { silent } = {}) {
+      if (!silent) stopSpin();
       const nv = snap(Number(v));
       if (!isFinite(nv)) return;
       const changed = nv !== value;
@@ -96,7 +114,7 @@ export default {
     });
     const prev = api.you && api.you() && api.you().myAnswer;
     if (typeof prev === "number") { setValue(prev, { silent: true }); btn.textContent = "UPDATE GUESS"; }
-    else setTimeout(sendSoft, 400);
+    else spin();
     appendTo(el,
       h("h2", { class: "title" }, content.title),
       content.subtitle ? h("p", { class: "sub" }, content.subtitle) : null,
@@ -113,7 +131,7 @@ export default {
     setTimeout(() => { if (!touched) tag.classList.add("blink"); setTimeout(() => tag.classList.remove("blink"), 1200); }, 2500);
   },
 
-  unmount() { clearInterval(demoTimer); if (softTimer) { clearTimeout(softTimer); softTimer = null; } },
+  unmount() { clearInterval(demoTimer); if (spinStop) { spinStop(); spinStop = null; } if (softTimer) { clearTimeout(softTimer); softTimer = null; } },
 
   // Rehearsal only: a plausible guess, submitted like a tap would.
   autoplay(el, content, api) {

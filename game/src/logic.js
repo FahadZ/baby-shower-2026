@@ -57,7 +57,7 @@ export function createState(now = Date.now(), seed) {
 export const currentGame = (core) => (core.gameIndex >= 0 ? GAMES_BY_ID[core.order[core.gameIndex]] : null);
 
 export function gameInfo(game) {
-  return game ? { id: game.id, title: game.title, tagline: game.tagline || "", rounds: game.rounds, icon: game.icon || "" } : null;
+  return game ? { id: game.id, title: game.title, tagline: game.tagline || "", rounds: game.rounds, icon: game.icon || "", progressive: !!game.progressive } : null;
 }
 
 function publicPlayers(core) {
@@ -665,7 +665,10 @@ export function publicState(state, now = Date.now()) {
     humanCount: humans.length,
     botCount: players.length - humans.length,
     connectedCount: players.filter((p) => p.connected).length,
-    answerCount: Object.keys(bucket).length,
+    // answerCount is final answers only. Slider positions and progressive updates count
+    // as "touched", so no counter claims a room is locked in before anyone is.
+    answerCount: Object.values(bucket).filter((a) => a && a.final).length,
+    touchedCount: Object.keys(bucket).length,
     revealNonce: core.revealNonce,
     order: core.order.map((id) => gameInfo(GAMES_BY_ID[id])),
     scored: core.scoredRounds.length,

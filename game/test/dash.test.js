@@ -18,17 +18,22 @@ test("schedule: deterministic per seed, sane items, twins use both lanes", () =>
     assert.ok(it.t >= 0 && it.t < data.duration);
     assert.equal(it.lane, 0);
     assert.ok(it.x > 0 && it.x < 1);
-    assert.ok(["good", "gold", "bad"].includes(it.kind));
+    assert.ok(["good", "gold", "bad", "vomit"].includes(it.kind));
     assert.ok(it.speed > 0);
     if (i) assert.ok(a[i].t >= a[i - 1].t, "sorted by time");
   }
   assert.ok(!a.some((it) => it.kind === "gold"), "no gold in round 1");
   assert.ok(buildSchedule({ seed: 4242, round: 2 }).some((it) => it.kind === "gold"), "gold appears in round 2");
   const t = buildSchedule({ seed: 4242, round: 3, twins: true });
-  assert.ok(t.some((it) => it.lane === 0) && t.some((it) => it.lane === 1), "twins fill both lanes");
-  assert.ok(t.length > a.length, "round 3 is busier than round 1");
+  assert.ok(t.some((it) => it.lane === 0) && t.some((it) => it.lane === 1), "twins (content flag) fill both lanes");
+  const r3 = buildSchedule({ seed: 4242, round: 3 });
+  assert.ok(r3.length > a.length, "round 3 is busier than round 1");
+  assert.ok(r3.every((it) => it.lane === 0), "round 3 is one lane");
+  assert.ok(!a.some((it) => it.kind === "vomit") && r3.some((it) => it.kind === "vomit"), "vomit shows up from round 2");
+  const speeds = a.map((it) => it.speed);
+  assert.ok(Math.max(...speeds) > Math.min(...speeds) * 1.6, "fall speeds vary widely: " + Math.min(...speeds) + ".." + Math.max(...speeds));
   const lim = scheduleLimits(a);
-  assert.equal(lim.good + lim.gold + lim.bad, a.length);
+  assert.equal(lim.good + lim.gold + lim.bad + lim.vomit, a.length);
   assert.equal(lim.max, lim.good + 3 * lim.gold);
 });
 
@@ -36,13 +41,13 @@ test("content: public, seeded, no schedule inside", () => {
   const c = dash.content(3, ctxFor(3));
   assert.equal(c.round, 3);
   assert.equal(c.seed, 4242);
-  assert.equal(c.twins, true);
+  assert.equal(c.twins, false);
   assert.equal(c.duration, 20000);
   assert.ok(!("items" in c) && !("schedule" in c));
-  assert.equal(dash.content(1, ctxFor(1)).twins, false);
-  assert.match(dash.howto(1).text, /DON'T TAP THE DIAPERS/);
+  assert.match(dash.howto(1).text, /DON'T TAP THE POOPIES/);
   assert.match(dash.howto(2).text, /GOLD BOTTLES/);
-  assert.match(dash.howto(3).text, /TWO LANES/);
+  assert.match(dash.howto(2).text, /VOMIT COSTS 5/);
+  assert.match(dash.howto(3).text, /WIND/);
   assert.equal(dash.progressive, true);
   assert.equal(dash.autoEnd, false);
 });
@@ -56,6 +61,7 @@ test("score: relative to the best, capped at the schedule's max, junk is 0", () 
     ace: { a: { caught: 10, gold: 2, bad: 0, score: aceScore }, t: 19000, final: true },
     half: { a: { caught: 5, gold: 1, bad: 0, score: 8 }, t: 19000, final: true },
     oops: { a: { caught: 3, gold: 0, bad: 5, score: -2 }, t: 19000, final: true },
+    sick: { a: { caught: 8, gold: 0, bad: 0, vomit: 1, score: 3 }, t: 19000, final: true },
     cheat: { a: { caught: 999, gold: 999, bad: 0, score: 99999 }, t: 100, final: true },
     liar: { a: { caught: 2, gold: 0, bad: 0, score: 500 }, t: 100, final: true },
     junk: { a: "lol", t: 100, final: true },
@@ -67,6 +73,7 @@ test("score: relative to the best, capped at the schedule's max, junk is 0", () 
   assert.equal(pts.ace, Math.round(1000 * aceScore / lim.max));
   assert.equal(pts.half, Math.round(1000 * 8 / lim.max));
   assert.equal(pts.oops, 0);
+  assert.equal(pts.sick, Math.round(1000 * 3 / lim.max), "one vomit costs five");
   assert.equal(pts.liar, Math.round(1000 * 2 / lim.max), "score is cross-checked against the counts");
   assert.equal(pts.junk, 0);
   assert.equal(pts.nan, 0);
@@ -76,6 +83,7 @@ test("score: relative to the best, capped at the schedule's max, junk is 0", () 
   const p2 = dash.score(answers, 2, ctx);
   assert.equal(p2.ace, 1000);
   assert.equal(p2.half, 500);
+  assert.equal(p2.sick, Math.round(1000 * 3 / aceScore));
   // All zero -> zeros.
   const z = dash.score({ a: { a: { caught: 0, gold: 0, bad: 2, score: -2 } }, b: { a: { caught: 0, gold: 0, bad: 0, score: 0 } } }, 1, ctxFor(1));
   assert.deepEqual(z, { a: 0, b: 0 });
@@ -94,7 +102,8 @@ test("revealData and liveStat: top lists, totals, names", () => {
   const r = dash.revealData(answers, 1, ctx, pts);
   assert.equal(r.top.length, 3);
   assert.equal(r.top[0].id, "p2");
-  assert.deepEqual(r.top[1], { id: "p1", raw: 4, caught: 5, gold: 0, bad: 1 });
+  assert.deepEqual(r.top[1], { id: "p1", raw: 4, caught: 5, gold: 0, bad: 1, vomit: 0 });
+  assert.equal(r.totalVomit, 0);
   assert.equal(r.totalCaught, 15);
   assert.equal(r.best, 9);
   assert.ok(r.max > 0);
@@ -116,9 +125,9 @@ test("botAnswer: numeric, within the schedule, lands late in the round", () => {
     const rng = rngFor(4242, "dash-" + round + ":bots");
     for (let i = 0; i < 25; i++) {
       const b = dash.botAnswer(round, ctx, { id: "bot" + i }, rng);
-      for (const k of ["caught", "gold", "bad", "score"]) assert.ok(Number.isFinite(b.a[k]), k + " is numeric");
-      assert.ok(b.a.caught <= lim.good && b.a.gold <= lim.gold && b.a.bad <= lim.bad);
-      assert.equal(b.a.score, b.a.caught + 3 * b.a.gold - b.a.bad);
+      for (const k of ["caught", "gold", "bad", "vomit", "score"]) assert.ok(Number.isFinite(b.a[k]), k + " is numeric");
+      assert.ok(b.a.caught <= lim.good && b.a.gold <= lim.gold && b.a.bad <= lim.bad && b.a.vomit <= lim.vomit);
+      assert.equal(b.a.score, b.a.caught + 3 * b.a.gold - b.a.bad - 5 * b.a.vomit);
       assert.ok(b.delayMs >= 15000 && b.delayMs < dash.roundTime(round));
     }
     if (round === 1) assert.equal(lim.gold, 0);
@@ -126,7 +135,7 @@ test("botAnswer: numeric, within the schedule, lands late in the round", () => {
 });
 
 test("sprites: every pixel map is 11x11 and uses palette colours", () => {
-  for (const kind of ["good", "gold", "bad"]) {
+  for (const kind of ["good", "gold", "bad", "vomit"]) {
     const rows = data.sprites[kind];
     assert.equal(rows.length, 11, kind + " has 11 rows");
     rows.forEach((row) => {

@@ -26,6 +26,9 @@ export function createStageView(root, { now, tv = false }) {
     live: () => lastLive, timeLeft: () => Math.max(0, (snap.endsAt || 0) - now()), roundTime: snap.roundTime
   });
 
+  // Final answers only; progressive games count who is playing instead.
+  const countText = (snap) => (snap.game && snap.game.progressive ? (snap.touchedCount || 0) + " PLAYING" : snap.answerCount + " LOCKED IN");
+
   function render(snap, live) {
     lastSnap = snap;
     if (live !== undefined) lastLive = live;
@@ -94,7 +97,7 @@ export function createStageView(root, { now, tv = false }) {
         const body = h("div", { class: "game-stage" });
         root.appendChild(body);
         if (g && g.stageView) { try { me.view = g.stageView(body, snap.content || {}, api(snap)); } catch (e) { console.error(e); } }
-        else appendTo(body, h("h2", { class: "title big" }, snap.game.title), h("div", { class: "counter center", dataset: { role: "count" } }, snap.answerCount + " LOCKED IN"));
+        else appendTo(body, h("h2", { class: "title big" }, snap.game.title), h("div", { class: "counter center", dataset: { role: "count" } }, countText(snap)));
         if (me.view && me.view.update) me.view.update(lastLive, snap);
         me.game = g;
         break;
@@ -150,7 +153,7 @@ export function createStageView(root, { now, tv = false }) {
 
   function update(snap) {
     const count = root.querySelector("[data-role=count]");
-    if (count) count.textContent = snap.phase === "playing" ? snap.answerCount + " LOCKED IN" : snap.playerCount + " PLAYERS";
+    if (count) count.textContent = snap.phase === "playing" ? countText(snap) : snap.playerCount + " PLAYERS";
     if (cur.crowd && snap.players) cur.crowd.update(snap.players);
     if (cur.cd) cur.cd.update({ endsAt: snap.endsAt, paused: snap.paused, pauseLeft: snap.pauseLeft });
     if (cur.view && cur.view.update) cur.view.update(lastLive, snap);

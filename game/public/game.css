@@ -187,6 +187,11 @@ html[data-screen="tv"] .frame { border: 0; box-shadow: none; }
 
 /* ---- character select ------------------------------------------ */
 .cs-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+/* The join screen's READY button rides along the bottom of the screen (the grid is long). */
+.cs-screen { padding-bottom: 150px; }
+.cs-ready { position: fixed; left: 50%; bottom: 0; transform: translateX(-50%); width: var(--fw); box-sizing: border-box; padding: 10px var(--pad) calc(12px + env(safe-area-inset-bottom)); background: linear-gradient(to bottom, rgba(63,68,58,0), var(--bg) 30%); z-index: 20; text-align: center; }
+.cs-ready .error:empty { display: none; }
+.cs-ready .link-btn { margin-top: 6px; }
 html[data-screen="tv"] .cs-grid { grid-template-columns: repeat(8, 1fr); }
 .cs-cell {
   position: relative; background: var(--bg-dark); border: 3px solid #1a1c17; padding: 8px 4px 4px;

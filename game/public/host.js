@@ -68,6 +68,13 @@ function nextLabel(s) {
   }
 }
 
+// Locked-in count (final answers only); progressive games show who is playing instead.
+function answersText(s) {
+  if (!(s.phase === "playing" || s.phase === "locked")) return "—";
+  if (s.game && s.game.progressive) return (s.touchedCount || 0) + "/" + s.playerCount + " PLAYING";
+  return s.answerCount + "/" + s.playerCount + " LOCKED IN";
+}
+
 function phaseLabel(s) {
   const map = { lobby: "LOBBY", intro: "GAME INTRO", howto: "HOW TO PLAY", playing: "PLAYING", locked: "LOCKED", reveal: "ANSWER REVEAL", results: "ROUND RESULTS", leaderboard: "LEADERBOARD", final: "FINAL RANKINGS", predictions: "PREDICTIONS", credits: "CREDITS" };
   return (map[s.phase] || s.phase) + (s.phase === "howto" && s.practice ? " · PRACTICE ON" : "");
@@ -104,7 +111,7 @@ function statusPanel(s) {
     h("span", null, "GAME"), h("b", { dataset: { f: "game" } }, g ? (s.gameIndex + 1) + "/" + s.gameCount + " " + g.title : "—"),
     h("span", null, "ROUND"), h("b", { dataset: { f: "round" } }, g && s.round ? s.round + "/" + g.rounds : "—"),
     h("span", null, "PLAYERS"), h("b", { dataset: { f: "players" } }, s.connectedCount + "/" + s.playerCount + (s.botCount ? " (" + s.botCount + " BOTS)" : "")),
-    h("span", null, "ANSWERS"), h("b", { dataset: { f: "answers" } }, s.phase === "playing" || s.phase === "locked" ? s.answerCount + "/" + s.playerCount : "—"));
+    h("span", null, "ANSWERS"), h("b", { dataset: { f: "answers" } }, answersText(s)));
   return h("div", { class: "panel dark" }, grid, h("div", { dataset: { f: "cd" } }));
 }
 
@@ -161,7 +168,7 @@ function updateControls() {
   if (!f("phase")) return;
   f("phase").textContent = phaseLabel(s) + (s.paused ? " (PAUSED)" : "");
   f("players").textContent = s.connectedCount + "/" + s.playerCount + (s.botCount ? " (" + s.botCount + " BOTS)" : "");
-  f("answers").textContent = s.phase === "playing" || s.phase === "locked" ? s.answerCount + "/" + s.playerCount : "—";
+  f("answers").textContent = answersText(s);
   const cdWrap = f("cd");
   const ae = f("autoend"); if (ae) ae.textContent = "AUTO-END: " + (s.settings && s.settings.autoEnd ? "ON" : "OFF");
   const pr = f("practice"); if (pr) { pr.textContent = "PRACTICE: " + (s.practice ? "ON" : "OFF"); pr.disabled = !(s.phase === "howto" && s.practiceAvailable); }

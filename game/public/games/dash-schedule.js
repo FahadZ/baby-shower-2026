@@ -26,11 +26,14 @@ export function buildSchedule(content) {
     let prevX = -1, prevT = -1e9;
     while (t < lastSpawn) {
       const r = rng();
-      const kind = r < spec.badShare ? "bad" : r < spec.badShare + spec.goldShare ? "gold" : "good";
+      const vomitShare = spec.vomitShare || 0;
+      const kind = r < spec.badShare ? "bad" : r < spec.badShare + vomitShare ? "vomit" : r < spec.badShare + vomitShare + spec.goldShare ? "gold" : "good";
       let x = 0.12 + rng() * 0.76;
       // Keep items that spawn close together apart horizontally.
       if (t - prevT < 700 && Math.abs(x - prevX) < 0.2) x = x < 0.5 ? x + 0.3 : x - 0.3;
-      const speed = data.baseSpeed * spec.speed * (0.9 + rng() * 0.2);
+      // Every item has its own speed: a wide random factor keeps the stream unpredictable.
+      const spread = spec.speedSpread != null ? spec.speedSpread : 0.2;
+      const speed = data.baseSpeed * spec.speed * (1 - spread / 2 + rng() * spread);
       items.push({ id: id++, t: Math.round(t), lane, x: +x.toFixed(3), kind, speed: +speed.toFixed(4), phase: +(rng() * 6.283).toFixed(3), wobble: +(0.015 + rng() * 0.02).toFixed(4) });
       prevX = x; prevT = t;
       t += (1000 / spec.rate) * (0.55 + rng() * 0.9);
@@ -54,7 +57,7 @@ export function buildSchedule(content) {
 
 // Counts and the theoretical best raw score for a schedule.
 export function scheduleLimits(items) {
-  let good = 0, gold = 0, bad = 0;
-  for (const it of items) { if (it.kind === "good") good++; else if (it.kind === "gold") gold++; else bad++; }
-  return { good, gold, bad, max: good * data.points.good + gold * data.points.gold };
+  let good = 0, gold = 0, bad = 0, vomit = 0;
+  for (const it of items) { if (it.kind === "good") good++; else if (it.kind === "gold") gold++; else if (it.kind === "vomit") vomit++; else bad++; }
+  return { good, gold, bad, vomit, max: good * data.points.good + gold * data.points.gold };
 }
