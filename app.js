@@ -36,8 +36,6 @@
     $("#dMap").href = mapUrl();
     $("#dHosts").textContent = P.hosts.join(" & ").toUpperCase();
     $("#closedHosts").textContent = P.hostsShort.toUpperCase();
-    var dl = fmt(DEADLINE, { weekday: "short", month: "short", day: "numeric" }).replace(/\./g, "");
-    $("#dDeadline").textContent = dl.toUpperCase();
     $("#closedDate").textContent = fmt(DEADLINE, { month: "long", day: "numeric" }).toUpperCase();
 
     if (P.registryUrl) {
