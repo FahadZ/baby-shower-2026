@@ -163,7 +163,14 @@ function mountRound(el, content, api) {
   (content.items || []).forEach((it) => { itemsById[it.id] = it; });
   const order = (content.items || []).map((it) => it.id);
   const avail = Math.max(240, el.clientWidth || 350);
-  const cell = Math.max(20, Math.min(36, Math.floor((avail - 16) / Math.max(1, m.w))));
+  const byWidth = Math.floor((avail - 16) / Math.max(1, m.w));
+  // Fit the height too: on an iPhone the Safari toolbars eat the bottom of the screen
+  // and the round cannot scroll, so the bag shrinks until the tray is fully visible.
+  const vh = (window.visualViewport && window.visualViewport.height) || window.innerHeight || 700;
+  const top = el.getBoundingClientRect ? Math.max(0, el.getBoundingClientRect().top) : 90;
+  const CHROME = 52 + 22 + 112 + 18;   // title + hud, tray label, tray, gaps and a little air
+  const byHeight = Math.floor((vh - top - CHROME - 12) / (m.h + 0.7));
+  const cell = Math.max(18, Math.min(36, byWidth, byHeight));
   const LIFT = Math.round(cell * 0.75);   // the ghost floats above the fingertip
 
   // A reload mid-round keeps what was packed.
@@ -461,39 +468,118 @@ export default {
   id: "bag",
   progressive: true,
 
-  // How-to loop: a blanket slides up from the tray and snaps into a mini bag.
+  // How-to loop with a pointing finger: tap the item in the tray to rotate it, drag it
+  // into the bag, tap it in the bag to rotate it again, drag it back down to take it out.
   howtoDemo(el, content) {
     ensureStyle();
     const mask = content.mask || [".####.", "######", "######", "######", "######", "######"];
     const m = parseMask(mask);
     const cell = Math.max(10, Math.min(16, Math.floor(200 / Math.max(1, m.w))));
-    const item = (content.items || []).find((it) => it.base === "blanket") || (content.items || [])[0] || { shape: ["####", "####"], color: "#f5c6a0", emoji: "🧣" };
+    const items = content.items || [];
+    // An item that looks different when turned (the onesie's L), else anything not square.
+    const item = items.find((it) => it.base === "onesie") || items.find((it) => it.base === "teddy")
+      || items.find((it) => { const d = dims(it.shape || ["#"]); return d.w !== d.h; }) || { shape: ["#.", "#.", "##"], color: "#c9b6f0", emoji: "👕", name: "ONESIE" };
     const b = boardEl(mask, cell);
-    const d = dims(item.shape);
-    const low = { x: Math.floor((m.w - d.w) / 2), y: m.h - d.h - 1 };
-    const pos = canPlace(m, [], item, low.x, low.y, 0) ? low : (firstFit(m, [], item, 0, {}) || { x: 0, y: 0 });
-    const tile = tileEl(item, 0, cell);
-    tile.style.left = pos.x * cell + "px";
-    tile.style.top = pos.y * cell + "px";
-    const hlc = cells(item.shape).map(([x, y]) => h("i", { class: "ok", style: { display: "none", width: cell + "px", height: cell + "px", transform: "translate(" + (pos.x + x) * cell + "px," + (pos.y + y) * cell + "px)" } }));
-    const hl = h("div", { class: "bag-layer bag-hl" }, ...hlc);
-    appendTo(b.grid, hl, tile);
-    const drop = (m.h - pos.y) * cell + 30;
-    const wrap = h("div", { class: "bag-demo", style: { width: b.W + "px", height: (b.H + 36) + "px" } }, b.board);
-    appendTo(el, wrap, h("p", { class: "tiny center", style: { marginTop: "6px" } }, "DRAG · SNAP · TAP TO ROTATE"));
+    const TRAY_W = 96, TRAY_H = 100, GAP = 16;
+    const W = Math.max(b.W, TRAY_W + 40), H = b.H + GAP + TRAY_H + 10;
+    const bx = Math.round((W - b.W) / 2);
+    const gx = bx + b.ox, gy = b.oy;                       // the grid's top-left inside the demo
+    const tx = Math.round((W - TRAY_W) / 2), ty = b.H + GAP; // the tray box
+    const trayC = [tx + TRAY_W / 2, ty + TRAY_H / 2];
+    // Where the item sits for a rotation: low and centred if it fits, else the first spot that does.
+    const posFor = (rot) => {
+      const d = dims(rotate(item.shape, rot));
+      const low = { x: Math.floor((m.w - d.w) / 2), y: m.h - d.h - 1 };
+      return canPlace(m, [], item, low.x, low.y, rot) ? low : (firstFit(m, [], item, rot, {}) || { x: 0, y: 0 });
+    };
+    const centreOf = (pos, rot) => { const d = dims(rotate(item.shape, rot)); return [gx + (pos.x + d.w / 2) * cell, gy + (pos.y + d.h / 2) * cell]; };
+
+    b.board.style.position = "absolute";
+    b.board.style.left = bx + "px";
+    b.board.style.top = "0px";
+    const placedLayer = h("div", { class: "bag-layer" });
+    const hl = h("div", { class: "bag-layer bag-hl" });
+    appendTo(b.grid, placedLayer, hl);
+    const mini = h("div", { class: "mini-wrap" });
+    const tt = h("div", { class: "tt" }, mini, h("div", { class: "nm" }, item.name || "ITEM"));
+    const tray = h("div", { class: "bag-tray", style: { position: "absolute", left: tx + "px", top: ty + "px", width: TRAY_W + "px", height: TRAY_H + "px", minHeight: "0", padding: "6px", justifyContent: "center", overflow: "hidden" } }, tt);
+    const ghostLayer = h("div", { style: { position: "absolute", left: "0", top: "0", width: W + "px", height: H + "px", pointerEvents: "none" } });
+    const finger = h("div", { "aria-hidden": "true", style: { position: "absolute", left: "0", top: "0", fontSize: "30px", lineHeight: "1", zIndex: "3", pointerEvents: "none", textTransform: "none", letterSpacing: "0", filter: "drop-shadow(2px 2px 0 rgba(0,0,0,.45))" } }, "👆");
+    const wrap = h("div", { class: "bag-demo", style: { width: W + "px", height: H + "px" } }, b.board, tray, ghostLayer, finger);
+    const caption = h("p", { class: "center", style: { margin: "0 0 8px", color: "var(--gold)", minHeight: "3.2em", fontSize: ".85em", lineHeight: "1.6" } }, "");
+    appendTo(el, caption, wrap);
+
     let stopped = false;
     const at = (ms, fn) => demoTimers.push(setTimeout(() => { if (!stopped) fn(); }, ms));
+    const drawMini = (rot) => { clear(mini); mini.appendChild(tileEl(item, rot, MINI, { cls: "bag-mini", emojiCenter: true, emojiPx: 18 })); };
+    let placedTile = null, ghost = null;
+    const drawPlaced = (rot) => {
+      if (placedTile) placedTile.remove();
+      const pos = posFor(rot);
+      placedTile = tileEl(item, rot, cell);
+      placedTile.style.left = pos.x * cell + "px";
+      placedTile.style.top = pos.y * cell + "px";
+      placedTile.classList.add("snap");
+      placedLayer.appendChild(placedTile);
+    };
+    const showHl = (rot, on) => {
+      clear(hl);
+      if (!on) return;
+      const pos = posFor(rot);
+      cells(rotate(item.shape, rot)).forEach(([x, y]) => hl.appendChild(h("i", { class: "ok", style: { display: "block", width: cell + "px", height: cell + "px", transform: "translate(" + (pos.x + x) * cell + "px," + (pos.y + y) * cell + "px)" } })));
+    };
+    // The finger's fingertip (top middle of the glyph) goes to (x, y).
+    const point = (x, y, ms = 500) => { finger.style.transition = ms ? "transform " + ms + "ms steps(8)" : "none"; finger.style.transform = "translate(" + Math.round(x - 12) + "px," + Math.round(y - 2) + "px)"; };
+    const press = (down) => { finger.style.transition = "transform 120ms steps(2)"; finger.style.transform = finger.style.transform.replace(/ scale\([^)]*\)/, "") + (down ? " scale(.82)" : ""); };
+    const makeGhost = (rot, cx, cy) => {
+      if (ghost) ghost.remove();
+      const d = dims(rotate(item.shape, rot));
+      ghost = tileEl(item, rot, cell, { cls: "bag-tile" });
+      ghost.style.opacity = ".9";
+      ghost.style.transform = "translate(" + Math.round(cx - d.w * cell / 2) + "px," + Math.round(cy - d.h * cell / 2) + "px)";
+      ghostLayer.appendChild(ghost);
+      return ghost;
+    };
+    const moveGhost = (rot, cx, cy, ms) => { if (!ghost) return; const d = dims(rotate(item.shape, rot)); ghost.style.transition = "transform " + ms + "ms steps(10)"; ghost.style.transform = "translate(" + Math.round(cx - d.w * cell / 2) + "px," + Math.round(cy - d.h * cell / 2) + "px)"; };
+    const dropGhost = () => { if (ghost) { ghost.remove(); ghost = null; } };
+
     const loop = () => {
       if (stopped) return;
-      tile.style.transition = "none";
-      tile.style.transform = "translate(" + (-pos.x * cell + 6) + "px," + drop + "px)";
-      tile.style.opacity = "0.9";
-      hlc.forEach((s) => { s.style.display = "none"; });
-      at(350, () => { tile.style.transition = "transform .6s steps(8)"; tile.style.transform = "translate(0px,0px)"; });
-      at(650, () => hlc.forEach((s) => { s.style.display = "block"; }));
-      at(1000, () => { tile.style.opacity = "1"; hlc.forEach((s) => { s.style.display = "none"; }); tile.classList.add("snap"); });
-      at(1300, () => tile.classList.remove("snap"));
-      at(2500, loop);
+      dropGhost();
+      if (placedTile) { placedTile.remove(); placedTile = null; }
+      showHl(0, false);
+      drawMini(0);
+      tt.style.visibility = "visible";
+      tt.classList.remove("src");
+      caption.textContent = "TAP AN ITEM IN THE TRAY TO ROTATE IT";
+      point(W - 10, H - 6, 0);
+      at(250, () => point(trayC[0], trayC[1] + 6, 500));
+      at(900, () => press(true));
+      at(1050, () => { press(false); drawMini(1); tt.classList.add("snap"); });
+      at(1500, () => press(true));
+      at(1650, () => { press(false); drawMini(2); });
+      at(2100, () => press(true));
+      at(2250, () => { press(false); drawMini(1); tt.classList.remove("snap"); });
+      // Drag it in.
+      const c1 = centreOf(posFor(1), 1);
+      at(2900, () => { caption.textContent = "DRAG IT INTO THE BAG"; press(true); tt.classList.add("src"); makeGhost(1, trayC[0], trayC[1] - 18); });
+      at(3100, () => { point(c1[0], c1[1] + 10, 900); moveGhost(1, c1[0], c1[1], 900); });
+      at(3800, () => showHl(1, true));
+      at(4100, () => { showHl(1, false); dropGhost(); drawPlaced(1); tt.style.visibility = "hidden"; press(false); });
+      // Rotate it in the bag.
+      const c2 = centreOf(posFor(2), 2);
+      at(4800, () => { caption.textContent = "TAP IT IN THE BAG TO ROTATE IT AGAIN"; point(c1[0], c1[1] + 4, 300); });
+      at(5300, () => press(true));
+      at(5450, () => { press(false); drawPlaced(2); });
+      at(6000, () => press(true));
+      at(6150, () => { press(false); drawPlaced(3); });
+      // Take it back out.
+      const c3 = centreOf(posFor(3), 3);
+      at(6900, () => { caption.textContent = "DRAG IT DOWN TO THE TRAY TO TAKE IT OUT"; point(c3[0], c3[1] + 4, 300); });
+      at(7300, () => { press(true); if (placedTile) { placedTile.remove(); placedTile = null; } makeGhost(3, c3[0], c3[1]); });
+      at(7500, () => { point(trayC[0], trayC[1] + 10, 800); moveGhost(3, trayC[0], trayC[1] - 10, 800); });
+      at(8400, () => { dropGhost(); press(false); drawMini(3); tt.style.visibility = "visible"; tt.classList.remove("src"); });
+      at(9600, loop);
     };
     loop();
     return () => { stopped = true; demoTimers.forEach(clearTimeout); demoTimers = []; };

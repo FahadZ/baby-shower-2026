@@ -393,3 +393,9 @@ input[type=range].px-range::-moz-range-thumb { width: 40px; height: 40px; backgr
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .001s !important; animation-iteration-count: 1 !important; transition-duration: .001s !important; }
 }
+
+/* ---- how-to again (player HUD) ----------------------------------- */
+.hud .help-btn { color: var(--gold); min-height: 36px; padding: 6px 8px; white-space: nowrap; }
+.help-ov { position: fixed; inset: 0; z-index: 70; display: flex; align-items: flex-start; justify-content: center; overflow-y: auto; -webkit-overflow-scrolling: touch; background: rgba(22,22,21,.92); padding: 16px 14px calc(24px + env(safe-area-inset-bottom)); }
+.help-card { width: min(100%, 560px); }
+.help-card .btn { width: 100%; }

@@ -213,3 +213,91 @@ test("answerCount counts final answers only; a moved slider is just touched", ()
   assert.equal(snap.answerCount, 1);
   assert.equal(snap.touchedCount, 1);
 });
+
+// Drive the room to a game's first round, playing and scoring it.
+function playRound(st, gameId, at) {
+  const gi = st.core.order.indexOf(gameId);
+  L.command(st, "goto", { gameIndex: gi, round: 1 }, at);
+  L.command(st, "next", null, at);       // intro -> howto
+  L.command(st, "next", null, at + 10);  // howto -> playing
+  L.command(st, "end", null, at + 5000); // lock
+  L.tick(st, st.core.endsAt);            // locked -> reveal
+}
+
+test("boss battle: results go straight to the next question and then the final, never the leaderboard", () => {
+  const st = fresh();
+  L.addBots(st, 6, 0);
+  L.command(st, "start", null, 0);
+  playRound(st, "boss", 1000);
+  assert.equal(st.core.phase, "reveal");
+  assert.equal(L.publicState(st, 2000).hideBoard, true);
+  assert.ok(L.command(st, "showLeaderboard", null, 7000).error);
+  L.command(st, "next", null, 7000);
+  assert.equal(st.core.phase, "results");
+  L.command(st, "next", null, 8000);
+  assert.equal(st.core.phase, "howto");
+  assert.equal(st.core.round, 2);
+  for (let r = 2; r <= 5; r++) {
+    L.command(st, "next", null, 10000 * r);
+    L.command(st, "end", null, 10000 * r + 3000);
+    L.tick(st, st.core.endsAt);
+    L.command(st, "next", null, 10000 * r + 5000); // reveal -> results
+    L.command(st, "next", null, 10000 * r + 6000); // results -> next question / final
+  }
+  assert.equal(st.core.phase, "final");
+  // Other games keep their leaderboard.
+  const st2 = fresh();
+  L.addBots(st2, 3, 0);
+  L.command(st2, "start", null, 0);
+  playRound(st2, "price", 1000);
+  assert.equal(L.publicState(st2, 2000).hideBoard, false);
+  L.command(st2, "next", null, 7000);
+  L.command(st2, "next", null, 8000);
+  assert.equal(st2.core.phase, "leaderboard");
+});
+
+test("redo round: back to the how-to card, answers and points from that round taken back", () => {
+  const st = fresh();
+  const me = L.join(st, { name: "Me", avatar: av("kirby") }, 0).playerId;
+  L.addBots(st, 5, 0);
+  L.command(st, "start", null, 0);
+  L.command(st, "next", null, 0);   // howto price-1
+  L.command(st, "next", null, 10);  // playing
+  L.answer(st, me, "price-1", 40, 2000);
+  L.command(st, "end", null, 3000);
+  L.tick(st, st.core.endsAt);
+  L.command(st, "next", null, 6000); // results
+  L.command(st, "next", null, 7000); // leaderboard
+  L.command(st, "next", null, 8000); // howto price-2
+  L.command(st, "next", null, 8010); // playing price-2
+  L.command(st, "end", null, 11000);
+  L.tick(st, st.core.endsAt);
+  const afterOne = Object.fromEntries(Object.values(st.core.players).map((p) => [p.id, p.points - st.results["price-2"].points[p.id]]));
+  assert.ok(Object.values(st.results["price-2"].points).some((v) => v > 0));
+  const res = L.command(st, "redoRound", null, 12000);
+  assert.ok(res.ok);
+  assert.equal(st.core.phase, "howto");
+  assert.equal(st.core.roundId, "price-2");
+  assert.equal(st.results["price-2"], undefined);
+  assert.equal(st.answers["price-2"], undefined);
+  assert.deepEqual(st.core.scoredRounds, ["price-1"]);
+  for (const p of Object.values(st.core.players)) assert.equal(p.points, afterOne[p.id], "points back to before the round");
+  assert.ok(st.dirty.has("del:results:price-2"));
+  // Play it again: it scores once, not twice.
+  L.command(st, "next", null, 13000);
+  assert.equal(st.core.phase, "playing");
+  L.command(st, "end", null, 15000);
+  L.tick(st, st.core.endsAt);
+  assert.deepEqual(st.core.scoredRounds, ["price-1", "price-2"]);
+  // Mid-round (and paused) works too, and nothing to redo in the lobby.
+  L.command(st, "next", null, 16000);
+  L.command(st, "next", null, 16100);
+  L.command(st, "next", null, 16200);
+  L.command(st, "next", null, 16300); // playing price-3
+  L.command(st, "pause", null, 17000);
+  assert.ok(L.command(st, "redoRound", null, 17500).ok);
+  assert.equal(st.core.phase, "howto");
+  assert.equal(st.core.paused, false);
+  L.reset(st, 20000);
+  assert.ok(L.command(st, "redoRound", null, 20001).error);
+});

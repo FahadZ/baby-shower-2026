@@ -436,6 +436,38 @@ function computeCallouts(state, game, round, answers, points, rr, before, after,
   return out.slice(0, 4);
 }
 
+// The boss hides the running leaderboard so the final rankings keep their suspense.
+export const hasLeaderboard = (game) => !game || game.leaderboard !== false;
+
+// Take a scored round back out: subtract its points, re-rank, forget its answers and result.
+function unscoreRound(state, roundId) {
+  const core = state.core;
+  if (!roundId) return;
+  const res = state.results[roundId];
+  const ids = Object.keys(core.players);
+  if (res && res.points) {
+    ids.forEach((id) => {
+      const p = core.players[id];
+      p.points = Math.max(0, p.points - (Number(res.points[id]) || 0));
+      p.roundPoints = 0;
+      p.roundRank = null;
+    });
+    core.scoredRounds = core.scoredRounds.filter((r) => r !== roundId);
+    if (core.scoredRounds.length) {
+      const totals = {};
+      ids.forEach((id) => { totals[id] = core.players[id].points; });
+      const ranks = rankBy(totals, ids).ranks;
+      ids.forEach((id) => { core.players[id].rank = ranks[id]; core.players[id].prevRank = null; });
+    } else ids.forEach((id) => { core.players[id].rank = null; core.players[id].prevRank = null; });
+    delete state.results[roundId];
+    state.dirty.add("del:results:" + roundId);
+  }
+  if (state.answers[roundId]) { delete state.answers[roundId]; state.dirty.add("del:answers:" + roundId); }
+  core.botQueue = [];
+  core.nextBot = 0;
+  state.dirty.add("core");
+}
+
 function advanceAfterRound(state, now) {
   const core = state.core;
   const game = currentGame(core);
@@ -552,7 +584,11 @@ export function command(state, cmd, arg, now = Date.now()) {
       if (phase === "playing") { lockRound(state, now); return { ok: true }; }
       if (phase === "locked") return { ok: true, wait: true };
       if (phase === "reveal") { setPhase(state, "results", now); return { ok: true }; }
-      if (phase === "results") { setPhase(state, "leaderboard", now); return { ok: true }; }
+      if (phase === "results") {
+        // Games without a leaderboard (the boss) go straight on: the final rankings are the reveal.
+        if (!hasLeaderboard(currentGame(core))) advanceAfterRound(state, now); else setPhase(state, "leaderboard", now);
+        return { ok: true };
+      }
       if (phase === "leaderboard") { advanceAfterRound(state, now); return { ok: true }; }
       if (phase === "final") { setPhase(state, "predictions", now); return { ok: true }; }
       if (phase === "predictions") { setPhase(state, "credits", now); return { ok: true }; }
@@ -585,8 +621,17 @@ export function command(state, cmd, arg, now = Date.now()) {
       return { ok: true };
     }
     case "showLeaderboard":
+      if (!hasLeaderboard(currentGame(core))) return { error: "NO LEADERBOARD DURING THE BOSS: SAVE IT FOR THE FINAL RANKINGS" };
       if (["results", "reveal"].includes(phase)) { setPhase(state, "leaderboard", now); return { ok: true }; }
       return { error: "NOT NOW" };
+    case "redoRound":
+      // Back to this round's how-to card as if it never ran: answers wiped, points taken back.
+      if (!["howto", "playing", "locked", "reveal", "results", "leaderboard"].includes(phase) || !(core.round >= 1)) return { error: "NO ROUND TO REDO" };
+      if (core.paused) { core.paused = false; core.pausedAt = null; core.pauseLeft = 0; }
+      unscoreRound(state, core.roundId);
+      enterHowto(state, core.round, now);
+      core.revealNonce++;
+      return { ok: true, redo: core.roundId };
     case "replay":
       if (!["reveal", "results", "leaderboard"].includes(phase)) return { error: "NOTHING TO REPLAY" };
       core.revealNonce++;
@@ -673,7 +718,8 @@ export function publicState(state, now = Date.now()) {
     order: core.order.map((id) => gameInfo(GAMES_BY_ID[id])),
     scored: core.scoredRounds.length,
     taken: takenAvatars(core),
-    settings: core.settings || { autoEnd: true }
+    settings: core.settings || { autoEnd: true },
+    hideBoard: !!game && !hasLeaderboard(game) && core.phase !== "intro"
   };
   if (game && core.round && ["howto", "playing", "locked", "reveal", "results"].includes(core.phase)) {
     snap.content = contentFor(state, game, core.round);
@@ -715,7 +761,8 @@ export function hostView(state) {
     t: "host",
     players: Object.values(core.players).map(row).map((r) => ({ ...r, connected: !!core.players[r.id].connected })),
     taken: takenAvatars(core),
-    predictions: Object.keys(state.predictions).length
+    predictions: Object.keys(state.predictions).length,
+    warnings: GAMES.flatMap((g) => (typeof g.warnings === "function" ? g.warnings() : []))
   };
 }
 

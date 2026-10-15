@@ -65,7 +65,9 @@ export class GameRoom extends DurableObject {
     }
     st.dirty.clear();
     if (Object.keys(puts).length) await this.ctx.storage.put(puts);
-    if (dels.length) await this.ctx.storage.delete(dels);
+    // A redone round can be deleted and written again in one batch: the write wins.
+    const delKeys = dels.filter((k) => !(k in puts));
+    if (delKeys.length) await this.ctx.storage.delete(delKeys);
   }
 
   // ------------------------------------------------------------ HTTP

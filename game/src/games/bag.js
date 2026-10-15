@@ -6,7 +6,7 @@ import { relative } from "../scoring.js";
 import { expandItems, fillStats, validPlacement, greedyPack, parseMask } from "../../public/games/bag-shared.js";
 
 const PENALTY = Number.isFinite(data.essentialPenalty) ? data.essentialPenalty : 15;
-const HOWTO = "DRAG ITEMS INTO THE BAG. TAP AN ITEM TO ROTATE. FILL IT UP; DON'T FORGET THE ESSENTIALS (DIAPERS, WIPES, BOTTLE, BINKY).";
+const HOWTO = "DRAG ITEMS FROM THE TRAY INTO THE BAG. TAP AN ITEM TO ROTATE IT, IN THE TRAY OR IN THE BAG. DRAG IT BACK DOWN TO TAKE IT OUT. FILL IT UP; DON'T FORGET THE ESSENTIALS (DIAPERS, WIPES, BOTTLE, BINKY).";
 
 function roundSpec(round) {
   return data.rounds[round - 1] || data.rounds[0];

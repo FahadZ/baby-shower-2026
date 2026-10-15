@@ -59,14 +59,22 @@ function nextLabel(s) {
     case "playing": return "END ROUND NOW";
     case "locked": return "SCORING...";
     case "reveal": return "SHOW ROUND RESULTS";
-    case "results": return "SHOW LEADERBOARD";
-    case "leaderboard": return g && s.round < g.rounds ? "NEXT ROUND (" + (s.round + 1) + "/" + g.rounds + ")" : (s.gameIndex + 1 < s.gameCount ? "NEXT GAME" : "FINAL RANKINGS");
+    case "results": return s.hideBoard ? afterRoundLabel(s) : "SHOW LEADERBOARD";
+    case "leaderboard": return afterRoundLabel(s);
     case "final": return "PREDICTIONS";
     case "predictions": return "ROLL CREDITS";
     case "credits": return "THE END";
     default: return "NEXT";
   }
 }
+
+function afterRoundLabel(s) {
+  const g = s.game;
+  return g && s.round < g.rounds ? "NEXT ROUND (" + (s.round + 1) + "/" + g.rounds + ")" : (s.gameIndex + 1 < s.gameCount ? "NEXT GAME" : "FINAL RANKINGS");
+}
+
+const REDO_PHASES = ["howto", "playing", "locked", "reveal", "results", "leaderboard"];
+const canRedo = (s) => REDO_PHASES.includes(s.phase) && s.round >= 1;
 
 // Locked-in count (final answers only); progressive games show who is playing instead.
 function answersText(s) {
@@ -128,7 +136,8 @@ function mountControls() {
     h("button", { class: "btn small", type: "button", disabled: ["lobby", "final", "predictions", "credits"].includes(s.phase), onclick: () => confirm("Skip this round? It will not be scored.") && cmd("skipRound") }, "SKIP ROUND"),
     h("button", { class: "btn small", type: "button", disabled: ["lobby", "final", "predictions", "credits"].includes(s.phase), onclick: () => confirm("Skip the rest of this game?") && cmd("skipGame") }, "SKIP GAME"),
     h("button", { class: "btn small", type: "button", disabled: !["reveal", "results", "leaderboard"].includes(s.phase), onclick: () => cmd("replay") }, "REPLAY REVEAL"),
-    h("button", { class: "btn small", type: "button", disabled: !["reveal", "results"].includes(s.phase), onclick: () => cmd("showLeaderboard") }, "LEADERBOARD"),
+    h("button", { class: "btn small", type: "button", disabled: s.hideBoard || !["reveal", "results"].includes(s.phase), title: s.hideBoard ? "Hidden during the boss so the final rankings stay a surprise" : "", onclick: () => cmd("showLeaderboard") }, s.hideBoard ? "BOARD HIDDEN" : "LEADERBOARD"),
+    h("button", { class: "btn small", type: "button", dataset: { f: "redo" }, disabled: !canRedo(s), title: "Everyone goes back to this round's how-to card; answers and points from this round are wiped", onclick: () => confirm("Redo round " + snap.round + "? Everyone goes back to the how-to card and this round's answers and points are wiped.") && cmd("redoRound") }, "REDO ROUND"),
     h("button", { class: "btn small", type: "button", onclick: () => { muted = !muted; store("bl.hostMute", muted ? "on" : "off"); audio.enable(!muted); toast(muted ? "THIS PHONE IS MUTED" : "SOUND ON (PLUG INTO A SPEAKER)"); } }, muted ? "UNMUTE" : "MUTE"),
     h("button", { class: "btn small", type: "button", dataset: { f: "autoend" }, title: "End a round early once every connected player has locked in", onclick: () => cmd("autoEnd", { on: !(snap.settings && snap.settings.autoEnd) }) }, "AUTO-END: " + (s.settings && s.settings.autoEnd ? "ON" : "OFF")),
     h("button", { class: "btn small", type: "button", dataset: { f: "practice" }, disabled: !(s.phase === "howto" && s.practiceAvailable), title: "On the how-to screen: everyone tries the game's simplest level on their own phone, nothing scored, until START ROUND", onclick: () => cmd("practice", { on: !snap.practice }) }, "PRACTICE: " + (s.practice ? "ON" : "OFF")));
@@ -149,6 +158,7 @@ function mountControls() {
     h("a", { href: "/api/predictions.csv?token=" + encodeURIComponent(token), download: "predictions.csv" }, "PREDICTIONS CSV"));
 
   appendTo(app, h("div", { class: "screen stack" },
+    h("div", { dataset: { f: "warn" } }),
     statusPanel(s),
     next,
     sec,
@@ -178,7 +188,16 @@ function updateControls() {
   } else if (cd) { cd.stop(); cd = null; clear(cdWrap); }
 }
 
+function renderWarnings() {
+  const el = $("[data-f=warn]");
+  if (!el) return;
+  clear(el);
+  const list = (host && host.warnings) || [];
+  if (list.length) el.appendChild(h("div", { class: "panel", style: { background: "var(--gold)" } }, h("div", { class: "label", style: { color: "var(--ink)" } }, "BEFORE THE PARTY (ONLY YOU SEE THIS)"), ...list.map((w) => h("p", { class: "tiny", style: { color: "var(--ink)", margin: "4px 0" } }, w))));
+}
+
 function renderPlayers() {
+  renderWarnings();
   const el = $("[data-f=plist]");
   if (!el || !host) return;
   clear(el);

@@ -52,6 +52,11 @@ A game is three files plus a test. It touches nothing else. The engine registers
 server modules in `src/games/index.js` and client modules in `public/games/index.js`
 (play order comes from the server list).
 
+Optional flags: on the server, `leaderboard: false` skips the leaderboard after the game's
+rounds (the boss) and `warnings()` returns host-only reminders (blank data); on the client,
+`scroll: true` lets the page scroll during play (quiz-style games), where otherwise the
+whole round is a `.game-surface`.
+
 ### `src/games/<id>.js` (server, pure functions, no I/O)
 
 ```js
@@ -172,7 +177,9 @@ Plain `export default { ... }` the host can edit. Imported by both sides.
    reveal, results and leaderboard each wait for **NEXT**. Round timers run on the
    server, so you can lock your phone mid-round and the round still ends on time.
 6. Use **+15 SEC** if people need more time, **PAUSE** for a toast, **SKIP** to move on,
-   **END ROUND NOW** to cut a round short. **AUTO-END** (default on) ends a round a
+   **END ROUND NOW** to cut a round short. If a round goes wrong (stuck phones, nobody
+   understood it), **REDO ROUND** sends everyone back to that round's how-to card and
+   takes the round's answers and points back out, so it can be played again cleanly. **AUTO-END** (default on) ends a round a
    moment after every connected player has locked in; turn it off if you'd rather
    always run the full clock.
 7. Price Is Right and Put It In Order count whatever a player's slider or tile order
@@ -181,7 +188,11 @@ Plain `export default { ... }` the host can edit. Imported by both sides.
    game's simplest level (Where's the Binky, Diaper Dash, Put It In Order and Fit the
    Diaper Bag have one) with nothing scored, as many tries as they like, until you press
    **START ROUND**. Tap it again to go back to the how-to card.
-9. After the last game: **FINAL RANKINGS**, then **PREDICTIONS**, then **ROLL CREDITS**.
+   During any round, guests can tap **? HELP** in the top bar to see the how-to card
+   again (the clock keeps running).
+9. The Boss Battle never shows the leaderboard, between questions or after the last one,
+   so **FINAL RANKINGS** is the big reveal. After the last game: **FINAL RANKINGS**, then
+   **PREDICTIONS**, then **ROLL CREDITS**.
 10. Download the leaderboard and the predictions as CSV from the host page.
 
 Rehearse beforehand: **+80 BOTS**, **START GAME**, and tap through. **HOLD TO RESET**
@@ -191,13 +202,13 @@ wipes scores and answers (players stay) when you are done.
 
 | # | Game | Rounds | Time | Input |
 |---|---|---|---|---|
-| 1 | Price Is Right: Baby Edition | 3 | 15 s | slider (tap/drag anywhere, − / +) |
+| 1 | Price Is Right: Baby Edition | 3 | 15 s | slider (tap/drag anywhere, − / +); the page scrolls and LOCK IN stays pinned to the bottom |
 | 2 | Where's the Binky? | 3 | 45 s | tap the 5 hidden items; round 2 is a tall pile you drag through; round 3 is dark with a flashlight |
 | 3 | Mom or Dad? | 2 (3 with photos) | 32 s | swipe left/right, 5 cards |
 | 4 | Diaper Dash | 3 | 20 s | tap the falling pacifiers (+1) and gold bottles (+3), dodge poopies (−1) and vomit (−5); every item falls at its own speed, round 3 adds wind |
 | 5 | Put It In Order | 3 | 30 s | drag 5 tiles into order |
-| 6 | Fit the Diaper Bag | 2 | 60/75 s | drag items into a grid bag, tap to rotate; more stuff than fits, so pack tight |
-| 7 | Boss Battle | 5 | 10 s | 4-option quiz, double points, hits the boss |
+| 6 | Fit the Diaper Bag | 2 | 60/75 s | drag items into a grid bag, tap to rotate (in the tray or the bag); the bag shrinks to fit the screen so the tray is never under Safari's toolbar |
+| 7 | Boss Battle | 5 | 10 s | 4-option quiz, double points, hits the boss; no leaderboard until the final rankings |
 
 If the wifi dies: phones reconnect on their own and show the current phase within a
 second of being back online. Submitted answers are kept. If the venue wifi is hopeless,
@@ -263,7 +274,7 @@ Object compute, all inside the plan's included allowance (1 million requests and
 
 | Where | What |
 |---|---|
-| `public/data/momordad.js` | The `answer` for each fact and prediction card ("mom"/"dad"); drop 5+ baby photos into `public/assets/babyphotos/` and list them in `photoCards` (see the README.txt there) |
+| `public/data/momordad.js` | The `answer` for each fact and prediction card ("mom"/"dad"; at least 5 per round, or that round uses random answers; the host remote shows a yellow reminder until then); drop 5+ baby photos into `public/assets/babyphotos/` and list them in `photoCards` (see the README.txt there) |
 | `public/data/price.js` | Re-check prices the week of the party; swap any item that is on the registry for a spare (list at the bottom of the file) |
 | `public/data/boss.js` | Optional: swap in your own trivia |
 | `public/data/avatars.js` | Generated from `scripts/roster.json`; remove characters you don't want and rerun `python3 scripts/make-avatar-palettes.py` |

@@ -165,3 +165,15 @@ test("howto text", () => {
   assert.equal(h.points, "UP TO 2000 PTS");
   assert.ok(boss.howto(2).title.includes("2/5"));
 });
+
+test("data: the right answer never stands out as the only range (all options ranges or none)", () => {
+  const isRange = (o) => /\d\s*(-|TO)\s*\d/.test(o);
+  for (const q of data.questions) {
+    const n = q.options.filter(isRange).length;
+    assert.ok(n === 0 || n === 4, "mixed ranges in: " + q.q + " " + JSON.stringify(q.options));
+  }
+});
+
+test("no leaderboard during or after the boss", () => {
+  assert.equal(boss.leaderboard, false);
+});

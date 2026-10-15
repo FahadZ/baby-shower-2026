@@ -309,7 +309,7 @@ export default {
     const mine = you && you.myAnswer && Array.isArray(you.myAnswer.picks) ? you.myAnswer.picks : [];
     const alive = () => el.isConnected !== false;
     appendTo(el, h("h2", { class: "title" }, reveal.title || "MOM OR DAD?"));
-    if (reveal.demoAnswers) el.appendChild(h("div", { class: "callout red" }, "DEMO ANSWERS", h("small", { style: { textTransform: "none" } }, "FILL IN data/momordad.js")));
+    // Rounds without real answers are flagged on the host remote only, never to guests.
     const list = h("div", { class: "md-rlist" });
     const flips = cards.map((c, k) => {
       const p = parents[c.answer] || {};

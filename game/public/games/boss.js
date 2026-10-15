@@ -179,6 +179,7 @@ let demoStop = null;
 
 export default {
   id: "boss",
+  scroll: true,   // four big buttons: let the page scroll on short phones
   progressive: false,
 
   // How-to loop: the boss bobbing, a sword slash lands every couple of seconds.

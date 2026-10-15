@@ -84,6 +84,16 @@ export default {
   progressive: false,
   maxPoints: () => MAX_POINTS,
 
+  // Host-only reminder while any deck still has cards without an answer.
+  warnings() {
+    const out = [];
+    DECKS.forEach((d) => {
+      const done = d.cards.filter((c) => isSide(String(c.answer || "").toLowerCase())).length;
+      if (done < CARDS_PER_ROUND) out.push("MOM OR DAD \"" + d.title + "\": " + done + " OF " + d.cards.length + " CARDS HAVE AN ANSWER. FILL IN AT LEAST " + CARDS_PER_ROUND + " OR THE ROUND USES RANDOM ANSWERS.");
+    });
+    return out;
+  },
+
   howto(round) {
     return { title: deckFor(round).title, text: HOWTO_TEXT, demo: "swipe", points: "UP TO " + MAX_POINTS + " PTS" };
   },

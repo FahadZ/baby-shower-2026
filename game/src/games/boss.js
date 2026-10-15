@@ -73,6 +73,8 @@ export default {
   roundTime: () => ROUND_MS,
   autoEnd: true,
   progressive: false,
+  // No leaderboard between boss questions or after the last one: FINAL RANKINGS is the reveal.
+  leaderboard: false,
   maxPoints: () => MAX_POINTS,
 
   howto(round) {

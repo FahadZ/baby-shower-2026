@@ -39,6 +39,11 @@ soundBtn.addEventListener("click", () => {
 });
 document.addEventListener("pointerdown", () => { if (audio.isOn()) audio.enable(true); }, { passive: true });
 
+// "HOW TO PLAY" (in the HUD while a round is on): the round's how-to card again, on top
+// of the round. The clock keeps running.
+const helpBtn = h("button", { class: "link-btn help-btn", type: "button", hidden: true, "aria-label": "How to play", onclick: showHelp }, "? HELP");
+soundBtn.parentNode.insertBefore(helpBtn, soundBtn);
+
 // ---------------------------------------------------------- network
 const net = connect({
   role: "player",
@@ -113,6 +118,9 @@ function render(force) {
   const key = !joined || editing ? "join" : [snap.phase, snap.roundId, snap.revealNonce, snap.gameIndex, snap.practice ? "practice" : ""].join("|");
   // If this screen was built before our own "you" message arrived (reload mid-game), build it again with it.
   if (!force && key === screenKey && you && you.id && cur.youId !== you.id && key !== "join") force = true;
+  helpBtn.hidden = !(joined && !editing && snap.phase === "playing" && snap.howto);
+  // The HUD is narrow: while HELP shows, it takes the game/round tag's place.
+  if (hudTag) hudTag.hidden = !helpBtn.hidden;
   if (hudTag) hudTag.textContent = snap.game && snap.phase !== "lobby" ? "G" + (snap.gameIndex + 1) + "/" + snap.gameCount + (snap.round ? " R" + snap.round : "") : (snap.playerCount || 0) + " PLAYERS";
   if (key !== screenKey || force) {
     teardown();
@@ -125,6 +133,7 @@ function render(force) {
 
 function teardown() {
   cur.cancel = true;
+  if (cur.stopHelp) { try { cur.stopHelp(); } catch (e) { /* ignore */ } }
   if (cur.cd) cur.cd.stop();
   if (cur.game && cur.game.unmount) { try { cur.game.unmount(); } catch (e) { /* ignore */ } }
   cur = { cancel: false, cd: null, game: null, seq: cur.seq + 1, youId: null };
@@ -165,6 +174,26 @@ function showLockedIn(label) {
     h("button", { class: "link-btn", type: "button", onclick: () => ov.remove() }, "CHANGE MY ANSWER"));
   app.appendChild(ov);
   vibrate(20);
+}
+
+function showHelp() {
+  const old = $(".help-ov");
+  if (old) { old.remove(); return; }
+  const g = snap.game && getGame(snap.game.id);
+  const demo = h("div", { class: "panel dark" });
+  let stop = null;
+  const close = () => { if (stop) { try { stop(); } catch (e) { /* ignore */ } } ov.remove(); };
+  const ov = h("div", { class: "help-ov", role: "dialog", "aria-modal": "true", "aria-label": "How to play" },
+    h("div", { class: "help-card" },
+      h("h2", { class: "title" }, (snap.howto && snap.howto.title) || (snap.game && snap.game.title) || "HOW TO PLAY"),
+      h("div", { class: "panel" }, (snap.howto && snap.howto.text) || ""),
+      demo,
+      h("p", { class: "tiny center" }, "THE CLOCK IS STILL RUNNING!"),
+      h("button", { class: "btn primary", type: "button", onclick: close }, "BACK TO THE GAME")));
+  app.appendChild(ov);
+  if (g && g.howtoDemo) { try { stop = g.howtoDemo(demo, snap.content || {}); } catch (e) { /* ignore */ } } else demo.remove();
+  // Leaving the round (time up) clears the overlay with the screen; this stops the demo too.
+  cur.stopHelp = close;
 }
 
 function hudLine(text) {
@@ -283,7 +312,9 @@ function mount() {
       const cdWrap = h("div", null);
       app.appendChild(cdWrap);
       me.cd = countdown(cdWrap, { endsAt: snap.endsAt, roundTime: snap.roundTime, now: net.now, paused: snap.paused, sound: true });
-      const body = h("div", { class: "screen game-surface" });
+      // Quiz-style games (g.scroll) let the page scroll so nothing ends up below the fold;
+      // their own drag surfaces (the price slider) still carry .game-surface.
+      const body = h("div", { class: "screen" + (g && g.scroll ? "" : " game-surface") });
       app.appendChild(body);
       if (!g) { body.appendChild(h("p", { class: "sub" }, "THIS GAME IS NOT INSTALLED ON YOUR PHONE. REFRESH!")); return; }
       me.game = g;

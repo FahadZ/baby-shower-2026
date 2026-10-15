@@ -3,9 +3,11 @@
 import { h, appendTo, clear, fmtMoney, countUp, wait } from "../engine/dom.js";
 import { spriteEl } from "../engine/avatars.js";
 
-function itemCards(items) {
-  return items.map((it) => h("div", { class: "panel item-card" },
-    h("span", { class: "emoji", "aria-hidden": "true" }, it.emoji || "🎁"),
+// Bundles stack several cards: those get the compact look so LOCK IN stays near the slider.
+function itemCards(items, { compact = false } = {}) {
+  const tight = compact && items.length > 1;
+  return items.map((it) => h("div", { class: "panel item-card", style: tight ? { padding: "8px 10px", margin: "0 0 8px", gap: "10px" } : null },
+    h("span", { class: "emoji", "aria-hidden": "true", style: tight ? { fontSize: "1.8em" } : null }, it.emoji || "🎁"),
     h("div", null, h("div", { class: "nm" }, it.name), it.detail ? h("div", { class: "dt" }, it.detail) : null)));
 }
 
@@ -14,6 +16,7 @@ let spinStop = null;   // stops the start-of-round slider spin on unmount
 
 export default {
   id: "price",
+  scroll: true,   // the page may scroll (bundle rounds are tall); the slider keeps its own touch handling
 
   // A looping demo for the how-to screen: a slider thumb wandering, a tag updating.
   howtoDemo(el, content) {
@@ -31,7 +34,10 @@ export default {
     const start = snap((min + max) / 2);
     let value = start;
     const tag = h("div", { class: "price-tag big", "aria-live": "polite" }, fmtMoney(start, { cents: false }));
-    const btn = h("button", { class: "btn primary", type: "button" }, h("i", { class: "tri" }), "LOCK IN");
+    // LOCK IN rides along the bottom of the screen (like READY on the join screen) so it is
+    // never below the fold, whatever the phone and however many items the round shows.
+    const btn = h("button", { class: "btn primary", type: "button", style: { width: "100%" } }, h("i", { class: "tri" }), "LOCK IN");
+    const bar = h("div", { class: "cs-ready" }, btn);
     let touched = false;
     // The slider position always counts: it is sent as a soft (non-final) answer while it
     // moves, so when time runs out nobody is left without a guess. LOCK IN makes it final.
@@ -118,14 +124,15 @@ export default {
     appendTo(el,
       h("h2", { class: "title" }, content.title),
       content.subtitle ? h("p", { class: "sub" }, content.subtitle) : null,
-      ...itemCards(content.items),
-      content.items.length > 1 ? h("p", { class: "sub" }, "WHAT DO ALL " + content.items.length + " COST TOGETHER?") : null,
+      ...itemCards(content.items, { compact: true }),
+      content.items.length > 1 ? h("p", { class: "sub", style: { marginBottom: "4px" } }, "WHAT DO ALL " + content.items.length + " COST TOGETHER?") : null,
       h("div", { class: "slider-wrap center" },
         h("div", { class: "pxs-row" }, nudge(-1), tag, nudge(1)),
         slider,
         h("div", { class: "range-ends" }, h("span", null, fmtMoney(min, { cents: false })), h("span", null, fmtMoney(max, { cents: false }))),
         h("p", { class: "tiny" }, "TAP OR DRAG THE BAR · − / + TO FINE-TUNE")),
-      btn
+      h("div", { style: { height: "84px" }, "aria-hidden": "true" }),
+      bar
     );
     paint();
     setTimeout(() => { if (!touched) tag.classList.add("blink"); setTimeout(() => tag.classList.remove("blink"), 1200); }, 2500);
