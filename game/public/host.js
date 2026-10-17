@@ -14,7 +14,7 @@ let token = store("bl.hostToken");
 let snap = null, host = null, live = null;
 let authed = false, authError = "";
 let stageMode = false, stageView = null, muted = store("bl.hostMute") === "on";
-let cd = null, lastKey = null, wake = null;
+let cd = null, lastKey = null, wake = null, doneShown = null;
 
 const net = connect({
   role: "host",
@@ -160,6 +160,7 @@ function mountControls() {
   appendTo(app, h("div", { class: "screen stack" },
     h("div", { dataset: { f: "warn" } }),
     statusPanel(s),
+    h("div", { dataset: { f: "done" } }),
     next,
     sec,
     stageBtn,
@@ -181,11 +182,31 @@ function updateControls() {
   f("answers").textContent = answersText(s);
   const cdWrap = f("cd");
   const ae = f("autoend"); if (ae) ae.textContent = "AUTO-END: " + (s.settings && s.settings.autoEnd ? "ON" : "OFF");
+  renderDone(s);
   const pr = f("practice"); if (pr) { pr.textContent = "PRACTICE: " + (s.practice ? "ON" : "OFF"); pr.disabled = !(s.phase === "howto" && s.practiceAvailable); }
   if (["playing", "locked"].includes(s.phase) && s.endsAt) {
     if (!cd) { cd = countdown(cdWrap, { endsAt: s.endsAt, roundTime: s.phase === "playing" ? s.roundTime : 1200, now: net.now, paused: s.paused, sound: false }); }
     else cd.update({ endsAt: s.endsAt, paused: s.paused, pauseLeft: s.pauseLeft });
   } else if (cd) { cd.stop(); cd = null; clear(cdWrap); }
+}
+
+// Everyone has finished the round: a banner with its own END ROUND NOW, once per round.
+function renderDone(s) {
+  const el = $("[data-f=done]");
+  if (!el) return;
+  const show = s.phase === "playing" && !!s.allDone;
+  if (show === !!el.firstChild) return;
+  clear(el);
+  if (!show) return;
+  el.appendChild(h("div", { class: "panel pop", style: { background: "var(--green)", textAlign: "center" } },
+    h("div", { class: "label", style: { color: "var(--ink)" } }, "EVERYONE'S DONE"),
+    h("p", { class: "tiny", style: { color: "var(--ink)", margin: "4px 0 10px" } }, "ALL PLAYERS HAVE FINISHED THIS ROUND."),
+    h("button", { class: "btn primary", type: "button", onclick: () => cmd("end") }, "END ROUND NOW")));
+  if (doneShown !== s.roundId) {
+    doneShown = s.roundId;
+    audio.sfx("coin");
+    try { if (navigator.vibrate) navigator.vibrate([60, 40, 60]); } catch (e) { /* ignore */ }
+  }
 }
 
 function renderWarnings() {

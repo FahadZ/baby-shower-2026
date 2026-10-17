@@ -301,3 +301,17 @@ test("redo round: back to the how-to card, answers and points from that round ta
   L.reset(st, 20000);
   assert.ok(L.command(st, "redoRound", null, 20001).error);
 });
+
+test("allDone: every connected human has a final answer; bots-only rooms count the bots", () => {
+  const core = { players: {
+    a: { id: "a", connected: true }, b: { id: "b", connected: true },
+    off: { id: "off", connected: false }, bot: { id: "bot", bot: true, connected: true }
+  } };
+  assert.equal(L.allDone(core, {}), false);
+  assert.equal(L.allDone(core, { a: { final: true }, b: { final: false } }), false);
+  assert.equal(L.allDone(core, { a: { final: true }, b: { final: true } }), true, "disconnected players and bots are not waited for");
+  const bots = { players: { x: { id: "x", bot: true, connected: true }, y: { id: "y", bot: true, connected: true } } };
+  assert.equal(L.allDone(bots, { x: { final: true } }), false);
+  assert.equal(L.allDone(bots, { x: { final: true }, y: { final: true } }), true);
+  assert.equal(L.allDone({ players: {} }, {}), false);
+});

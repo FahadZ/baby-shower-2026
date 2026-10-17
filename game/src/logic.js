@@ -255,7 +255,17 @@ export function answer(state, playerId, roundId, a, now = Date.now(), final = tr
       return { ok: true, autoEnd: true };
     }
   }
-  return { ok: true };
+  // A finished player who undid it (an item back out of the bag): the room must re-broadcast.
+  return prev && prev.final && !final ? { ok: true, undone: true } : { ok: true };
+}
+
+// Every connected human has finished the round (a final answer: locked in, all items
+// found, the stream over). A bots-only rehearsal counts the bots instead.
+export function allDone(core, bucket) {
+  const players = Object.values(core.players);
+  const humans = players.filter((p) => !p.bot && p.connected);
+  const pool = humans.length ? humans : players.filter((p) => p.bot);
+  return pool.length > 0 && pool.every((p) => bucket[p.id] && bucket[p.id].final);
 }
 
 export function setPrediction(state, playerId, data, now = Date.now()) {
@@ -715,6 +725,7 @@ export function publicState(state, now = Date.now()) {
     // as "touched", so no counter claims a room is locked in before anyone is.
     answerCount: Object.values(bucket).filter((a) => a && a.final).length,
     touchedCount: Object.keys(bucket).length,
+    allDone: core.phase === "playing" && allDone(core, bucket),
     revealNonce: core.revealNonce,
     order: core.order.map((id) => gameInfo(GAMES_BY_ID[id])),
     scored: core.scoredRounds.length,

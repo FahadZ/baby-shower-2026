@@ -145,7 +145,7 @@ export class GameRoom extends DurableObject {
           this.scheduleLive();
           // Progressive (partial) answers arrive many times a second from 80 phones:
           // persist them soon, but only re-broadcast state for final answers / auto-end.
-          if (msg.final === false && !res.autoEnd) { this.persistSoon(); break; }
+          if (msg.final === false && !res.autoEnd && !res.undone) { this.persistSoon(); break; }
           changed = true;
         }
         break;

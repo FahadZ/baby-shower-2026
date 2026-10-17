@@ -181,7 +181,9 @@ Plain `export default { ... }` the host can edit. Imported by both sides.
    understood it), **REDO ROUND** sends everyone back to that round's how-to card and
    takes the round's answers and points back out, so it can be played again cleanly. **AUTO-END** (default on) ends a round a
    moment after every connected player has locked in; turn it off if you'd rather
-   always run the full clock.
+   always run the full clock. In every game, once all connected players have finished
+   (locked in, found all five, packed every item, or their stream ended) the remote shows
+   a green **EVERYONE'S DONE** banner with its own **END ROUND NOW** (and a buzz).
 7. Price Is Right and Put It In Order count whatever a player's slider or tile order
    shows when time runs out, so slow lockers-in still score.
 8. If a room looks confused on a how-to screen, tap **PRACTICE**: every phone runs the
@@ -204,7 +206,7 @@ wipes scores and answers (players stay) when you are done.
 |---|---|---|---|---|
 | 1 | Price Is Right: Baby Edition | 3 | 15 s | slider (tap/drag anywhere, − / +); the page scrolls and LOCK IN stays pinned to the bottom |
 | 2 | Where's the Binky? | 3 | 45 s | tap the 5 hidden items; round 2 is a tall pile you drag through; round 3 is dark with a flashlight |
-| 3 | Mom or Dad? | 2 (3 with photos) | 32 s | swipe left/right, 5 cards |
+| 3 | Mom or Dad? | 3 (4 with photos) | 6 s a card (44/44/38 s) | swipe left/right; the cards play in the data file's order, up to 7 a round (7, 7, 6) |
 | 4 | Diaper Dash | 3 | 20 s | tap the falling pacifiers (+1) and gold bottles (+3), dodge poopies (−1) and vomit (−5); every item falls at its own speed, round 3 adds wind |
 | 5 | Put It In Order | 3 | 30 s | drag 5 tiles into order |
 | 6 | Fit the Diaper Bag | 2 | 60/75 s | drag items into a grid bag, tap to rotate (in the tray or the bag); the bag shrinks to fit the screen so the tray is never under Safari's toolbar |
@@ -274,7 +276,7 @@ Object compute, all inside the plan's included allowance (1 million requests and
 
 | Where | What |
 |---|---|
-| `public/data/momordad.js` | The `answer` for each fact and prediction card ("mom"/"dad"; at least 5 per round, or that round uses random answers; the host remote shows a yellow reminder until then); drop 5+ baby photos into `public/assets/babyphotos/` and list them in `photoCards` (see the README.txt there) |
+| `public/data/momordad.js` | The cards and their `answer` ("mom"/"dad"), in play order; a list longer than 7 splits into near-equal rounds and each round's timer follows its card count (a list with fewer than 5 answers plays random demo answers and the host remote shows a yellow reminder); drop 5+ baby photos into `public/assets/babyphotos/` and list them in `photoCards` (see the README.txt there) |
 | `public/data/price.js` | Re-check prices the week of the party; swap any item that is on the registry for a spare (list at the bottom of the file) |
 | `public/data/boss.js` | Optional: swap in your own trivia |
 | `public/data/avatars.js` | Generated from `scripts/roster.json`; remove characters you don't want and rerun `python3 scripts/make-avatar-palettes.py` |

@@ -268,7 +268,9 @@ function mountRound(el, content, api) {
   }
   function changed() {
     refresh();
-    api.submit({ placed: placed.map((p) => ({ key: p.key, x: p.x, y: p.y, rot: p.rot })) }, { final: false });
+    // Everything in the bag counts as done (for the host's EVERYONE'S DONE alert); the
+    // player can still rearrange, and the last placement sent is the one scored.
+    api.submit({ placed: placed.map((p) => ({ key: p.key, x: p.x, y: p.y, rot: p.rot })) }, { final: me.remaining().length === 0 });
   }
   function place(id, x, y, rot, src) {
     const item = itemsById[id];

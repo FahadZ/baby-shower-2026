@@ -1,6 +1,6 @@
 // MOM OR DAD? (client). Tinder-style cards: swipe left for MOM, right for DAD,
-// five cards, six seconds each. Phones pace themselves; the server only sees
-// the growing picks array and locks it in after the fifth card.
+// up to seven cards a round, six seconds each. Phones pace themselves; the server
+// only sees the growing picks array and locks it in after the last card.
 import { h, appendTo, wait } from "../engine/dom.js";
 import { spriteEl } from "../engine/avatars.js";
 
@@ -45,7 +45,13 @@ const CSS = `
 html[data-screen="tv"] .md-demo { height: 300px; }
 html[data-screen="tv"] .md-demo .md-zone .av { height: 90px; }
 .md-rlist { display: grid; gap: 12px; perspective: 900px; margin-bottom: 14px; }
-html[data-screen="tv"] .md-rlist { grid-template-columns: repeat(5, 1fr); gap: 20px; }
+html[data-screen="tv"] .md-rlist { grid-template-columns: repeat(var(--n, 5), minmax(0, 1fr)); gap: 20px; }
+/* Six or seven cards across the TV: the answer banner stacks so MOM / DAD fits the column. */
+html[data-screen="tv"] .md-rlist.many { gap: 12px; }
+html[data-screen="tv"] .md-rlist.many .md-ans { flex-direction: column; gap: 6px; }
+html[data-screen="tv"] .md-rlist.many .md-ans-txt { align-items: center; }
+html[data-screen="tv"] .md-rlist.many .md-ans-big { font-size: 1.6em; }
+html[data-screen="tv"] .md-rlist.many .md-ans .av { height: var(--av); }
 .md-flip { display: grid; transform-style: preserve-3d; transition: transform .55s; }
 .md-flip.in { transform: rotateY(180deg); }
 .md-face { grid-area: 1 / 1; backface-visibility: hidden; -webkit-backface-visibility: hidden; padding: 12px; border: 4px solid var(--ink); box-shadow: 4px 4px 0 #000; min-height: 120px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 8px; }
@@ -310,7 +316,8 @@ export default {
     const alive = () => el.isConnected !== false;
     appendTo(el, h("h2", { class: "title" }, reveal.title || "MOM OR DAD?"));
     // Rounds without real answers are flagged on the host remote only, never to guests.
-    const list = h("div", { class: "md-rlist" });
+    const list = h("div", { class: "md-rlist" + (cards.length > 5 ? " many" : "") });
+    list.style.setProperty("--n", String(Math.max(1, cards.length)));
     const flips = cards.map((c, k) => {
       const p = parents[c.answer] || {};
       const my = SIDES.includes(mine[k]) ? mine[k] : null;
@@ -360,7 +367,7 @@ export default {
       await wait(500);
     }
     const perfect = reveal.perfect || 0;
-    el.appendChild(h("div", { class: "callout " + (perfect ? "green" : "") }, "PERFECT: " + perfect + " PLAYER" + (perfect === 1 ? "" : "S"), h("small", null, perfect ? "5 OUT OF 5. THEY KNOW YOU TOO WELL." : "NOBODY GOT ALL FIVE.")));
+    el.appendChild(h("div", { class: "callout " + (perfect ? "green" : "") }, "PERFECT: " + perfect + " PLAYER" + (perfect === 1 ? "" : "S"), h("small", null, perfect ? cards.length + " OUT OF " + cards.length + ". THEY KNOW YOU TOO WELL." : "NOBODY GOT ALL " + cards.length + ".")));
     const best = (reveal.best || []).map((id) => byId[id]).filter(Boolean);
     if (best.length) {
       const wrap = h("div", { class: "md-best" });
