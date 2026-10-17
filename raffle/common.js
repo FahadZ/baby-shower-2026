@@ -12,6 +12,10 @@
   var KEY = "wtp-raffle-v1";
   var SETTINGS_KEY = "wtp-raffle-settings";
   var ASSETS = "../assets/pokemon/";
+  // Sound URLs carry the build number, so a browser never reuses an old
+  // copy (or an old "not found") after the site is updated.
+  var buildMeta = document.querySelector('meta[name="build"]');
+  var BUILD = "?v=" + (buildMeta ? buildMeta.content : "0");
 
   var missing = {};
   (C.missing || []).forEach(function (n) { missing[parseInt(n, 10)] = true; });
@@ -26,8 +30,8 @@
     name: function (n) { return DEX[n] || ""; },
     spoken: function (n) { return SAY[n] || DEX[n] || ""; },
     art: function (n) { return ASSETS + "art/" + pad3(n) + ".webp"; },
-    cry: function (n) { return ASSETS + "cries/" + pad3(n) + ".mp3"; },
-    voice: function (file) { return ASSETS + "voice/" + file; },
+    cry: function (n) { return ASSETS + "cries/" + pad3(n) + ".mp3" + BUILD; },
+    voice: function (file) { return ASSETS + "voice/" + file + BUILD; },
     isMissing: function (n) { return !!missing[n]; },
     inBook: function (n) { return n >= 1 && n <= MAX && !missing[n]; },
     all: function () {
@@ -291,7 +295,7 @@
     // Fetch + decode a sound file. Resolves to null if it doesn't exist.
     function loadBuffer(url) {
       if (!buffers[url]) {
-        buffers[url] = fetch(url, { cache: "force-cache" })
+        buffers[url] = fetch(url)
           .then(function (r) { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); })
           .then(function (data) {
             var c = ac();
@@ -416,6 +420,7 @@
 
       load: loadBuffer,
       playUrl: playUrl,
+      playElement: playElement,
       playBuffer: playBuffer,
       say: say,
       voices: voices,

@@ -285,20 +285,17 @@ body.checkin {
 }
 .share-url { margin-top: 10px; font-size: 14px; }
 
-/* The show's name lettering: blue block capitals, yellow outline, dark edge. */
+/* The show's name lettering: yellow block capitals with a blue outline, like the logo. */
 .name-style {
   font-family: "Anton", Impact, var(--display);
   font-weight: 400;
   line-height: 1.05;
-  letter-spacing: .01em;
+  letter-spacing: .02em;
   text-transform: uppercase;
-  color: #2f6ea6;
-  -webkit-text-stroke: .1em #f2d33a;
+  color: #f7d117;
+  -webkit-text-stroke: .12em #2a5ea8;
   paint-order: stroke fill;
-  text-shadow:
-    .07em 0 0 #142640, -.07em 0 0 #142640, 0 .07em 0 #142640, 0 -.07em 0 #142640,
-    .05em .05em 0 #142640, -.05em .05em 0 #142640, .05em -.05em 0 #142640, -.05em -.05em 0 #142640,
-    .06em .11em 0 #142640;
+  text-shadow: -.04em .07em 0 #1b3a6b, -.07em .11em 0 #1b3a6b;
 }
 
 /* ============================================================

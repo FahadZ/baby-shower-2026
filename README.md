@@ -28,7 +28,7 @@ Plain HTML/CSS/JS. There's no framework and no build step.
 | `print/qr-code.png` | QR code for the live URL |
 | `raffle/` | "Who's That Pokémon?" sticker raffle: check-in page + TV draw screen (see [Raffle](#raffle-whos-that-pokémon)) |
 | `assets/pokemon/` | Official artwork (`art/`) and cries (`cries/`) for #001–#151 via PokeAPI; the 1998 segment's audio (`voice/`); the painted speed lines and burst (`wtp-speed.webp`, `wtp-burst.webp`); the blocky "?" (`wtp-question.svg`); the Pokémon logo (`pokemon-logo.svg`, from Wikimedia Commons) |
-| `assets/fonts/` (raffle) | Anton for the blue-and-yellow name lettering (SIL Open Font License); Luckiest Guy for the keypad and "Sticker #___ wins!" (Apache License 2.0) |
+| `assets/fonts/` (raffle) | Anton for the yellow-and-blue name lettering (SIL Open Font License); Luckiest Guy for the keypad and "Sticker #___ wins!" (Apache License 2.0) |
 
 ## Raffle: Who's That Pokémon?
 

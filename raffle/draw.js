@@ -174,12 +174,14 @@
     Sound.load(Dex.voice("its-" + Dex.pad3(n) + ".mp3"));
     Sound.load(Dex.voice("cry-" + Dex.pad3(n) + ".mp3"));
 
-    // Start picture and sound together so they stay in sync.
-    Promise.race([ready, Sound.wait(1500)]).then(function () {
+    // Start picture and sound together so they stay in sync; if the clips
+    // haven't loaded yet, give them another try first.
+    var clipsReady = clips.whosThat && clips.music ? null : loadClips();
+    Promise.race([Promise.all([ready, clipsReady]), Sound.wait(4000)]).then(function () {
       if (my !== run) return;
       void stage.offsetWidth;
       stage.classList.add("rolling");
-      announceWhosThat(my);
+      announceWhosThat();
       return Sound.wait(BALL_MS);
     }).then(function () {
       if (my !== run) return;
@@ -188,17 +190,17 @@
     });
   }
 
-  function announceWhosThat(my) {
-    if (clips.whosThat) return Sound.playBuffer(clips.whosThat);
-    Sound.whoosh();
-    return Sound.wait(BALL_MS).then(function () {
-      if (my !== run) return;
-      var sting = Sound.jingle();
-      return Sound.wait(600).then(function () {
-        if (my !== run) return;
-        return Sound.say(C.whosThatLine || "Who's that Pokémon?", { pitch: 1.2, rate: 1.0 });
-      }).then(function () { return sting; });
-    });
+  // The opening is always the original broadcast audio, never a stand-in.
+  function announceWhosThat() {
+    var url = Dex.voice("whos-that-pokemon.mp3");
+    return clips.whosThat ? Sound.playBuffer(clips.whosThat) : Sound.playElement(url);
+  }
+
+  function loadClips() {
+    return Promise.all([
+      Sound.load(Dex.voice("whos-that-pokemon.mp3")).then(function (clip) { if (clip) clips.whosThat = clip; }),
+      Sound.load(Dex.voice("reveal-music.mp3")).then(function (clip) { if (clip) clips.music = clip; })
+    ]);
   }
 
   function reveal() {
@@ -212,7 +214,7 @@
     var showWinner = function () { if (alive()) stage.classList.add("show-winner"); };
     var voiceDone = Sound.wait(DIP_MS).then(function () {
       if (!alive()) return;
-      if (clips.music) Sound.playBuffer(clips.music); else Sound.reveal();
+      if (clips.music) Sound.playBuffer(clips.music); else Sound.playElement(Dex.voice("reveal-music.mp3"));
       setTimeout(function () { if (alive()) setPhase("reveal"); }, COLOUR_MS);
       setTimeout(function () { if (alive()) busy = false; }, COLOUR_MS + 400);
       return Sound.wait(ITS_MS - 100).then(function () { return alive() && sayIts(n, my); });
@@ -340,9 +342,9 @@
       e.currentTarget.blur();
       fillVoices();
       $("#voiceOn").checked = R.Settings.get().voiceOn;
-      $("#clipNote").textContent = clips.whosThat
-        ? "“Who's that Pokémon?” plays the original announcer clip."
-        : "The announcer clip didn't load, so a synthesized sting and the computer voice stand in.";
+      $("#clipNote").textContent = clips.whosThat && clips.music
+        ? "The opening and reveal music are the original broadcast audio."
+        : "The original audio hasn't finished loading. Check the internet connection, then reload.";
       if (clips.whosThat) $("#clipNote").textContent += " Charmander uses the original “It's Charmander!” and its anime cry.";
       if (dlg.showModal) dlg.showModal(); else dlg.setAttribute("open", "");
     });
@@ -362,8 +364,7 @@
     initSettings();
     renderIdle(shared ? "Added " + shared.added.length + " from the shared link · " + Store.pool().length + " in the draw" : null);
     Store.onChange(function () { if (phase === "idle") renderIdle(); });
-    Sound.load(Dex.voice("whos-that-pokemon.mp3")).then(function (clip) { clips.whosThat = clip; });
-    Sound.load(Dex.voice("reveal-music.mp3")).then(function (clip) { clips.music = clip; });
+    loadClips();
     pokeUi();
   }
 
