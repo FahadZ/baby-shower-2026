@@ -6,12 +6,12 @@
   var $ = function (sel) { return document.querySelector(sel); };
 
   var stage = $("#stage");
-  var phase = "idle";
+  var phase = "idle";    // idle → ball → ask → reveal
   var current = null;
   var isTest = false;
   var busy = false;
   var run = 0;           // bumps on every step so stale async callbacks bail out
-  var whosThatClip = null;
+  var clips = { whosThat: null, sting: null };
 
   function setPhase(p) {
     phase = p;
@@ -88,8 +88,54 @@
   }
 
   // ---------------------------------------------------------------
-  //  The show: wipe → silhouette → reveal
+  //  The show
   // ---------------------------------------------------------------
+
+  // The name in the show's lettering, one span per letter, each a little
+  // off-kilter like the hand-drawn original.
+  function setName(n) {
+    var el = $("#monName");
+    var name = Dex.name(n).toUpperCase();
+    el.textContent = "";
+    el.setAttribute("aria-label", Dex.name(n));
+    el.style.setProperty("--len", Math.max(name.length, 6));
+    for (var i = 0; i < name.length; i++) {
+      var s = document.createElement("span");
+      s.textContent = name[i];
+      s.setAttribute("aria-hidden", "true");
+      s.style.setProperty("--rot", (Math.random() * 8 - 4).toFixed(1) + "deg");
+      s.style.setProperty("--dy", (Math.random() * 8 - 4).toFixed(1) + "%");
+      s.style.animationDelay = (0.035 * i).toFixed(3) + "s";
+      el.appendChild(s);
+    }
+  }
+
+  function setWinner(n, test) {
+    var winner = $("#winner"), num = document.createElement("b");
+    num.textContent = "#" + Dex.pad3(n);
+    winner.textContent = test ? "Test run: " : "Sticker ";
+    winner.appendChild(num);
+    winner.appendChild(document.createTextNode(test ? " " + Dex.name(n) : " wins!"));
+  }
+
+  // Silhouette and full-colour art come from the same picture.
+  function prepare(n) {
+    var url = Dex.art(n), css = "url(\"" + url + "\")";
+    ["#sil", "#silShadow"].forEach(function (sel) {
+      var el = $(sel);
+      el.style.webkitMaskImage = css;
+      el.style.maskImage = css;
+    });
+    return loadImage($("#monImg"), url);
+  }
+
+  function playCry(n) {
+    // An anime voice clip in assets/pokemon/voice/cry-NNN.mp3 wins over the game cry.
+    return Sound.load(Dex.voice("cry-" + Dex.pad3(n) + ".mp3")).then(function (clip) {
+      return clip ? Sound.playBuffer(clip) : Sound.playUrl(Dex.cry(n));
+    });
+  }
+
   function startDraw(test) {
     if (busy) return;
     var pool = test ? Dex.all() : Store.pool();
@@ -109,37 +155,32 @@
     busy = true;
     var my = ++run;
 
-    var ready = loadImage($("#monImg"), Dex.art(n));
+    // Leave the old Pokémon's screen first, so a redraw never shows the next one early.
+    stage.classList.remove("show-winner");
+    stage.classList.toggle("is-test", test);
+    setPhase("ball");
+
+    var ready = prepare(n);
+    setName(n);
+    setWinner(n, test);
     Sound.load(Dex.cry(n));
     Sound.load(Dex.voice("its-" + Dex.pad3(n) + ".mp3"));
-    $("#itsName").textContent = Dex.name(n) + "!";
-    $("#its").classList.toggle("long", Dex.name(n).length > 8);
-    var winner = $("#winner"), num = document.createElement("b");
-    num.textContent = "#" + Dex.pad3(n);
-    winner.textContent = test ? "Test run: " : "Sticker ";
-    winner.appendChild(num);
-    winner.appendChild(document.createTextNode(test ? " " + Dex.name(n) : " wins!"));
 
-    var wipe = $("#wipe");
-    wipe.classList.remove("out");
-    restartAnim(wipe, "in");
+    restartAnim($("#ball"), "go");
     Sound.whoosh();
 
-    // Swap the scene while the Poké Ball covers the screen.
-    Promise.all([Sound.wait(620), Promise.race([ready, Sound.wait(3000)])]).then(function () {
+    // The Poké Ball flies in, then a flash opens on the silhouette.
+    Promise.all([Sound.wait(900), Promise.race([ready, Sound.wait(3000)])]).then(function () {
       if (my !== run) return;
-      stage.classList.toggle("is-test", test);
-      stage.classList.remove("show-winner");
+      restartAnim($("#flash"), "go");
       setPhase("ask");
-      wipe.classList.remove("in");
-      wipe.classList.add("out");
-      return announceWhosThat(my);
+      announceWhosThat(my);
+      setTimeout(function () { if (my === run) busy = false; }, 600);
     });
-    setTimeout(function () { if (my === run) busy = false; }, 1400);
   }
 
   function announceWhosThat(my) {
-    if (whosThatClip) return Sound.playBuffer(whosThatClip);
+    if (clips.whosThat) return Sound.playBuffer(clips.whosThat);
     var sting = Sound.jingle();
     return Sound.wait(700).then(function () {
       if (my !== run) return;
@@ -153,16 +194,16 @@
     var my = ++run, n = current;
     Sound.stopAll();
     restartAnim($("#flash"), "go");
-    Sound.reveal();
     setPhase("reveal");
+    if (clips.sting) Sound.playBuffer(clips.sting, 0.6); else Sound.reveal();
 
     var showWinner = function () { if (my === run) stage.classList.add("show-winner"); };
-    setTimeout(showWinner, 4500);
+    setTimeout(showWinner, 5000);
 
-    Sound.wait(450)
+    Sound.wait(350)
       .then(function () { return my === run && sayIts(n, my); })
-      .then(function () { return my === run && Sound.wait(120); })
-      .then(function () { return my === run && Sound.playUrl(Dex.cry(n)); })
+      .then(function () { return my === run && Sound.wait(100); })
+      .then(function () { return my === run && playCry(n); })
       .then(showWinner);
     setTimeout(function () { if (my === run) busy = false; }, 900);
   }
@@ -187,7 +228,7 @@
 
   // Bail out mid-show. If nobody has seen the answer yet, it goes back in the draw.
   function cancel() {
-    if (phase === "ask" && !isTest && current !== null) Store.undraw(current);
+    if ((phase === "ball" || phase === "ask") && !isTest && current !== null) Store.undraw(current);
     toIdle();
   }
 
@@ -282,18 +323,17 @@
       e.currentTarget.blur();
       fillVoices();
       $("#voiceOn").checked = R.Settings.get().voiceOn;
-      $("#clipNote").textContent = whosThatClip
-        ? "Using your recorded clip (assets/pokemon/voice/whos-that-pokemon.mp3) for “Who's that Pokémon?”."
-        : "No recorded clip found, so the built-in sting plays with the voice below.";
+      $("#clipNote").textContent = clips.whosThat
+        ? "“Who's that Pokémon?” plays the original announcer clip."
+        : "The announcer clip didn't load, so a synthesized sting and the computer voice stand in.";
       if (dlg.showModal) dlg.showModal(); else dlg.setAttribute("open", "");
     });
     $("#voiceOn").addEventListener("change", function (e) { R.Settings.set({ voiceOn: e.target.checked }); });
     $("#voiceSelect").addEventListener("change", function (e) { R.Settings.set({ voiceURI: e.target.value }); });
     $("#voiceTest").addEventListener("click", function () {
       Sound.unlock();
-      Sound.say(C.whosThatLine || "Who's that Pokémon?", { pitch: 1.2, rate: 1.0 }).then(function () {
-        return Sound.say((C.itsLine || "It's {name}!").replace("{name}", Dex.spoken(25)), { pitch: 1.2, rate: 1.0 });
-      }).then(function () { Sound.playUrl(Dex.cry(25)); });
+      Sound.say((C.itsLine || "It's {name}!").replace("{name}", Dex.spoken(4)), { pitch: 1.2, rate: 1.0 })
+        .then(function () { return playCry(4); });
     });
     Sound.onVoices(function () { if (dlg.open) fillVoices(); });
   }
@@ -304,7 +344,8 @@
     initSettings();
     renderIdle(shared ? "Added " + shared.added.length + " from the shared link · " + Store.pool().length + " in the draw" : null);
     Store.onChange(function () { if (phase === "idle") renderIdle(); });
-    Sound.load(Dex.voice("whos-that-pokemon.mp3")).then(function (clip) { whosThatClip = clip; });
+    Sound.load(Dex.voice("whos-that-pokemon.mp3")).then(function (clip) { clips.whosThat = clip; });
+    Sound.load(Dex.voice("reveal-sting.mp3")).then(function (clip) { clips.sting = clip; });
     pokeUi();
   }
 

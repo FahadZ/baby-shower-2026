@@ -27,12 +27,12 @@ Plain HTML/CSS/JS. There's no framework and no build step.
 | `apps-script/` | Google Apps Script backend (Sheet + emails) |
 | `print/qr-code.png` | QR code for the live URL |
 | `raffle/` | "Who's That Pokémon?" sticker raffle: check-in page + TV draw screen (see [Raffle](#raffle-whos-that-pokémon)) |
-| `assets/pokemon/` | Official artwork (`art/`) and game cries (`cries/`) for #001–#151, via PokeAPI; optional announcer clips (`voice/`) |
-| `assets/fonts/luckiest-guy-latin.woff2` | Luckiest Guy, the raffle's logo lettering (Apache License 2.0) |
+| `assets/pokemon/` | Official artwork (`art/`) and cries (`cries/`) for #001–#151 via PokeAPI; the announcer clip and reveal sting (`voice/`); the painted eyecatch background (`wtp-burst.webp`); the Pokémon logo (`pokemon-logo.svg`, from Wikimedia Commons) |
+| `assets/fonts/` (raffle) | Pokémon Solid, a fan-made version of the Pokémon logo lettering for the "?" and titles (personal use); Passion One for the reveal names (SIL Open Font License); Luckiest Guy for check-in and "Sticker #___ wins!" (Apache License 2.0) |
 
 ## Raffle: Who's That Pokémon?
 
-Each guest picks a numbered sticker (#001–#151) from the sticker book. Throughout the party, the TV draws one of the checked-in stickers in the style of the anime's "Who's That Pokémon?" segment.
+Each guest picks a numbered sticker (#001–#151) from the sticker book. Throughout the party, the TV draws one of the checked-in stickers as the original 1998 "Who's That Pokémon?" segment.
 
 - **Check-in** (for the assistant at the door): https://fahadz.github.io/baby-shower-2026/raffle/
 - **Draw screen** (for the TV): https://fahadz.github.io/baby-shower-2026/raffle/draw.html
@@ -47,28 +47,33 @@ Type the number on the guest's sticker and tap **Add** (or press Enter on a keyb
 
 On the draw screen, press **Space** (or click **Draw!**). The order is:
 
-1. Poké Ball wipe
-2. Silhouette on the blue sunburst
-3. The "Who's That Pokémon?" sting and voice line
+1. A Poké Ball spins in over the red speed lines and white-cyan burst
+2. Flash: the blue silhouette, the big yellow **?** and the POKéMON logo
+3. The original announcer clip: "Who's that Pokémon?" and its jingle
 
 Let everyone guess, then press **Space** again to reveal:
 
-1. Flash, then the Pokémon in color
-2. "It's Onix!"
+1. Flash, then the Pokémon in color, with its name in place of the **?**
+2. The jingle's closing sting, with "It's Onix!" in the computer voice
 3. The Pokémon's cry
 4. "Sticker #095 wins!"
 
 Press **Space** once more to go back between draws.
 
 - Winners leave the pool, so nobody wins twice.
-- If the winner isn't there, press **R** (*Not here? Redraw*). That sticker is marked as a no-show and the next draw starts.
+- If the winner isn't there, press **R** (*Not here? Redraw*). That sticker is marked as a no-show and the next draw starts with its own Poké Ball opening.
 - **Esc** before the reveal cancels the draw and puts the sticker back.
 - **T** does a test run with any Pokémon. It isn't recorded, so it's safe for checking the TV and sound before guests arrive.
 - **F** toggles full screen. A presentation clicker also works, because → and PageDown count as Space.
 - The draw uses the browser's crypto random number generator, so every sticker in the pool has the same chance.
 - In the check-in list, ↺ puts a winner or no-show back in the draw.
 
-**Sound:** cries are the original game cries. The "Who's that Pokémon?" sting is synthesized in the browser, and the announcer lines use the device's text-to-speech. Choose a voice under **🔊 Sound** on the draw screen. You can replace the sting and the "It's …!" lines with your own recordings; see `assets/pokemon/voice/README.md`.
+**Sound:**
+- "Who's that Pokémon?" is the original English announcer clip with its jingle.
+- The reveal uses the end of that jingle.
+- "It's …!" uses the device's text-to-speech. Choose the voice under **🔊 Sound** on the draw screen, or turn it off and shout the name yourself.
+- Cries are the full-quality versions from the recent games. Pikachu's is Ikue Ōtani's anime voice.
+- To use a Pokémon's anime voice ("Char!") or a recorded "It's …!" line instead, drop the clip in `assets/pokemon/voice/`; see the README there.
 
 ### One device or two
 
