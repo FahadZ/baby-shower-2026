@@ -1,5 +1,5 @@
 #!/bin/sh
-# Re-render the raffle poster and rule sheet PDFs (and PNG previews) from their HTML.
+# Re-render the raffle posters and rule sheet PDFs (and PNG previews) from their HTML.
 # Needs Node with Playwright: npm i -g playwright && npx playwright install chromium
 set -e
 cd "$(dirname "$0")/.."
@@ -14,6 +14,7 @@ const { chromium } = require(require('child_process').execSync('npm root -g').to
   const p = await b.newPage({ viewport: { width: 1200, height: 1700 } });
   for (const [page, w, h, out] of [
     ['raffle-poster.html', '297mm', '420mm', 'raffle-poster-A3'],
+    ['raffle-poster-landscape.html', '420mm', '297mm', 'raffle-poster-A3-landscape'],
     ['raffle-rules.html', '8.5in', '11in', 'raffle-rules-letter'],
   ]) {
     await p.emulateMedia({ media: 'print' });

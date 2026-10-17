@@ -7,6 +7,9 @@
   var typed = "";
   var flashTimer = null;
   var justAdded = null;
+  var UNDO_WINDOW_MS = 30000;   // in guest mode, how long a guest can undo their own entry
+  var lastAdd = null;           // { n, at } for the entry added on this screen most recently
+  var undoTimer = null;
 
   // ---------------------------------------------------------------
   //  Number entry
@@ -114,6 +117,9 @@
     }
     typed = "";
     justAdded = n;
+    lastAdd = { n: n, at: Date.now() };
+    clearTimeout(undoTimer);
+    undoTimer = setTimeout(renderList, UNDO_WINDOW_MS + 50);
     setStatus("✔ " + Dex.label(n) + " added. " + Store.pool().length + " in the draw.", "good");
     Sound.blip();
     if (R.Settings.get().cryOnCheckin) Sound.wait(180).then(function () { Sound.playUrl(Dex.cry(n)); });
@@ -207,15 +213,56 @@
     $("#countWord").textContent = count === 1 ? "trainer" : "trainers";
     $("#empty").hidden = count > 0;
     $("#undo").disabled = count === 0;
+    $("#undo").hidden = guest() && !canGuestUndo();
     var drawn = count - pool;
     $("#poolLine").textContent = count ? pool + " still in the draw" + (drawn ? " · " + drawn + " drawn" : "") : "";
   }
 
   function renderAll() { renderList(); renderReadout(); }
 
+  // ---------------------------------------------------------------
+  //  Guest mode: guests sign themselves up; staff tools are hidden.
+  // ---------------------------------------------------------------
+  function guest() { return !!R.Settings.get().guestMode; }
+
+  // A guest may undo only the entry they just made here, and only for a short while.
+  function canGuestUndo() {
+    var entries = Store.entries();
+    var last = entries.length ? entries[entries.length - 1].n : null;
+    return !!lastAdd && last === lastAdd.n && !Store.drawOf(last) && Date.now() - lastAdd.at < UNDO_WINDOW_MS;
+  }
+
+  function setGuest(on) {
+    R.Settings.set({ guestMode: on });
+    document.body.classList.toggle("guest", on);
+    $("#guestLock").hidden = !on;
+    $("#undo").textContent = on ? "Oops, undo" : "Undo last";
+    if (on) { $(".tools").open = false; window.scrollTo({ top: 0 }); }
+    renderAll();
+  }
+
+  // Staff unlock: press and hold the lock for 2 seconds.
+  function initGuestLock() {
+    var lock = $("#guestLock"), timer = null;
+    var cancel = function () { clearTimeout(timer); lock.classList.remove("holding"); };
+    lock.addEventListener("pointerdown", function (e) {
+      e.preventDefault();
+      lock.classList.add("holding");
+      timer = setTimeout(function () {
+        lock.classList.remove("holding");
+        if (confirm("Leave guest mode?")) setGuest(false);
+      }, 2000);
+    });
+    ["pointerup", "pointerleave", "pointercancel"].forEach(function (ev) { lock.addEventListener(ev, cancel); });
+    lock.addEventListener("contextmenu", function (e) { e.preventDefault(); });
+    lock.addEventListener("click", function () { setStatus("Staff: press and hold the lock for 2 seconds."); });
+    $("#guestOn").addEventListener("click", function () { setGuest(true); });
+  }
+
   function undoLast() {
     var entries = Store.entries();
     if (!entries.length) return;
+    if (guest() && !canGuestUndo()) { renderList(); return; }
     var n = entries[entries.length - 1].n;
     var extra = Store.drawOf(n) ? "\n\n(It has already been drawn.)" : "";
     if (!confirm("Undo the last one, " + Dex.label(n) + "?" + extra)) return;
@@ -287,7 +334,8 @@
     if (shared) setStatus("Added " + shared.added.length + " from the shared link.", "good");
     initKeypad();
     initTools();
-    renderAll();
+    initGuestLock();
+    setGuest(guest());
     Store.onChange(renderAll);
   }
 

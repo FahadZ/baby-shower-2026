@@ -123,6 +123,21 @@ body.checkin {
 .brand .pokeball { --size: 46px; }
 .brand h1 { font-size: clamp(24px, 5.5vw, 36px); text-transform: uppercase; }
 .dex-top .btn { white-space: nowrap; }
+
+/* Guest mode: staff controls disappear; the lock unlocks on a 2-second hold. */
+body.guest .staff-only, body.guest .chip-btn { display: none !important; }
+.guest-lock {
+  position: relative; overflow: hidden;
+  touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+}
+.guest-lock::before {
+  content: ""; position: absolute; inset: 0;
+  background: var(--yellow);
+  transform: scaleX(0); transform-origin: left;
+  z-index: -1;
+}
+.guest-lock { isolation: isolate; }
+.guest-lock.holding::before { transform: scaleX(1); transition: transform 2s linear; }
 .brand p { margin: 2px 0 0; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; font-size: 13px; opacity: .9; }
 
 .banner {

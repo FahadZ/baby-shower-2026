@@ -26,7 +26,7 @@ Plain HTML/CSS/JS. There's no framework and no build step.
 | `assets/og-image.png` | 1200×630 link preview for WhatsApp / iMessage |
 | `apps-script/` | Google Apps Script backend (Sheet + emails) |
 | `print/qr-code.png` | QR code for the live URL |
-| `print/raffle-poster-A3.pdf`, `print/raffle-rules-letter.pdf` | Raffle booth poster (A3) and table rule sheet (Letter), ready to print; HTML sources beside them |
+| `print/raffle-poster-A3.pdf`, `print/raffle-poster-A3-landscape.pdf`, `print/raffle-rules-letter.pdf` | Raffle booth posters (A3 portrait and landscape) and table rule sheet (Letter), ready to print; HTML sources beside them |
 | `raffle/` | "Who's That Pokémon?" sticker raffle: the Raffle Pokédex (check-in) + TV draw screen (see [Raffle](#raffle-whos-that-pokémon)) |
 | `assets/pokemon/` | Official artwork (`art/`) and cries (`cries/`) for #001–#151 via PokeAPI; the 1998 segment's audio (`voice/`); the painted speed lines and burst (`wtp-speed.webp`, `wtp-burst.webp`); the blocky "?" (`wtp-question.svg`); the Pokémon logo (`pokemon-logo.svg`, from Wikimedia Commons) |
 | `assets/fonts/` (raffle) | Anton for the yellow-and-blue name lettering (SIL Open Font License); Luckiest Guy for the keypad and "Sticker #___ wins!" (Apache License 2.0) |
@@ -41,6 +41,8 @@ Each guest picks a numbered sticker (#001–#151) from the sticker book. Through
 ### Raffle Pokédex (check-in)
 
 Type the number on the guest's sticker and tap **Add** (or press Enter on a keyboard). Before you add it, the screen shows that Pokémon's picture and name, so it's easy to compare with the sticker. It refuses numbers outside 001–151, numbers already checked in, and numbers missing from the sticker book. **Undo last** and the ✕ on each entry fix mistakes.
+
+**Guest mode** (for leaving the iPad out so guests sign themselves up): open the section at the bottom and tap **Turn on guest mode**. It hides removing, sharing, reset and the draw-screen link. Right after adding, a guest can still tap **Oops, undo** for 30 seconds to take back their own entry. To turn it off, press and hold **🔒 Guest mode** at the top for 2 seconds. It stays on after a reload.
 
 **Missing stickers:** list the Pokédex numbers your sticker book doesn't have in `missing` in `raffle/raffle-config.js`, e.g. `missing: [7, 25, 150]`.
 
@@ -80,10 +82,10 @@ Press **Space** once more to go back between draws.
 
 ### Posters
 
-- `print/raffle-poster-A3.pdf`: the booth poster, 297 × 420 mm. It also prints on 11 × 17 in. with "fit to page".
+- `print/raffle-poster-A3.pdf` (portrait, 297 × 420 mm) and `print/raffle-poster-A3-landscape.pdf` (420 × 297 mm): the booth poster. Both also print on 11 × 17 in. with "fit to page".
 - `print/raffle-rules-letter.pdf`: the how-to-enter sheet for the table next to the iPad, 8.5 × 11 in.
 
-Print at 100% (actual size) with background graphics on. To change the wording, edit `print/raffle-poster.html` or `print/raffle-rules.html`, then run `scripts/render-print.sh`, which needs Node and Playwright.
+Print at 100% (actual size) with background graphics on. To change the wording, edit `print/raffle-poster.html`, `print/raffle-poster-landscape.html` or `print/raffle-rules.html`, then run `scripts/render-print.sh`, which needs Node and Playwright.
 
 ### One device or two
 

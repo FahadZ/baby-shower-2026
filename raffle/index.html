@@ -6,7 +6,7 @@
   <title>Raffle Pokédex | Who's That Pokémon?</title>
   <meta name="robots" content="noindex">
   <meta name="theme-color" content="#b3102b">
-  <meta name="build" content="20261017135819">
+  <meta name="build" content="20261017140627">
   <script>
     // If this page came from a stale cache, jump to the latest build.
     (function () {
@@ -27,7 +27,7 @@
   <link rel="icon" href="../favicon.ico" sizes="any">
   <link rel="apple-touch-icon" href="../assets/favicon-180.png">
   <link rel="preload" href="../assets/fonts/luckiest-guy-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="raffle.css?v=20261017135819">
+  <link rel="stylesheet" href="raffle.css?v=20261017140627">
 </head>
 <body class="checkin">
   <header class="dex-top">
@@ -38,7 +38,8 @@
         <p>Raffle Pokédex</p>
       </div>
     </div>
-    <a class="btn btn-light" href="draw.html">Draw screen ▶</a>
+    <a class="btn btn-light staff-only" href="draw.html">Draw screen ▶</a>
+    <button type="button" class="btn btn-light guest-lock" id="guestLock" title="Staff: press and hold to unlock" hidden>🔒 Guest mode</button>
   </header>
 
   <p class="banner" id="storageWarning" hidden>
@@ -72,7 +73,7 @@
         <button type="button" data-key="0">0</button>
         <button type="button" data-key="enter" class="key-add" id="addKey">Add</button>
       </div>
-      <p class="rule">Numbered stickers only · 1 Pokémon per human</p>
+      <p class="rule">Numbered stickers only · 1 Pokémon per trainer</p>
       <p class="hint">On a keyboard: type the number, press <kbd>Enter</kbd>.</p>
     </section>
 
@@ -86,8 +87,15 @@
       <p class="empty" id="empty">No stickers yet. When a guest picks one, type its number above.</p>
     </section>
 
-    <details class="tools">
-      <summary>Move the list to another device · settings · reset</summary>
+    <details class="tools staff-only">
+      <summary>Guest mode · move the list to another device · settings · reset</summary>
+
+      <div class="tool">
+        <h3>Guest mode</h3>
+        <p>For leaving the iPad out so guests can sign themselves up. It keeps the keypad and list, and hides removing, sharing, reset and the draw screen. Right after adding, a guest can still undo their own entry for 30 seconds.</p>
+        <p>To turn it off, <b>press and hold 🔒 Guest mode</b> at the top for 2 seconds.</p>
+        <button type="button" class="btn" id="guestOn">Turn on guest mode</button>
+      </div>
 
       <div class="tool">
         <h3>Send the list to the draw screen</h3>
@@ -119,9 +127,9 @@
     </details>
   </main>
 
-  <script src="pokedex.js?v=20261017135819"></script>
-  <script src="raffle-config.js?v=20261017135819"></script>
-  <script src="common.js?v=20261017135819"></script>
-  <script src="checkin.js?v=20261017135819"></script>
+  <script src="pokedex.js?v=20261017140627"></script>
+  <script src="raffle-config.js?v=20261017140627"></script>
+  <script src="common.js?v=20261017140627"></script>
+  <script src="checkin.js?v=20261017140627"></script>
 </body>
 </html>

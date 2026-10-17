@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Who's That Pokémon? Raffle poster (A3 landscape)</title>
+  <meta name="robots" content="noindex">
+  <!-- Print source for raffle-poster-A3-landscape.pdf. Open in Chrome and print at 100%, or run scripts/render-print.sh. -->
+  <style>
+    @font-face { font-family: "Anton"; src: url("../assets/fonts/anton-latin.woff2") format("woff2"); }
+    @font-face { font-family: "Luckiest Guy"; src: url("../assets/fonts/luckiest-guy-latin.woff2") format("woff2"); }
+    @font-face { font-family: "Nunito"; src: url("../assets/fonts/nunito-latin.woff2") format("woff2"); font-weight: 200 1000; }
+    @page { size: 420mm 297mm; margin: 0; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; background: #555; }
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+    .sheet {
+      position: relative;
+      width: 420mm; height: 297mm;
+      margin: 0 auto;
+      overflow: hidden;
+      background: #c41a33 url("raffle-poster-landscape-bg.jpg") center / cover no-repeat;
+      font-family: "Nunito", system-ui, sans-serif;
+      color: #142640;
+    }
+
+    /* Yellow block capitals with a blue outline, as on the draw screen. */
+    .name-style {
+      font-family: "Anton", Impact, sans-serif;
+      font-weight: 400;
+      line-height: 1;
+      letter-spacing: .02em;
+      text-transform: uppercase;
+      color: #f7d117;
+      -webkit-text-stroke: .12em #2a5ea8;
+      paint-order: stroke fill;
+      text-shadow: -.04em .07em 0 #1b3a6b, -.07em .11em 0 #1b3a6b;
+    }
+
+    /* Right column: title, steps, call to action. The burst and mystery Pokémon fill the left. */
+    .col { position: absolute; left: 214mm; right: 10mm; top: 0; bottom: 0; }
+    .title { position: absolute; left: 0; right: 0; top: 11mm; text-align: center; }
+    .title .wt { display: block; font-size: 30mm; transform: rotate(-3deg); }
+    .title .pk { display: flex; justify-content: center; align-items: center; gap: 3mm; margin-top: 2mm; }
+    .title .logo { width: 146mm; transform: rotate(-3deg); filter: drop-shadow(-1.4mm 1.8mm 0 rgba(22, 30, 70, .5)); }
+    .title .q { height: 50mm; transform: rotate(5deg); }
+
+    /* A Pokémon: full colour, or the show's blue silhouette with its darker drop (print/sil/, pre-rendered). */
+    .mon { position: absolute; width: var(--s); height: var(--s); transform: rotate(var(--r, 0deg)); }
+    .mon img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 1.6mm 0 rgba(30, 10, 20, .35)); }
+    .mon img.sil { filter: none; }
+    .hero { left: calc(122mm - var(--s) / 2); top: calc(150mm - var(--s) / 2); }
+
+    .sub { position: absolute; left: 0; right: 0; top: 108mm; margin: 0; text-align: center; font-size: 19mm; transform: rotate(-2deg); }
+
+    .steps {
+      position: absolute; left: 4mm; right: 4mm; top: 136mm;
+      display: grid; gap: 5.5mm;
+      padding: 8mm 9mm;
+      background: #fff8e7;
+      border: 1.6mm solid #142640;
+      border-radius: 9mm;
+      box-shadow: 0 2.4mm 0 #142640;
+    }
+    .step { display: grid; grid-template-columns: 17mm 1fr; column-gap: 5mm; align-items: center; }
+    .step .badge { width: 17mm; height: 17mm; font-size: 10mm; }
+    .step .badge { grid-row: span 2; }
+    .badge {
+      display: inline-grid; place-items: center;
+      width: 15mm; height: 15mm; border-radius: 50%;
+      background: #dc0a2d; color: #fff;
+      border: 1.2mm solid #142640;
+      font: 400 9mm/1 "Luckiest Guy", sans-serif; padding-top: 1.4mm;
+    }
+    .step h3 { margin: 0; font: 900 8.6mm/1.1 "Nunito", sans-serif; letter-spacing: -.01em; }
+    .step p { margin: 1mm 0 0; font: 700 5.6mm/1.3 "Nunito", sans-serif; color: #3a4258; }
+    .step b.num { color: #dc0a2d; }
+
+    .cta {
+      position: absolute; left: 0; right: 0; bottom: 10mm; margin: 0;
+      text-align: center;
+      font: 400 17mm/1 "Luckiest Guy", sans-serif;
+      color: #fff;
+      -webkit-text-stroke: .16em #142640;
+      paint-order: stroke fill;
+      text-shadow: 0 .09em 0 #142640;
+      letter-spacing: .02em;
+    }
+    .cta small { display: block; margin-top: 2.5mm; font: 900 6.4mm/1 "Nunito", sans-serif; -webkit-text-stroke: 0; text-shadow: 0 .5mm 1mm rgba(0, 0, 0, .5); letter-spacing: 0; }
+
+    @media screen { .sheet { margin: 10mm auto; box-shadow: 0 4mm 12mm rgba(0, 0, 0, .5); } }
+  </style>
+</head>
+<body>
+  <div class="sheet">
+    <!-- The mystery Pokémon in the burst -->
+    <div class="mon hero" style="--s: 150mm"><img class="sil" src="sil/025.png" alt=""></div>
+
+    <!-- Gen 1 friends around the burst: some revealed, some still a mystery.
+         Kangaskhan, Chansey and Exeggcute are here for the baby shower. -->
+    <div class="mon" style="left: 8mm; top: 12mm; --s: 48mm; --r: -8deg"><img src="../assets/pokemon/art/001.webp" alt=""></div>
+    <div class="mon" style="left: 92mm; top: 4mm; --s: 34mm; --r: 6deg"><img class="sil" src="sil/039.png" alt=""></div>
+    <div class="mon" style="left: 150mm; top: 12mm; --s: 46mm; --r: 8deg"><img src="../assets/pokemon/art/007.webp" alt=""></div>
+    <div class="mon" style="left: 2mm; top: 108mm; --s: 44mm; --r: 6deg"><img class="sil" src="sil/004.png" alt=""></div>
+    <div class="mon" style="left: 8mm; top: 228mm; --s: 54mm; --r: -4deg"><img src="../assets/pokemon/art/115.webp" alt=""></div>
+    <div class="mon" style="left: 72mm; top: 246mm; --s: 38mm; --r: 8deg"><img src="../assets/pokemon/art/102.webp" alt=""></div>
+    <div class="mon" style="left: 124mm; top: 236mm; --s: 46mm; --r: -6deg"><img class="sil" src="sil/133.png" alt=""></div>
+    <div class="mon" style="left: 168mm; top: 186mm; --s: 50mm; --r: 5deg"><img src="../assets/pokemon/art/113.webp" alt=""></div>
+
+    <div class="col">
+      <div class="title">
+        <span class="wt name-style">Who's That</span>
+        <span class="pk"><img class="logo" src="../assets/pokemon/pokemon-logo.svg" alt="Pokémon"><img class="q" src="../assets/pokemon/wtp-question.svg" alt="?"></span>
+      </div>
+
+      <p class="sub name-style">Baby Shower Raffle</p>
+
+      <div class="steps">
+        <div class="step">
+          <span class="badge">1</span>
+          <h3>Pick a Pokémon sticker</h3>
+          <p>Only ones with a number, like <b class="num">#025</b></p>
+        </div>
+        <div class="step">
+          <span class="badge">2</span>
+          <h3>Check in on the Raffle Pokédex</h3>
+          <p>Type your number on the iPad</p>
+        </div>
+        <div class="step">
+          <span class="badge">3</span>
+          <h3>“Who's that Pokémon?”</h3>
+          <p>If the TV reveals yours, you win a prize!</p>
+        </div>
+      </div>
+
+      <p class="cta">Sign up here!<small>1 Pokémon per trainer · winners drawn all party long</small></p>
+    </div>
+  </div>
+</body>
+</html>
