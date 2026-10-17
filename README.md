@@ -27,8 +27,8 @@ Plain HTML/CSS/JS. There's no framework and no build step.
 | `apps-script/` | Google Apps Script backend (Sheet + emails) |
 | `print/qr-code.png` | QR code for the live URL |
 | `raffle/` | "Who's That Pokémon?" sticker raffle: check-in page + TV draw screen (see [Raffle](#raffle-whos-that-pokémon)) |
-| `assets/pokemon/` | Official artwork (`art/`) and cries (`cries/`) for #001–#151 via PokeAPI; the announcer clip and reveal sting (`voice/`); the painted eyecatch background (`wtp-burst.webp`); the Pokémon logo (`pokemon-logo.svg`, from Wikimedia Commons) |
-| `assets/fonts/` (raffle) | Pokémon Solid, a fan-made version of the Pokémon logo lettering for the "?" and titles (personal use); Passion One for the reveal names (SIL Open Font License); Luckiest Guy for check-in and "Sticker #___ wins!" (Apache License 2.0) |
+| `assets/pokemon/` | Official artwork (`art/`) and cries (`cries/`) for #001–#151 via PokeAPI; the 1998 segment's audio (`voice/`); the painted speed lines and burst (`wtp-speed.webp`, `wtp-burst.webp`); the blocky "?" (`wtp-question.svg`); the Pokémon logo (`pokemon-logo.svg`, from Wikimedia Commons) |
+| `assets/fonts/` (raffle) | Anton for the blue-and-yellow name lettering (SIL Open Font License); Luckiest Guy for the keypad and "Sticker #___ wins!" (Apache License 2.0) |
 
 ## Raffle: Who's That Pokémon?
 
@@ -47,16 +47,18 @@ Type the number on the guest's sticker and tap **Add** (or press Enter on a keyb
 
 On the draw screen, press **Space** (or click **Draw!**). The order is:
 
-1. A Poké Ball spins in over the red speed lines and white-cyan burst
-2. Flash: the blue silhouette, the big yellow **?** and the POKéMON logo
-3. The original announcer clip: "Who's that Pokémon?" and its jingle
+1. A Poké Ball spins past the camera, cuts to the red speed lines and POKéMON logo, and flies off into the distance
+2. The white-cyan burst, blue silhouette and yellow **?** zoom out of where it vanished
+3. "Who's that Pokémon?" and the jingle, from the original broadcast
 
 Let everyone guess, then press **Space** again to reveal:
 
-1. Flash, then the Pokémon in color, with its name in place of the **?**
-2. The jingle's closing sting, with "It's Onix!" in the computer voice
+1. A dip to black, like coming back from the commercial break, and the original reveal music
+2. "It's Onix!" while the silhouette dissolves into colour and the name spins in where the **?** was
 3. The Pokémon's cry
 4. "Sticker #095 wins!"
+
+The timings come from the broadcast, frame by frame.
 
 Press **Space** once more to go back between draws.
 
@@ -69,9 +71,9 @@ Press **Space** once more to go back between draws.
 - In the check-in list, ↺ puts a winner or no-show back in the draw.
 
 **Sound:**
-- "Who's that Pokémon?" is the original English announcer clip with its jingle.
-- The reveal uses the end of that jingle.
-- "It's …!" uses the device's text-to-speech. Choose the voice under **🔊 Sound** on the draw screen, or turn it off and shout the name yourself.
+- The opening (Poké Ball sound, music, "Who's that Pokémon?") is the original English broadcast audio.
+- The reveal plays the broadcast's reveal music with the announcer taken out, so any Pokémon's name can go over it.
+- "It's …!" uses the device's text-to-speech. Choose the voice under **🔊 Sound** on the draw screen, or turn it off and shout the name yourself. Charmander gets the original "It's Charmander!" and its anime "Char!".
 - Cries are the full-quality versions from the recent games. Pikachu's is Ikue Ōtani's anime voice.
 - To use a Pokémon's anime voice ("Char!") or a recorded "It's …!" line instead, drop the clip in `assets/pokemon/voice/`; see the README there.
 

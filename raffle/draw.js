@@ -11,11 +11,12 @@
   var isTest = false;
   var busy = false;
   var run = 0;           // bumps on every step so stale async callbacks bail out
-  var clips = { whosThat: null, sting: null };
+  var clips = { whosThat: null, music: null };
 
   function setPhase(p) {
     phase = p;
     stage.setAttribute("data-phase", p);
+    stage.classList.remove("rolling");
   }
 
   // Unbiased pick using the browser's crypto RNG.
@@ -103,9 +104,8 @@
       var s = document.createElement("span");
       s.textContent = name[i];
       s.setAttribute("aria-hidden", "true");
-      s.style.setProperty("--rot", (Math.random() * 8 - 4).toFixed(1) + "deg");
-      s.style.setProperty("--dy", (Math.random() * 8 - 4).toFixed(1) + "%");
-      s.style.animationDelay = (0.035 * i).toFixed(3) + "s";
+      s.style.setProperty("--rot", (Math.random() * 4 - 2).toFixed(1) + "deg");
+      s.style.setProperty("--dy", (Math.random() * 4 - 2).toFixed(1) + "%");
       el.appendChild(s);
     }
   }
@@ -136,6 +136,13 @@
     });
   }
 
+  // Timings below follow the 1998 broadcast, measured frame by frame.
+  var BALL_MS = 700;        // Poké Ball spins past and flies off; then the burst zooms out
+  var DIP_MS = 500;         // black at the commercial break, before the reveal music
+  var ITS_MS = 950;         // "It's ___!" starts this long into the reveal music
+  var COLOUR_MS = 1230;     // silhouette dissolves into colour
+  var CRY_MS = 2600;        // the Pokémon's cry, at the earliest
+
   function startDraw(test) {
     if (busy) return;
     var pool = test ? Dex.all() : Store.pool();
@@ -165,55 +172,65 @@
     setWinner(n, test);
     Sound.load(Dex.cry(n));
     Sound.load(Dex.voice("its-" + Dex.pad3(n) + ".mp3"));
+    Sound.load(Dex.voice("cry-" + Dex.pad3(n) + ".mp3"));
 
-    restartAnim($("#ball"), "go");
-    Sound.whoosh();
-
-    // The Poké Ball flies in, then a flash opens on the silhouette.
-    Promise.all([Sound.wait(900), Promise.race([ready, Sound.wait(3000)])]).then(function () {
+    // Start picture and sound together so they stay in sync.
+    Promise.race([ready, Sound.wait(1500)]).then(function () {
       if (my !== run) return;
-      restartAnim($("#flash"), "go");
-      setPhase("ask");
+      void stage.offsetWidth;
+      stage.classList.add("rolling");
       announceWhosThat(my);
-      setTimeout(function () { if (my === run) busy = false; }, 600);
+      return Sound.wait(BALL_MS);
+    }).then(function () {
+      if (my !== run) return;
+      setPhase("ask");
+      setTimeout(function () { if (my === run) busy = false; }, 900);
     });
   }
 
   function announceWhosThat(my) {
     if (clips.whosThat) return Sound.playBuffer(clips.whosThat);
-    var sting = Sound.jingle();
-    return Sound.wait(700).then(function () {
+    Sound.whoosh();
+    return Sound.wait(BALL_MS).then(function () {
       if (my !== run) return;
-      return Sound.say(C.whosThatLine || "Who's that Pokémon?", { pitch: 1.2, rate: 1.0 });
-    }).then(function () { return sting; });
+      var sting = Sound.jingle();
+      return Sound.wait(600).then(function () {
+        if (my !== run) return;
+        return Sound.say(C.whosThatLine || "Who's that Pokémon?", { pitch: 1.2, rate: 1.0 });
+      }).then(function () { return sting; });
+    });
   }
 
   function reveal() {
     if (phase !== "ask" || busy || current === null) return;
     busy = true;
     var my = ++run, n = current;
+    var alive = function () { return my === run; };
     Sound.stopAll();
-    restartAnim($("#flash"), "go");
-    setPhase("reveal");
-    if (clips.sting) Sound.playBuffer(clips.sting, 0.6); else Sound.reveal();
+    restartAnim($("#dip"), "go");
 
-    var showWinner = function () { if (my === run) stage.classList.add("show-winner"); };
-    setTimeout(showWinner, 5000);
-
-    Sound.wait(350)
-      .then(function () { return my === run && sayIts(n, my); })
-      .then(function () { return my === run && Sound.wait(100); })
-      .then(function () { return my === run && playCry(n); })
+    var showWinner = function () { if (alive()) stage.classList.add("show-winner"); };
+    var voiceDone = Sound.wait(DIP_MS).then(function () {
+      if (!alive()) return;
+      if (clips.music) Sound.playBuffer(clips.music); else Sound.reveal();
+      setTimeout(function () { if (alive()) setPhase("reveal"); }, COLOUR_MS);
+      setTimeout(function () { if (alive()) busy = false; }, COLOUR_MS + 400);
+      return Sound.wait(ITS_MS - 100).then(function () { return alive() && sayIts(n, my); });
+    });
+    var cryAt = Sound.wait(DIP_MS + CRY_MS);
+    Promise.all([voiceDone, cryAt])
+      .then(function () { return alive() && playCry(n); })
+      .then(function () { return alive() && Sound.wait(200); })
       .then(showWinner);
-    setTimeout(function () { if (my === run) busy = false; }, 900);
+    setTimeout(showWinner, DIP_MS + 5500);
   }
 
   function sayIts(n, my) {
     return Sound.load(Dex.voice("its-" + Dex.pad3(n) + ".mp3")).then(function (clip) {
       if (my !== run) return;
-      if (clip) return Sound.playBuffer(clip);
+      if (clip) return Sound.wait(100).then(function () { return Sound.playBuffer(clip); });
       var line = (C.itsLine || "It's {name}!").replace("{name}", Dex.spoken(n));
-      return Sound.say(line, { pitch: 1.2, rate: 1.0 });
+      return Sound.say(line, { pitch: 1.2, rate: 1.05 });
     });
   }
 
@@ -326,6 +343,7 @@
       $("#clipNote").textContent = clips.whosThat
         ? "“Who's that Pokémon?” plays the original announcer clip."
         : "The announcer clip didn't load, so a synthesized sting and the computer voice stand in.";
+      if (clips.whosThat) $("#clipNote").textContent += " Charmander uses the original “It's Charmander!” and its anime cry.";
       if (dlg.showModal) dlg.showModal(); else dlg.setAttribute("open", "");
     });
     $("#voiceOn").addEventListener("change", function (e) { R.Settings.set({ voiceOn: e.target.checked }); });
@@ -345,7 +363,7 @@
     renderIdle(shared ? "Added " + shared.added.length + " from the shared link · " + Store.pool().length + " in the draw" : null);
     Store.onChange(function () { if (phase === "idle") renderIdle(); });
     Sound.load(Dex.voice("whos-that-pokemon.mp3")).then(function (clip) { clips.whosThat = clip; });
-    Sound.load(Dex.voice("reveal-sting.mp3")).then(function (clip) { clips.sting = clip; });
+    Sound.load(Dex.voice("reveal-music.mp3")).then(function (clip) { clips.music = clip; });
     pokeUi();
   }
 

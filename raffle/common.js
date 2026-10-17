@@ -380,7 +380,7 @@
         var done = false;
         function fin() { if (!done) { done = true; clearTimeout(timer); resolve(); } }
         // Chrome sometimes never fires onend, so cap the wait.
-        var timer = setTimeout(fin, 2500 + text.length * 110);
+        var timer = setTimeout(fin, 1200 + text.length * 90);
         u.onend = fin;
         u.onerror = fin;
         keepUtterances.push(u);

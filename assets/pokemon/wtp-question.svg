@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-16 -8 132 200">
+  <!-- Blocky "?" from the 1998 eyecatch: yellow, navy outline, navy extrusion to the lower left. -->
+  <defs>
+    <path id="q" d="M13 3.5 L98 1.6 L100.8 71.4 L77.6 93.3 L75.7 139.2 L37.3 140.4 L35.7 78.4 L59.2 54.9 L57.5 41 L47.1 51.8 L13.7 56.5 L1 24 Z"/>
+    <path id="dot" d="M37.3 154.9 L76.5 153.3 L77 181 L38 182.5 Z"/>
+  </defs>
+  <g fill="#173a57" stroke="#173a57" stroke-width="10" stroke-linejoin="round" transform="translate(-9 6)">
+    <use href="#q"/><use href="#dot"/>
+  </g>
+  <g fill="#173a57" stroke="#173a57" stroke-width="10" stroke-linejoin="round" transform="translate(-4.5 3)">
+    <use href="#q"/><use href="#dot"/>
+  </g>
+  <g fill="#f4c812" stroke="#1d4a6b" stroke-width="8" stroke-linejoin="round">
+    <use href="#q"/><use href="#dot"/>
+  </g>
+</svg>

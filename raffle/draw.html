@@ -6,7 +6,7 @@
   <title>Who's That Pokémon? | Raffle Draw</title>
   <meta name="robots" content="noindex">
   <meta name="theme-color" content="#0d4ba8">
-  <meta name="build" content="20261017041142">
+  <meta name="build" content="20261017043425">
   <script>
     // If this page came from a stale cache, jump to the latest build.
     (function () {
@@ -26,26 +26,28 @@
   </script>
   <link rel="icon" href="../favicon.ico" sizes="any">
   <link rel="apple-touch-icon" href="../assets/favicon-180.png">
-  <link rel="preload" href="../assets/fonts/pokemon-solid.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="preload" href="../assets/fonts/passion-one-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="../assets/fonts/anton-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="../assets/fonts/luckiest-guy-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="../assets/pokemon/wtp-speed.webp" as="image">
   <link rel="preload" href="../assets/pokemon/wtp-burst.webp" as="image">
-  <link rel="stylesheet" href="raffle.css?v=20261017041142">
+  <link rel="stylesheet" href="raffle.css?v=20261017043425">
 </head>
 <body class="draw">
   <main class="stage" id="stage" data-phase="idle">
-    <!-- Everything sits in a 4:3 frame, like the 1998 broadcast; the burst bleeds past it to fill wide screens. -->
+    <!-- Everything sits in a 4:3 frame, like the 1998 broadcast; the background bleeds past it to fill wide screens. -->
     <div class="frame" id="frame">
+      <div class="speed" aria-hidden="true"></div>
+      <div class="whiteout" aria-hidden="true"></div>
       <div class="burst" aria-hidden="true"></div>
 
       <!-- Between draws -->
       <section class="idle" id="idle" aria-labelledby="idleTitle">
         <span class="pokeball idle-ball" aria-hidden="true"></span>
         <h1 class="idle-title" id="idleTitle">
-          <span class="wt">Who's That</span>
-          <span class="pk"><img src="../assets/pokemon/pokemon-logo.svg" alt="Pokémon"><span class="q-inline">?</span></span>
+          <span class="wt name-style">Who's That</span>
+          <span class="pk"><img src="../assets/pokemon/pokemon-logo.svg" alt="Pokémon"><img class="q-inline" src="../assets/pokemon/wtp-question.svg" alt="?"></span>
         </h1>
-        <p class="idle-sub">Baby Shower Raffle</p>
+        <p class="idle-sub name-style">Baby Shower Raffle</p>
         <p class="idle-pool" id="poolText"></p>
         <ol class="past" id="past" aria-label="Winners so far"></ol>
       </section>
@@ -57,14 +59,14 @@
         <img id="monImg" alt="">
       </figure>
       <div class="ball-in" aria-hidden="true"><span class="pokeball" id="ball"></span></div>
-      <p class="qmark" aria-hidden="true">?</p>
-      <h2 class="mon-name" id="monName"></h2>
+      <img class="qmark" src="../assets/pokemon/wtp-question.svg" alt="">
+      <h2 class="mon-name name-style" id="monName"></h2>
       <img class="show-logo" src="../assets/pokemon/pokemon-logo.svg" alt="">
       <p class="winner" id="winner" aria-live="polite"></p>
       <p class="test-badge" id="testBadge">Test run · not recorded</p>
     </div>
 
-    <div class="flash" id="flash" aria-hidden="true"></div>
+    <div class="dip" id="dip" aria-hidden="true"></div>
 
     <nav class="controls" id="controls" aria-label="Draw controls">
       <button type="button" class="cbtn cbtn-main" data-show="idle" data-act="draw">Draw! <kbd>Space</kbd></button>
@@ -85,7 +87,7 @@
     <form method="dialog">
       <h2 id="settingsTitle">Sound</h2>
       <p class="note" id="clipNote"></p>
-      <label class="check"><input type="checkbox" id="voiceOn"> Computer voice says “It's …!” on the reveal</label>
+      <label class="check"><input type="checkbox" id="voiceOn"> Computer voice says “It's …!” over the reveal music</label>
       <label for="voiceSelect">Computer voice</label>
       <div class="row">
         <select id="voiceSelect"></select>
@@ -96,9 +98,9 @@
     </form>
   </dialog>
 
-  <script src="pokedex.js?v=20261017041142"></script>
-  <script src="raffle-config.js?v=20261017041142"></script>
-  <script src="common.js?v=20261017041142"></script>
-  <script src="draw.js?v=20261017041142"></script>
+  <script src="pokedex.js?v=20261017043425"></script>
+  <script src="raffle-config.js?v=20261017043425"></script>
+  <script src="common.js?v=20261017043425"></script>
+  <script src="draw.js?v=20261017043425"></script>
 </body>
 </html>
