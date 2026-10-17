@@ -86,6 +86,14 @@ The list is saved in the browser of the device it was entered on.
 
 All art, cries and fonts are served with the site; nothing comes from a third-party service. The draw screen preloads the pictures and cries for everyone in the pool, so a Wi-Fi drop during the party won't interrupt a draw.
 
+## Party games (`game/`)
+
+The live, host-controlled party games guests play on their phones at the shower live
+in [`game/`](game/README.md): a Cloudflare Worker + Durable Object at
+https://baby.thenerdnextdoor.ca/ (players), `/host` (the remote) and `/tv` (optional big
+screen). The build brief is `GAME-PROMPT.md`; the printable join cards are in
+`print/join-card.pdf`.
+
 ## Editing event details
 
 Open `config.js`:

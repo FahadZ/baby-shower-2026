@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en" data-screen="player">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+  <title>Baby Loading.. Party Games</title>
+  <meta name="description" content="Scan, pick a character, and play along at Fahad &amp; Oyshe's baby shower.">
+  <meta name="theme-color" content="#2b2f27">
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="assets/favicon.ico" sizes="any">
+  <link rel="apple-touch-icon" href="assets/favicon-180.png">
+  <link rel="preload" href="assets/fonts/press-start-2p-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="game.css">
+  <style>body { touch-action: manipulation; }</style>
+</head>
+<body>
+  <div class="frame">
+    <header class="hud">
+      <span><i class="dot sync" id="netDot" aria-hidden="true"></i><span class="tag">BABY LOADING..</span></span>
+      <span class="row" style="gap:10px">
+        <span id="hudTag" aria-live="off"></span>
+        <button class="link-btn" id="soundBtn" type="button" aria-label="Sound effects">SFX: OFF</button>
+      </span>
+    </header>
+    <main id="app" class="console" aria-live="polite">
+      <p class="sub" style="padding-top:30vh">CONNECTING<span class="blink">...</span></p>
+    </main>
+    <p class="sr-only" id="live" aria-live="polite"></p>
+    <footer class="footer">MADE WITH ♥ FOR PLAYER 3</footer>
+  </div>
+  <noscript><p class="noscript">This game needs JavaScript. Please turn it on and reload.</p></noscript>
+  <script type="module" src="player.js"></script>
+</body>
+</html>
