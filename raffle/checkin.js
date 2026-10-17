@@ -41,7 +41,7 @@
     }
     if (n === null) {
       img.hidden = true;
-      text.textContent = "Type the number on the guest's sticker";
+      text.textContent = "Type the number on your sticker";
       return;
     }
     if (!(n >= 1 && n <= Dex.max)) {
@@ -55,7 +55,7 @@
       text.textContent = Dex.label(n) + " isn't in the sticker book";
       $("#lcd").classList.add("is-bad");
     } else if (Store.has(n)) {
-      text.textContent = Dex.label(n) + " is already checked in";
+      text.textContent = Dex.label(n) + " is already in the Pokédex";
       $("#lcd").classList.add("is-bad");
     } else {
       text.textContent = Dex.label(n);
@@ -105,8 +105,8 @@
       var msg = {
         range: "There's no Pokémon #" + Dex.pad3(n) + ". Stickers go from 001 to " + Dex.pad3(Dex.max) + ".",
         missing: Dex.label(n) + " isn't in the sticker book. Check the number?",
-        duplicate: Dex.label(n) + " is already checked in" +
-          (Store.drawOf(n) ? " (and already drawn)." : ". Check the sticker?")
+        duplicate: Dex.label(n) + " is already in the Pokédex" +
+          (Store.drawOf(n) ? " (and already drawn)." : ". Pick another sticker?")
       }[r.reason];
       setStatus(msg, "bad");
       Sound.buzz(); shake();
@@ -204,7 +204,7 @@
 
     var count = entries.length, pool = Store.pool().length;
     $("#count").textContent = count;
-    $("#countWord").textContent = count === 1 ? "guest" : "guests";
+    $("#countWord").textContent = count === 1 ? "trainer" : "trainers";
     $("#empty").hidden = count > 0;
     $("#undo").disabled = count === 0;
     var drawn = count - pool;

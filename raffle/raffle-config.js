@@ -3,7 +3,7 @@
 // ============================================================
 window.RAFFLE = {
   // Pokédex numbers that are NOT in the sticker book, e.g. [7, 25, 150].
-  // Check-in refuses these, so a mistyped number can't sneak into the draw.
+  // The Raffle Pokédex refuses these, so a mistyped number can't sneak into the draw.
   missing: [],
 
   // Announcer lines spoken by the device's voice when there's no recorded

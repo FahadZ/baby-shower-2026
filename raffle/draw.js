@@ -52,7 +52,7 @@
     var entries = Store.entries(), pool = Store.pool();
     var text;
     if (note) text = note;
-    else if (!entries.length) text = "No stickers checked in yet.";
+    else if (!entries.length) text = "No stickers in the Pokédex yet.";
     else if (!pool.length) text = "Every sticker has been drawn!";
     else text = pool.length + (pool.length === 1 ? " sticker" : " stickers") + " in the draw";
     $("#poolText").textContent = text;
@@ -149,7 +149,7 @@
     if (!pool.length) {
       Sound.unlock();
       Sound.buzz();
-      renderIdle(Store.entries().length ? "Every sticker has been drawn!" : "No stickers checked in yet. Open Check-in first.");
+      renderIdle(Store.entries().length ? "Every sticker has been drawn!" : "No stickers in the Pokédex yet. Open the Raffle Pokédex first.");
       restartAnim($("#poolText"), "nudge");
       return;
     }

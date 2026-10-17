@@ -26,7 +26,8 @@ Plain HTML/CSS/JS. There's no framework and no build step.
 | `assets/og-image.png` | 1200×630 link preview for WhatsApp / iMessage |
 | `apps-script/` | Google Apps Script backend (Sheet + emails) |
 | `print/qr-code.png` | QR code for the live URL |
-| `raffle/` | "Who's That Pokémon?" sticker raffle: check-in page + TV draw screen (see [Raffle](#raffle-whos-that-pokémon)) |
+| `print/raffle-poster-A3.pdf`, `print/raffle-rules-letter.pdf` | Raffle booth poster (A3) and table rule sheet (Letter), ready to print; HTML sources beside them |
+| `raffle/` | "Who's That Pokémon?" sticker raffle: the Raffle Pokédex (check-in) + TV draw screen (see [Raffle](#raffle-whos-that-pokémon)) |
 | `assets/pokemon/` | Official artwork (`art/`) and cries (`cries/`) for #001–#151 via PokeAPI; the 1998 segment's audio (`voice/`); the painted speed lines and burst (`wtp-speed.webp`, `wtp-burst.webp`); the blocky "?" (`wtp-question.svg`); the Pokémon logo (`pokemon-logo.svg`, from Wikimedia Commons) |
 | `assets/fonts/` (raffle) | Anton for the yellow-and-blue name lettering (SIL Open Font License); Luckiest Guy for the keypad and "Sticker #___ wins!" (Apache License 2.0) |
 
@@ -34,10 +35,10 @@ Plain HTML/CSS/JS. There's no framework and no build step.
 
 Each guest picks a numbered sticker (#001–#151) from the sticker book. Throughout the party, the TV draws one of the checked-in stickers as the original 1998 "Who's That Pokémon?" segment.
 
-- **Check-in** (for the assistant at the door): https://fahadz.github.io/baby-shower-2026/raffle/
+- **Raffle Pokédex** (check-in, on the iPad at the booth): https://fahadz.github.io/baby-shower-2026/raffle/
 - **Draw screen** (for the TV): https://fahadz.github.io/baby-shower-2026/raffle/draw.html
 
-### Check-in
+### Raffle Pokédex (check-in)
 
 Type the number on the guest's sticker and tap **Add** (or press Enter on a keyboard). Before you add it, the screen shows that Pokémon's picture and name, so it's easy to compare with the sticker. It refuses numbers outside 001–151, numbers already checked in, and numbers missing from the sticker book. **Undo last** and the ✕ on each entry fix mistakes.
 
@@ -68,7 +69,7 @@ Press **Space** once more to go back between draws.
 - **T** does a test run with any Pokémon. It isn't recorded, so it's safe for checking the TV and sound before guests arrive.
 - **F** toggles full screen. A presentation clicker also works, because → and PageDown count as Space.
 - The draw uses the browser's crypto random number generator, so every sticker in the pool has the same chance.
-- In the check-in list, ↺ puts a winner or no-show back in the draw.
+- In the Raffle Pokédex list, ↺ puts a winner or no-show back in the draw.
 
 **Sound:**
 - The opening (Poké Ball sound, music, "Who's that Pokémon?") is the original English broadcast audio.
@@ -77,12 +78,19 @@ Press **Space** once more to go back between draws.
 - Cries are the full-quality versions from the recent games. Pikachu's is Ikue Ōtani's anime voice.
 - To use a Pokémon's anime voice ("Char!") or a recorded "It's …!" line instead, drop the clip in `assets/pokemon/voice/`; see the README there.
 
+### Posters
+
+- `print/raffle-poster-A3.pdf`: the booth poster, 297 × 420 mm. It also prints on 11 × 17 in. with "fit to page".
+- `print/raffle-rules-letter.pdf`: the how-to-enter sheet for the table next to the iPad, 8.5 × 11 in.
+
+Print at 100% (actual size) with background graphics on. To change the wording, edit `print/raffle-poster.html` or `print/raffle-rules.html`, then run `scripts/render-print.sh`, which needs Node and Playwright.
+
 ### One device or two
 
 The list is saved in the browser of the device it was entered on.
 
 - **One device** (a laptop or tablet at the door that later goes on the TV): nothing to do.
-- **Two devices** (a phone at the door, a laptop on the TV): on check-in, open **Move the list to another device**, tap **Share link**, and open that link on the TV laptop. It only adds stickers the TV doesn't have yet, so you can send it again after late arrivals. **Copy numbers** with **Add numbers from another device** does the same by copy and paste.
+- **Two devices** (a phone at the door, a laptop on the TV): in the Raffle Pokédex, open **Move the list to another device**, tap **Share link**, and open that link on the TV laptop. It only adds stickers the TV doesn't have yet, so you can send it again after late arrivals. **Copy numbers** with **Add numbers from another device** does the same by copy and paste.
 
 All art, cries and fonts are served with the site; nothing comes from a third-party service. The draw screen preloads the pictures and cries for everyone in the pool, so a Wi-Fi drop during the party won't interrupt a draw.
 

@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Raffle Check-in | Who's That Pokémon?</title>
+  <title>Raffle Pokédex | Who's That Pokémon?</title>
   <meta name="robots" content="noindex">
   <meta name="theme-color" content="#b3102b">
-  <meta name="build" content="20261017043851">
+  <meta name="build" content="20261017135819">
   <script>
     // If this page came from a stale cache, jump to the latest build.
     (function () {
@@ -27,7 +27,7 @@
   <link rel="icon" href="../favicon.ico" sizes="any">
   <link rel="apple-touch-icon" href="../assets/favicon-180.png">
   <link rel="preload" href="../assets/fonts/luckiest-guy-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="raffle.css?v=20261017043851">
+  <link rel="stylesheet" href="raffle.css?v=20261017135819">
 </head>
 <body class="checkin">
   <header class="dex-top">
@@ -35,7 +35,7 @@
       <span class="pokeball" aria-hidden="true"></span>
       <div>
         <h1 class="name-style">Who's That Pokémon?</h1>
-        <p>Raffle check-in</p>
+        <p>Raffle Pokédex</p>
       </div>
     </div>
     <a class="btn btn-light" href="draw.html">Draw screen ▶</a>
@@ -52,7 +52,7 @@
         <div class="readout" aria-hidden="true"><span class="hash">#</span><span id="digits" class="digits"></span><span class="caret"></span></div>
         <div class="preview" id="preview">
           <img id="previewImg" alt="" hidden>
-          <p id="previewText" class="preview-text">Type the number on the guest's sticker</p>
+          <p id="previewText" class="preview-text">Type the number on your sticker</p>
         </div>
       </div>
 
@@ -72,12 +72,13 @@
         <button type="button" data-key="0">0</button>
         <button type="button" data-key="enter" class="key-add" id="addKey">Add</button>
       </div>
+      <p class="rule">Numbered stickers only · 1 Pokémon per human</p>
       <p class="hint">On a keyboard: type the number, press <kbd>Enter</kbd>.</p>
     </section>
 
     <section class="entries" aria-labelledby="countTitle">
       <div class="entries-head">
-        <h2 id="countTitle"><span id="count">0</span> <span id="countWord">guests</span> checked in</h2>
+        <h2 id="countTitle"><span id="count">0</span> <span id="countWord">trainers</span> in the Pokédex</h2>
         <button type="button" class="btn btn-small" id="undo" disabled>Undo last</button>
       </div>
       <p class="sub" id="poolLine"></p>
@@ -118,9 +119,9 @@
     </details>
   </main>
 
-  <script src="pokedex.js?v=20261017043851"></script>
-  <script src="raffle-config.js?v=20261017043851"></script>
-  <script src="common.js?v=20261017043851"></script>
-  <script src="checkin.js?v=20261017043851"></script>
+  <script src="pokedex.js?v=20261017135819"></script>
+  <script src="raffle-config.js?v=20261017135819"></script>
+  <script src="common.js?v=20261017135819"></script>
+  <script src="checkin.js?v=20261017135819"></script>
 </body>
 </html>

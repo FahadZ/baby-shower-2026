@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Raffle Pokédex: how to enter (Letter)</title>
+  <meta name="robots" content="noindex">
+  <!-- Print source for raffle-rules-letter.pdf. Open in Chrome and print at 100%, or run scripts/render-print.sh. -->
+  <style>
+    @font-face { font-family: "Anton"; src: url("../assets/fonts/anton-latin.woff2") format("woff2"); }
+    @font-face { font-family: "Luckiest Guy"; src: url("../assets/fonts/luckiest-guy-latin.woff2") format("woff2"); }
+    @font-face { font-family: "Nunito"; src: url("../assets/fonts/nunito-latin.woff2") format("woff2"); font-weight: 200 1000; }
+    @page { size: 8.5in 11in; margin: 0; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; background: #555; }
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+    .sheet {
+      position: relative;
+      width: 8.5in; height: 11in;
+      margin: 0 auto;
+      overflow: hidden;
+      background: #fff8e7;
+      font-family: "Nunito", system-ui, sans-serif;
+      color: #142640;
+    }
+
+    .name-style {
+      font-family: "Anton", Impact, sans-serif;
+      font-weight: 400;
+      line-height: 1;
+      letter-spacing: .02em;
+      text-transform: uppercase;
+      color: #f7d117;
+      -webkit-text-stroke: .12em #2a5ea8;
+      paint-order: stroke fill;
+      text-shadow: -.04em .07em 0 #1b3a6b, -.07em .11em 0 #1b3a6b;
+    }
+
+    /* Pokédex-red header, like the check-in screen */
+    .head {
+      position: relative;
+      height: 44mm;
+      padding: 6mm 12mm 0;
+      background: radial-gradient(circle at 15% -20%, #ff3b56, transparent 55%), linear-gradient(#dc0a2d, #a30821);
+      border-bottom: 2mm solid #142640;
+      display: flex; align-items: center; gap: 7mm;
+    }
+    .ball {
+      --size: 26mm;
+      flex: none;
+      width: var(--size); height: var(--size); border-radius: 50%;
+      background:
+        radial-gradient(circle closest-side, #fff 0 20%, #222 21% 31%, transparent 32%),
+        linear-gradient(to bottom, #ee1515 0 45%, #222 45% 55%, #f0f0f0 55% 100%);
+      box-shadow: 0 0 0 1.4mm #222, inset -2mm -2mm 0 rgba(0, 0, 0, .18);
+    }
+    .head h1 { margin: 0; font-size: 17mm; }
+    .head p { margin: 2.5mm 0 0; color: #fff; font: 800 6mm/1.2 "Nunito", sans-serif; }
+    .head p .q { height: 7mm; vertical-align: -1.4mm; margin-left: .6mm; }
+    .head .logo { height: 7.2mm; vertical-align: -1.6mm; margin: 0 .6mm; }
+
+    .steps { list-style: none; margin: 0; padding: 3mm 12mm 0; }
+    .steps li {
+      display: grid; grid-template-columns: 15mm 1fr auto; gap: 5mm; align-items: center;
+      padding: 3mm 0;
+      border-bottom: .5mm dashed rgba(20, 38, 64, .25);
+    }
+    .steps li:last-child { border-bottom: 0; }
+    .badge {
+      display: grid; place-items: center;
+      width: 15mm; height: 15mm; border-radius: 50%;
+      background: #dc0a2d; color: #fff;
+      border: 1mm solid #142640;
+      font: 400 9mm/1 "Luckiest Guy", sans-serif; padding-top: 1.3mm;
+    }
+    .steps h2 { margin: 0; font: 900 6.9mm/1.15 "Nunito", sans-serif; letter-spacing: -.01em; }
+    .steps p { margin: 1.4mm 0 0; font: 700 4.6mm/1.35 "Nunito", sans-serif; color: #3a4258; }
+    .steps em { font-style: normal; color: #dc0a2d; }
+
+    /* Sticker examples */
+    .stickers { display: flex; gap: 4mm; }
+    .sticker {
+      position: relative;
+      width: 22mm; height: 26mm;
+      padding: 1.5mm 1.5mm 0;
+      background: #fff;
+      border: .6mm solid #c8c2b5;
+      border-radius: 4mm;
+      box-shadow: 0 .8mm 0 rgba(20, 38, 64, .2);
+      text-align: center;
+    }
+    .sticker img { width: 18mm; height: 18mm; object-fit: contain; }
+    .sticker .no { display: block; font: 400 4.6mm/1 "Luckiest Guy", sans-serif; color: #142640; padding-top: .6mm; }
+    .sticker .mark {
+      position: absolute; right: -3mm; top: -3mm;
+      width: 9mm; height: 9mm; border-radius: 50%;
+      display: grid; place-items: center;
+      font: 900 5.6mm/1 "Nunito", sans-serif; color: #fff;
+      border: .7mm solid #142640;
+    }
+    .sticker .yes { background: #20c26a; }
+    .sticker .nope { background: #dc0a2d; }
+    .sticker.blank img { opacity: .9; }
+
+    /* Mini Pokédex screen */
+    .lcd {
+      width: 50mm; padding: 1.8mm 3mm 2.2mm;
+      background: radial-gradient(circle at 30% 20%, #23365f, #0b1c3d 70%);
+      border: 2.4mm solid #d6d1c6; outline: .6mm solid #142640;
+      border-radius: 3mm 3mm 3mm 9mm;
+      color: #fff; text-align: center;
+    }
+    .lcd .read { font: 400 8mm/1 "Luckiest Guy", sans-serif; color: #ffcb05; }
+    .lcd .read span { opacity: .55; }
+    .lcd img { width: 12mm; height: 12mm; object-fit: contain; display: block; margin: .6mm auto 0; }
+    .lcd .who { font: 800 3.6mm/1 "Nunito", sans-serif; }
+    .lcd .add { display: inline-block; margin-top: 1.4mm; padding: .9mm 3.4mm .5mm; border-radius: 2mm; background: #20c26a; border: .5mm solid #142640; font: 400 3.8mm/1 "Luckiest Guy", sans-serif; }
+
+    /* Mini eyecatch */
+    .tv {
+      position: relative;
+      width: 50mm; height: 30mm;
+      border: 1.4mm solid #142640; border-radius: 3mm;
+      background: #c41a33 url("../assets/pokemon/wtp-speed.webp") 30% 45% / 260% auto;
+      overflow: hidden;
+    }
+    .tv::before {
+      content: ""; position: absolute; inset: 0;
+      background: url("../assets/pokemon/wtp-burst.webp") 30% 45% / 260% auto;
+    }
+    .tv .sil { position: absolute; left: 1.5mm; top: 1.5mm; width: 25mm; height: 25mm; object-fit: contain; }
+    .tv .q { position: absolute; right: 5mm; top: 2.5mm; height: 16mm; }
+    .tv .lg { position: absolute; right: 2.2mm; bottom: 2mm; width: 22mm; }
+
+    .rules {
+      margin: 2mm 12mm 0;
+      padding: 4mm 7mm 4.5mm;
+      background: #142640;
+      border-radius: 5mm;
+      color: #fff;
+    }
+    .rules h2 { margin: 0 0 3mm; font-size: 9mm; }
+    .rules ul { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: 1fr 1fr; gap: 2.6mm 7mm; }
+    .rules li { position: relative; padding-left: 7mm; font: 700 4.6mm/1.3 "Nunito", sans-serif; }
+    .rules li::before {
+      content: ""; position: absolute; left: 0; top: .7mm;
+      width: 4.2mm; height: 4.2mm; border-radius: 50%;
+      background: linear-gradient(#ee1515 0 45%, #111 45% 55%, #fff 55%);
+      box-shadow: 0 0 0 .4mm #111;
+    }
+    .rules b { color: #ffcb05; }
+
+    .foot {
+      position: absolute; left: 0; right: 0; bottom: 6mm; margin: 0;
+      text-align: center;
+      font: 400 7.4mm/1 "Luckiest Guy", sans-serif;
+      color: #dc0a2d;
+      letter-spacing: .02em;
+    }
+
+    @media screen { .sheet { margin: 10mm auto; box-shadow: 0 4mm 12mm rgba(0, 0, 0, .5); } }
+  </style>
+</head>
+<body>
+  <div class="sheet">
+    <header class="head">
+      <span class="ball" aria-hidden="true"></span>
+      <div>
+        <h1 class="name-style">Raffle Pokédex</h1>
+        <p>How to enter the “Who's That <img class="logo" src="../assets/pokemon/pokemon-logo.svg" alt="Pokémon"><img class="q" src="../assets/pokemon/wtp-question.svg" alt="?">” raffle</p>
+      </div>
+    </header>
+
+    <ol class="steps">
+      <li>
+        <span class="badge">1</span>
+        <div>
+          <h2>Take <em>ONE</em> Pokémon sticker with a number on it.</h2>
+          <p>Only numbered stickers count. Stickers without a number aren't in the raffle.</p>
+        </div>
+        <div class="stickers">
+          <div class="sticker"><img src="../assets/pokemon/art/025.webp" alt="Pikachu sticker numbered 025"><span class="no">#025</span><span class="mark yes">✓</span></div>
+          <div class="sticker blank"><img src="../assets/pokemon/art/025.webp" alt="Pikachu sticker with no number"><span class="no">&nbsp;</span><span class="mark nope">✕</span></div>
+        </div>
+      </li>
+      <li>
+        <span class="badge">2</span>
+        <div>
+          <h2>Type your number into the Raffle Pokédex on this iPad.</h2>
+          <p>Make sure the picture and name match your sticker, then tap <em>ADD</em>. Use the iPad, not your phone, so your entry counts.</p>
+        </div>
+        <div class="lcd" aria-hidden="true">
+          <div class="read"><span>#</span>025</div>
+          <img src="../assets/pokemon/art/025.webp" alt="">
+          <div class="who">#025 Pikachu</div>
+          <span class="add">ADD</span>
+        </div>
+      </li>
+      <li>
+        <span class="badge">3</span>
+        <div>
+          <h2>Wear your sticker. It's your raffle ticket!</h2>
+          <p>Stick it on your shirt so you're ready when your Pokémon is called.</p>
+        </div>
+        <div></div>
+      </li>
+      <li>
+        <span class="badge">4</span>
+        <div>
+          <h2>Watch the TV for “Who's that Pokémon?”</h2>
+          <p>We draw all party long. If the TV reveals your Pokémon, shout its name and come claim your prize!</p>
+        </div>
+        <div class="tv" aria-hidden="true">
+          <img class="sil" src="sil/004.png" alt="">
+          <img class="q" src="../assets/pokemon/wtp-question.svg" alt="">
+          <img class="lg" src="../assets/pokemon/pokemon-logo.svg" alt="">
+        </div>
+      </li>
+    </ol>
+
+    <section class="rules">
+      <h2 class="name-style">Trainer rules</h2>
+      <ul>
+        <li><b>1 Pokémon per human.</b> Little trainers count too!</li>
+        <li>Only stickers with a <b>number</b> count.</li>
+        <li>Number already taken? The Pokédex will tell you. Pick another sticker.</li>
+        <li>No trading or swapping once you've checked in.</li>
+        <li>You must be at the party to win. If nobody claims it, we draw again.</li>
+        <li>Each Pokémon can only win once.</li>
+      </ul>
+    </section>
+
+    <p class="foot">Need help? Ask our Pokédex helper!</p>
+  </div>
+</body>
+</html>

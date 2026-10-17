@@ -1,6 +1,6 @@
 /* ============================================================
    Who's That Pokémon? raffle
-   Check-in is a Pokédex; the draw is the 1998 anime eyecatch.
+   The Raffle Pokédex (check-in) and the 1998 anime eyecatch (draw).
    ============================================================ */
 @font-face {
   font-family: "Luckiest Guy";
@@ -216,7 +216,8 @@ body.checkin {
 .keypad .key-alt { background: #d6d1c6; font-family: var(--body); font-size: 26px; padding-top: 0; }
 .keypad .key-add { background: var(--yellow); color: var(--blue-dark); font-size: 28px; }
 .keypad .key-add.ready { background: var(--good); color: #fff; }
-.hint { margin: 12px 0 0; font-size: 14px; color: #555; text-align: center; }
+.rule { margin: 12px 0 0; font-weight: 800; font-size: 15px; color: var(--dex-dark); text-align: center; }
+.hint { margin: 6px 0 0; font-size: 14px; color: #555; text-align: center; }
 @media (hover: none) { .hint { display: none; } }
 
 /* The list */
