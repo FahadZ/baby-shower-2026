@@ -1,0 +1,142 @@
+[
+  {
+    "slug": "blinky",
+    "name": "Blinky",
+    "franchise": "Pac-Man",
+    "game": "Pac-Man (arcade, 1980)",
+    "pageUrl": "https://pacman.fandom.com/wiki/File:Blinky8bit.png",
+    "imageUrl": "https://static.wikia.nocookie.net/pacman/images/5/58/Blinky8bit.png/revision/latest",
+    "width": 14,
+    "height": 14
+  },
+  {
+    "slug": "pinky",
+    "name": "Pinky",
+    "franchise": "Pac-Man",
+    "game": "Pac-Man (arcade, 1980)",
+    "pageUrl": "https://pacman.fandom.com/wiki/File:Pinky8bit.png",
+    "imageUrl": "https://static.wikia.nocookie.net/pacman/images/1/10/Pinky8bit.png/revision/latest",
+    "width": 14,
+    "height": 14
+  },
+  {
+    "slug": "clyde",
+    "name": "Clyde",
+    "franchise": "Pac-Man",
+    "game": "Pac-Man (arcade, 1980)",
+    "pageUrl": "https://pacman.fandom.com/wiki/File:Clyde-sue-8bit.png",
+    "imageUrl": "https://static.wikia.nocookie.net/pacman/images/a/a1/Clyde-sue-8bit.png/revision/latest",
+    "width": 14,
+    "height": 14
+  },
+  {
+    "slug": "frogger",
+    "name": "Frogger",
+    "franchise": "Frogger",
+    "game": "Frogger (arcade, 1981)",
+    "pageUrl": "https://www.spriters-resource.com/arcade/frogger/asset/11067/",
+    "imageUrl": "https://www.spriters-resource.com/media/assets/11/11067.png",
+    "width": 9,
+    "height": 12
+  },
+  {
+    "slug": "qbert",
+    "name": "Q*bert",
+    "franchise": "Q*bert",
+    "game": "Q*bert (arcade, 1982)",
+    "pageUrl": "https://www.spriters-resource.com/arcade/qbert/asset/60496/",
+    "imageUrl": "https://www.spriters-resource.com/media/assets/57/60496.png",
+    "width": 29,
+    "height": 31
+  },
+  {
+    "slug": "space-invader",
+    "name": "Crab Invader",
+    "franchise": "Space Invaders",
+    "game": "Space Invaders (arcade, 1978)",
+    "pageUrl": "https://www.spriters-resource.com/arcade/spaceinv/asset/115520/",
+    "imageUrl": "https://www.spriters-resource.com/media/assets/112/115520.png",
+    "width": 11,
+    "height": 8
+  },
+  {
+    "slug": "galaga",
+    "name": "Boss Galaga",
+    "franchise": "Galaga",
+    "game": "Galaga (arcade, 1981)",
+    "pageUrl": "https://www.spriters-resource.com/arcade/galaga/asset/26482/",
+    "imageUrl": "https://www.spriters-resource.com/media/assets/24/26482.png",
+    "width": 16,
+    "height": 15
+  },
+  {
+    "slug": "crash",
+    "name": "Crash Bandicoot",
+    "franchise": "Crash Bandicoot",
+    "game": "Crash Bandicoot: The Huge Adventure (GBA, 2002)",
+    "pageUrl": "https://www.spriters-resource.com/game_boy_advance/crashband/asset/7336/",
+    "imageUrl": "https://www.spriters-resource.com/media/assets/7/7336.png",
+    "width": 32,
+    "height": 30
+  },
+  {
+    "slug": "spyro",
+    "name": "Spyro",
+    "franchise": "Spyro",
+    "game": "Spyro: Season of Ice (GBA, 2001)",
+    "pageUrl": "https://www.spriters-resource.com/game_boy_advance/spyrosoi/asset/13411/",
+    "imageUrl": "https://www.spriters-resource.com/media/assets/13/13411.png",
+    "width": 50,
+    "height": 43
+  },
+  {
+    "slug": "cuphead",
+    "name": "Cuphead",
+    "franchise": "Cuphead",
+    "game": "Cuphead (NES-style fan pixel sprite by Mister Mike)",
+    "pageUrl": "https://www.spriters-resource.com/custom_edited/cupheadcustoms/asset/98538/",
+    "imageUrl": "https://www.spriters-resource.com/media/assets/95/98538.png",
+    "width": 21,
+    "height": 24
+  },
+  {
+    "slug": "shovel-knight",
+    "name": "Shovel Knight",
+    "franchise": "Shovel Knight",
+    "game": "Shovel Knight: Treasure Trove (PC, 2014)",
+    "pageUrl": "https://www.spriters-resource.com/pc_computer/shovelknight/asset/67117/",
+    "imageUrl": "https://www.spriters-resource.com/media/assets/64/67117.png",
+    "width": 34,
+    "height": 31
+  },
+  {
+    "slug": "hollow-knight",
+    "name": "The Knight",
+    "franchise": "Hollow Knight",
+    "game": "Hollow Knight (Super Mario Maker-style fan pixel sprite by MichelST)",
+    "pageUrl": "https://www.spriters-resource.com/custom_edited/hollowknightcustoms/asset/167804/",
+    "imageUrl": "https://www.spriters-resource.com/media/assets/165/167804.png",
+    "width": 9,
+    "height": 17
+  },
+  {
+    "slug": "dig-dug",
+    "name": "Dig Dug (Taizo Hori)",
+    "franchise": "Dig Dug",
+    "game": "Dig Dug (arcade, 1982)",
+    "pageUrl": "https://www.spriters-resource.com/arcade/digdug/asset/64409/",
+    "imageUrl": "https://www.spriters-resource.com/media/assets/61/64409.png",
+    "width": 13,
+    "height": 14
+  },
+  {
+    "slug": "bomberman",
+    "name": "Bomberman",
+    "franchise": "Bomberman",
+    "game": "Super Bomberman (SNES, 1993)",
+    "pageUrl": "https://www.spriters-resource.com/snes/sbomber/asset/7887/",
+    "imageUrl": "https://www.spriters-resource.com/media/assets/8/7887.png",
+    "width": 15,
+    "height": 24
+  }
+]

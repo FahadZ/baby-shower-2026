@@ -1,0 +1,17 @@
+[
+ ["mario","Mario","Super Mario","jump"],["luigi","Luigi","Super Mario","jump"],["peach","Peach","Super Mario","jump"],["toad","Toad","Super Mario","jump"],["yoshi","Yoshi","Super Mario","jump"],["bowser","Bowser","Super Mario","jump"],["wario","Wario","Super Mario","jump"],["shy-guy","Shy Guy","Super Mario","jump"],["mushroom","Super Mushroom","Super Mario","jump"],
+ ["donkey-kong","Donkey Kong","Donkey Kong","jump"],["diddy-kong","Diddy Kong","Donkey Kong","jump"],
+ ["link","Link","The Legend of Zelda","spin"],["zelda","Zelda","The Legend of Zelda","jump"],["link-toon","Toon Link","The Legend of Zelda","spin"],
+ ["pikachu","Pikachu","Pokémon","thunderbolt"],["charmander","Charmander","Pokémon","jump"],["squirtle","Squirtle","Pokémon","jump"],["bulbasaur","Bulbasaur","Pokémon","jump"],["eevee","Eevee","Pokémon","jump"],["jigglypuff","Jigglypuff","Pokémon","jump"],["snorlax","Snorlax","Pokémon","jump"],
+ ["kirby","Kirby","Kirby","kirby"],["meta-knight","Meta Knight","Kirby","jump"],
+ ["samus","Samus","Metroid","jump"],["isabelle","Isabelle","Animal Crossing","jump"],["tom-nook","Tom Nook","Animal Crossing","jump"],["pikmin","Red Pikmin","Pikmin","jump"],
+ ["sonic","Sonic","Sonic the Hedgehog","jump"],["tails","Tails","Sonic the Hedgehog","jump"],["knuckles","Knuckles","Sonic the Hedgehog","jump"],["shadow","Shadow","Sonic the Hedgehog","jump"],["amy","Amy Rose","Sonic the Hedgehog","jump"],
+ ["cloud","Cloud","Final Fantasy","slash"],["chocobo","Chocobo","Final Fantasy","jump"],["slime","Slime","Dragon Quest","jump"],
+ ["ryu","Ryu","Street Fighter","jump"],["chun-li","Chun-Li","Street Fighter","jump"],["mega-man","Mega Man","Mega Man","jump"],
+ ["pacman","Pac-Man","Pac-Man","jump"],["ghost","Inky","Pac-Man","jump"],["blinky","Blinky","Pac-Man","jump"],["pinky","Pinky","Pac-Man","jump"],["clyde","Clyde","Pac-Man","jump"],
+ ["frogger","Frogger","Arcade Classics","jump"],["qbert","Q*bert","Arcade Classics","jump"],["space-invader","Space Invader","Arcade Classics","jump"],["galaga","Galaga Boss","Arcade Classics","jump"],["dig-dug","Dig Dug","Arcade Classics","jump"],["bomberman","Bomberman","Arcade Classics","jump"],
+ ["crash","Crash Bandicoot","Crash & Spyro","jump"],["spyro","Spyro","Crash & Spyro","jump"],
+ ["cuphead","Cuphead","Indie Heroes","jump"],["shovel-knight","Shovel Knight","Indie Heroes","jump"],["hollow-knight","The Knight","Indie Heroes","jump"],["celeste-madeline","Madeline","Indie Heroes","jump"],["sans","Sans","Indie Heroes","jump"],["frisk","Frisk","Indie Heroes","jump"],["terraria","Terrarian","Indie Heroes","jump"],["shantae","Shantae","Indie Heroes","jump"],["scott-pilgrim","Scott Pilgrim","Indie Heroes","jump"],
+ ["steve","Steve","Minecraft","jump"],["creeper","Creeper","Minecraft","jump"],["crewmate","Crewmate","Among Us","jump"],["fall-guy","Fall Guy","Fall Guys","jump"],
+ ["master-chief","Master Chief","Halo","jump"],["lara-croft","Lara Croft","Tomb Raider","jump"],["kratos","Kratos","God of War","jump"],["sackboy","Sackboy","LittleBigPlanet","jump"]
+]
