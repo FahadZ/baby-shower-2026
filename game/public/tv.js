@@ -15,7 +15,7 @@ const net = connect({
   role: "tv",
   onStatus(s) { netDot.className = "dot " + (s === "open" ? "on" : s === "connecting" ? "sync" : ""); },
   onMessage(msg) {
-    if (msg.t === "state") { snap = msg; view.render(snap, live); }
+    if (msg.t === "state") { snap = msg; view.render(snap, live); audio.follow(snap); }
     else if (msg.t === "live") { live = msg.stat; view.onLive(live); }
   }
 });
@@ -27,12 +27,15 @@ document.addEventListener("visibilitychange", () => { if (!document.hidden) requ
 
 // Sound prompt: one real click is what browsers need before audio can play.
 const prompt = $("#soundPrompt");
-$("#soundYes").addEventListener("click", () => { audio.enable(true); audio.music(true); audio.sfx("coin"); prompt.hidden = true; requestWake(); tryFullscreen(); });
+const musicOpts = { clock: () => net.now() };
+$("#soundYes").addEventListener("click", () => { audio.enable(true); audio.music(true, musicOpts); audio.sfx("coin"); prompt.hidden = true; requestWake(); tryFullscreen(); });
 $("#soundNo").addEventListener("click", () => { audio.enable(false); prompt.hidden = true; requestWake(); tryFullscreen(); });
 $("#fsBtn").addEventListener("click", tryFullscreen);
-$("#muteBtn").addEventListener("click", () => { const on = !audio.isOn(); audio.enable(on); if (on) audio.music(true); $("#muteBtn").textContent = on ? "MUTE" : "UNMUTE"; });
+$("#muteBtn").addEventListener("click", () => { const on = !audio.isOn(); audio.enable(on); if (on) audio.music(true, musicOpts); $("#muteBtn").textContent = on ? "MUTE" : "UNMUTE"; });
 
 function tryFullscreen() {
   try { if (document.fullscreenEnabled && !document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {}); } catch (e) { /* ignore */ }
 }
 preloadMoves();
+// Rehearsal scripts read what the soundtrack is playing.
+window.__nowPlaying = () => audio.nowPlaying();

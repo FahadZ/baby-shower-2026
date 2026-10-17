@@ -1,5 +1,6 @@
 // 8-bit sound effects (square-wave synth, same recipes as the RSVP site) and
-// the chiptune theme. Everything is silent until enable() runs from a tap.
+// the TV soundtrack (engine/chip.js). Everything is silent until enable() runs from a tap.
+import * as chip from "./chip.js";
 const SFX = {
   blip: [[660, 0.05]],
   select: [[523, 0.06], [784, 0.08]],
@@ -29,7 +30,7 @@ const SFX = {
   down: [[659, 0.06], [554, 0.06], [440, 0.12]]
 };
 
-let ctx = null, on = false, bgm = null, wantMusic = false;
+let ctx = null, on = false, wantMusic = false, musicOpts = {};
 
 function ac() {
   ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
@@ -56,25 +57,31 @@ export function sfx(name, vol = 0.06) {
   } catch (e) { /* audio unsupported */ }
 }
 
-export function music(play) {
+// The soundtrack follows the game: call follow(snap) with every state snapshot.
+// opts.clock: the server clock, for speeding up in a round's last 10 seconds.
+export function music(play, opts) {
   wantMusic = play;
+  if (opts) musicOpts = opts;
   if (!on) return;
   try {
     if (navigator.audioSession) navigator.audioSession.type = "playback";
-    if (!bgm) { bgm = new Audio("assets/audio/theme.wav"); bgm.loop = true; bgm.volume = 0.5; }
-    if (play) { const p = bgm.play(); if (p && p.catch) p.catch(() => {}); } else bgm.pause();
-  } catch (e) { /* ignore */ }
+    chip.attach(ac(), musicOpts);
+    chip.setEnabled(play);
+  } catch (e) { /* audio unsupported */ }
 }
+export const follow = (snap) => chip.follow(snap);
+export const nowPlaying = () => chip.nowPlaying();
 
 export function enable(flag = true) {
   on = flag;
   if (flag) { try { ac(); } catch (e) { /* ignore */ } }
-  if (!flag && bgm) bgm.pause();
+  if (!flag) chip.setEnabled(false);
   if (flag && wantMusic) music(true);
 }
 export const isOn = () => on;
 
+// A hidden tab throttles timers; stop rather than stutter, pick up again on return.
 document.addEventListener("visibilitychange", () => {
-  if (!bgm || !on || !wantMusic) return;
-  if (document.hidden) bgm.pause(); else { const p = bgm.play(); if (p && p.catch) p.catch(() => {}); }
+  if (!on || !wantMusic) return;
+  chip.setEnabled(!document.hidden);
 });

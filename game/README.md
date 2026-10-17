@@ -27,7 +27,7 @@ game/
     host.html  host.js    The remote (+ STAGE view)
     tv.html    tv.js      The big screen
     game.css              Shared pixel styling
-    engine/               net, dom, audio, avatars, moves, countdown, hype, stage, stageview
+    engine/               net, dom, audio, chip + notes (TV soundtrack), avatars, moves, countdown, hype, stage, stageview
     games/<id>.js         Client side of each game
     data/<id>.js          Editable content (prices, questions, roster...)
     assets/               fonts, deco, scene, avatars (character + palette PNGs), babyphotos
@@ -171,6 +171,13 @@ Plain `export default { ... }` the host can edit. Imported by both sides.
 1. Print the join cards (`print/join-card.pdf`) or show the TV page's QR.
 2. Open `/host` on your phone, enter the PIN. Keep the phone plugged in.
 3. Optional: open `/tv` on a laptop or TV browser, tap "YES, PLAY IT" for sound, go fullscreen.
+   The TV's soundtrack follows the game (see `public/data/music.js`): each game has its own
+   8-bit tune (The Entertainer, Pop Goes the Weasel and Brahms' Lullaby for the night round,
+   Twinkle Twinkle, Hall of the Mountain King speeding up, Eine kleine Nachtmusik, the
+   Tetris tune, Bach's Toccata for the boss), how-to screens play a quiet beat-only version,
+   the last 10 seconds of a round play faster, the lobby, reveals and results improvise
+   their own music so they never loop, FINAL RANKINGS gets Ode to Joy, and the credits
+   play the original theme. PAUSE pauses the music too.
 4. Watch players pile into the lobby. Kick anyone rude. Press **START GAME**.
 5. From then on the big **NEXT** button always does the right thing, and nothing moves
    without you: each round's how-to screen waits for your **START ROUND** tap, and the
@@ -279,6 +286,7 @@ Object compute, all inside the plan's included allowance (1 million requests and
 | `public/data/momordad.js` | The cards and their `answer` ("mom"/"dad"), in play order; a list longer than 7 splits into near-equal rounds and each round's timer follows its card count (a list with fewer than 5 answers plays random demo answers and the host remote shows a yellow reminder); drop 5+ baby photos into `public/assets/babyphotos/` and list them in `photoCards` (see the README.txt there) |
 | `public/data/price.js` | Re-check prices the week of the party; swap any item that is on the registry for a spare (list at the bottom of the file) |
 | `public/data/boss.js` | Optional: swap in your own trivia |
+| `public/data/music.js` | Optional: the TV soundtrack; swap tunes between games in `GAME_SONGS` or edit the notes (`npm test` checks every bar) |
 | `public/data/avatars.js` | Generated from `scripts/roster.json`; remove characters you don't want and rerun `python3 scripts/make-avatar-palettes.py` |
 | Cloudflare secret `HOST_PIN` | The host PIN |
 
