@@ -611,3 +611,29 @@ body.draw { overflow: hidden; background: #c41a33; }
   .idle-ball, .caret { animation: none; }
   .lcd.shake, .idle-pool.nudge { animation: none; }
 }
+
+/* Host PIN lock on the draw screen (lock.js) */
+.pin-lock {
+  position: fixed; inset: 0; z-index: 100;
+  display: grid; place-items: center;
+  padding: 16px;
+  background: #0d4ba8;
+}
+.pin-box {
+  display: grid; gap: 12px;
+  width: min(100%, 340px);
+  padding: 24px;
+  border-radius: 16px;
+  background: #fff;
+  color: #111;
+  text-align: center;
+}
+.pin-box h2 { margin: 0; }
+.pin-box p { margin: 0; }
+.pin-box input {
+  font: inherit; font-size: 1.6rem;
+  padding: .4em; text-align: center; letter-spacing: .3em;
+  border: 2px solid #111; border-radius: 10px;
+}
+.pin-error { min-height: 1.2em; color: #c41a33; font-weight: 700; }
+body.locked .hud, body.locked .controls { visibility: hidden; }
