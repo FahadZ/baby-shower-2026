@@ -160,7 +160,7 @@ test("final phase after the last round of the last game", () => {
   assert.equal(snap.results.final, true);
   assert.equal(snap.results.board.length, 2);
   L.command(st, "next", null, 0);
-  assert.equal(st.core.phase, "predictions");
+  assert.equal(st.core.phase, "credits");
 });
 
 test("practice round: a host toggle on the how-to screen, off again once the round starts", () => {

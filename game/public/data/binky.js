@@ -40,7 +40,9 @@ export default {
   targetSizeMax: 86,
   targetGap: 300,
   hitRadius: 85,
-  // Flashlight radius in units; on the phone the light floats this far above the finger.
-  flashlight: 270,
-  lightOffset: 190
+  // Flashlight radius in units (never under lightMinPx on screen). On the phone the whole
+  // beam floats above the finger, its bottom edge lightGap screen px clear of the fingertip.
+  flashlight: 135,
+  lightMinPx: 50,
+  lightGap: 40
 };

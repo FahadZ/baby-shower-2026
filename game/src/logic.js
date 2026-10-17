@@ -590,7 +590,8 @@ export function command(state, cmd, arg, now = Date.now()) {
         return { ok: true };
       }
       if (phase === "leaderboard") { advanceAfterRound(state, now); return { ok: true }; }
-      if (phase === "final") { setPhase(state, "predictions", now); return { ok: true }; }
+      // The predictions page is skipped: the final rankings roll straight into the credits.
+      if (phase === "final") { setPhase(state, "credits", now); return { ok: true }; }
       if (phase === "predictions") { setPhase(state, "credits", now); return { ok: true }; }
       return { ok: true, wait: true };
     case "extend":

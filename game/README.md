@@ -192,8 +192,8 @@ Plain `export default { ... }` the host can edit. Imported by both sides.
    again (the clock keeps running).
 9. The Boss Battle never shows the leaderboard, between questions or after the last one,
    so **FINAL RANKINGS** is the big reveal. After the last game: **FINAL RANKINGS**, then
-   **PREDICTIONS**, then **ROLL CREDITS**.
-10. Download the leaderboard and the predictions as CSV from the host page.
+   **ROLL CREDITS** (the predictions page is skipped).
+10. Download the leaderboard as CSV from the host page.
 
 Rehearse beforehand: **+80 BOTS**, **START GAME**, and tap through. **HOLD TO RESET**
 wipes scores and answers (players stay) when you are done.

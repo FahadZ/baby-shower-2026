@@ -61,7 +61,7 @@ function nextLabel(s) {
     case "reveal": return "SHOW ROUND RESULTS";
     case "results": return s.hideBoard ? afterRoundLabel(s) : "SHOW LEADERBOARD";
     case "leaderboard": return afterRoundLabel(s);
-    case "final": return "PREDICTIONS";
+    case "final": return "ROLL CREDITS";
     case "predictions": return "ROLL CREDITS";
     case "credits": return "THE END";
     default: return "NEXT";

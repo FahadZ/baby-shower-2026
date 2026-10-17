@@ -119,8 +119,8 @@ function createView(canvas, scene, { night = false, fitViewport = false, pan = f
   const maxPan = () => Math.max(0, scene.h * scale() - cssH);
   const canPan = () => pan && maxPan() > 1;
   function setPan(y) { st.panY = Math.max(0, Math.min(maxPan(), y || 0)); }
-  // The torch never shrinks below a thumb-friendly size on screen, whatever the scale.
-  const lightRadius = () => Math.max(data.flashlight, 100 / Math.max(0.01, scale()));
+  // The torch never shrinks below a usable size on screen, whatever the scale.
+  const lightRadius = () => Math.max(data.flashlight, data.lightMinPx / Math.max(0.01, scale()));
 
   // Scene units -> canvas px, through the camera: a zoom (reveal tour) or the pan offset.
   function map(ux, uy) {
@@ -278,8 +278,10 @@ export default {
       };
       if (night) {
         ctx.fillStyle = NIGHT; ctx.fillRect(0, 0, W, H);
-        ctx.save(); ctx.beginPath(); ctx.arc(fx, fy - 4, 42, 0, TAU); ctx.clip(); drawScene(); ctx.restore();
-        ctx.strokeStyle = "rgba(255,216,74,.6)"; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(fx, fy - 4, 42, 0, TAU); ctx.stroke();
+        // The beam rides above the fingertip until it is over the item, then stays put while the finger taps.
+        const bx = Math.min(fx, target.x), by = Math.max(target.y, fy - 34);
+        ctx.save(); ctx.beginPath(); ctx.arc(bx, by, 24, 0, TAU); ctx.clip(); drawScene(); ctx.restore();
+        ctx.strokeStyle = "rgba(255,216,74,.6)"; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(bx, by, 24, 0, TAU); ctx.stroke();
       } else drawScene();
       if (tapped) drawRing(ctx, target.x, target.y, 22 + (p < 0.6 ? (0.6 - p) * 60 : 0), GREEN, 4);
       ctx.save(); ctx.translate(fx, fy); ctx.scale(press, press); ctx.font = "34px " + EMOJI_FONT; ctx.textAlign = "center"; ctx.textBaseline = "top"; ctx.fillText("👆", 0, 0); ctx.restore();
@@ -365,11 +367,18 @@ export default {
     }
 
     // Night mode: the beam floats above the finger (fingers cover what they touch), it
-    // keeps shining where you leave it, a drag searches and a clean tap grabs. The offset
-    // is at least 72 screen px however small the canvas got.
+    // keeps shining where you leave it, a drag searches and a clean tap grabs. The whole
+    // beam sits lightGap screen px above the fingertip, so no part of it is under the finger.
+    // In the bottom band it drops toward the finger so the lowest items (targets sit 110
+    // units in from the edge) can still be lit with the finger on the canvas's last row.
+    // At the top it slides off the canvas rather than stopping under a finger that went too high.
     const lightAt = (x, y) => {
-      const off = Math.max(data.lightOffset, 72 / view.scale());
-      view.st.light = { x, y: Math.max(view.lightRadius() * 0.6, y - off) };
+      const r = view.lightRadius();
+      const off = r + data.lightGap / view.scale();
+      const lowest = r + 60;                       // beam's bottom edge 60 units above the map's bottom
+      const band = 300;
+      const drop = Math.max(0, off - lowest) * Math.max(0, Math.min(1, (y - (scene.h - band)) / band));
+      view.st.light = { x, y: Math.max(-r * 0.5, y - off + drop) };
       view.request();
     };
     // Day mode on a tall map: a drag scrolls the pile, a clean tap grabs. Small day maps

@@ -12,9 +12,9 @@ export default {
   // factor around `speed` (1.0 = anywhere from half speed to one-and-a-half). `wind`
   // (lane widths) blows the whole stream sideways in slow gusts.
   rounds: [
-    { title: "ROUND 1: WARM-UP", subtitle: "TAP THE PACIFIERS. SKIP THE POOPIES.", rate: 1.3, speed: 1.0, speedSpread: 0.7, goldShare: 0, badShare: 0.28, vomitShare: 0, wind: 0 },
-    { title: "ROUND 2: RUSH HOUR", subtitle: "FASTER. GOLD BOTTLES ARE WORTH 3. VOMIT COSTS 5.", rate: 2.0, speed: 1.35, speedSpread: 0.9, goldShare: 0.14, badShare: 0.24, vomitShare: 0.06, wind: 0 },
-    { title: "ROUND 3: BLOWOUT", subtitle: "A STORM OF STUFF, AND THE WIND BLOWS IT SIDEWAYS.", rate: 2.7, speed: 1.55, speedSpread: 1.0, goldShare: 0.14, badShare: 0.26, vomitShare: 0.08, wind: 0.32 }
+    { title: "ROUND 1: WARM-UP", subtitle: "TAP THE PACIFIERS. SKIP THE POOPIES.", rate: 2.0, speed: 1.0, speedSpread: 0.7, goldShare: 0, badShare: 0.28, vomitShare: 0, wind: 0 },
+    { title: "ROUND 2: RUSH HOUR", subtitle: "FASTER. GOLD BOTTLES ARE WORTH 3. VOMIT COSTS 5.", rate: 2.6, speed: 1.35, speedSpread: 0.9, goldShare: 0.14, badShare: 0.24, vomitShare: 0.06, wind: 0 },
+    { title: "ROUND 3: BLOWOUT", subtitle: "A STORM OF STUFF, AND THE WIND BLOWS IT SIDEWAYS.", rate: 3.0, speed: 1.55, speedSpread: 1.0, goldShare: 0.14, badShare: 0.26, vomitShare: 0.08, wind: 0.32 }
   ],
   // Text glyphs for places where a sprite cannot be drawn.
   glyphs: { good: "🍼", gold: "✨", bad: "💩", vomit: "🤮" },
