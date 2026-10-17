@@ -26,6 +26,58 @@ Plain HTML/CSS/JS. There's no framework and no build step.
 | `assets/og-image.png` | 1200×630 link preview for WhatsApp / iMessage |
 | `apps-script/` | Google Apps Script backend (Sheet + emails) |
 | `print/qr-code.png` | QR code for the live URL |
+| `raffle/` | "Who's That Pokémon?" sticker raffle: check-in page + TV draw screen (see [Raffle](#raffle-whos-that-pokémon)) |
+| `assets/pokemon/` | Official artwork (`art/`) and game cries (`cries/`) for #001–#151, via PokeAPI; optional announcer clips (`voice/`) |
+| `assets/fonts/luckiest-guy-latin.woff2` | Luckiest Guy, the raffle's logo lettering (Apache License 2.0) |
+
+## Raffle: Who's That Pokémon?
+
+Each guest picks a numbered sticker (#001–#151) from the sticker book. Throughout the party, the TV draws one of the checked-in stickers in the style of the anime's "Who's That Pokémon?" segment.
+
+- **Check-in** (for the assistant at the door): https://fahadz.github.io/baby-shower-2026/raffle/
+- **Draw screen** (for the TV): https://fahadz.github.io/baby-shower-2026/raffle/draw.html
+
+### Check-in
+
+Type the number on the guest's sticker and tap **Add** (or press Enter on a keyboard). Before you add it, the screen shows that Pokémon's picture and name, so it's easy to compare with the sticker. It refuses numbers outside 001–151, numbers already checked in, and numbers missing from the sticker book. **Undo last** and the ✕ on each entry fix mistakes.
+
+**Missing stickers:** list the Pokédex numbers your sticker book doesn't have in `missing` in `raffle/raffle-config.js`, e.g. `missing: [7, 25, 150]`.
+
+### The draw
+
+On the draw screen, press **Space** (or click **Draw!**). The order is:
+
+1. Poké Ball wipe
+2. Silhouette on the blue sunburst
+3. The "Who's That Pokémon?" sting and voice line
+
+Let everyone guess, then press **Space** again to reveal:
+
+1. Flash, then the Pokémon in color
+2. "It's Onix!"
+3. The Pokémon's cry
+4. "Sticker #095 wins!"
+
+Press **Space** once more to go back between draws.
+
+- Winners leave the pool, so nobody wins twice.
+- If the winner isn't there, press **R** (*Not here? Redraw*). That sticker is marked as a no-show and the next draw starts.
+- **Esc** before the reveal cancels the draw and puts the sticker back.
+- **T** does a test run with any Pokémon. It isn't recorded, so it's safe for checking the TV and sound before guests arrive.
+- **F** toggles full screen. A presentation clicker also works, because → and PageDown count as Space.
+- The draw uses the browser's crypto random number generator, so every sticker in the pool has the same chance.
+- In the check-in list, ↺ puts a winner or no-show back in the draw.
+
+**Sound:** cries are the original game cries. The "Who's that Pokémon?" sting is synthesized in the browser, and the announcer lines use the device's text-to-speech. Choose a voice under **🔊 Sound** on the draw screen. You can replace the sting and the "It's …!" lines with your own recordings; see `assets/pokemon/voice/README.md`.
+
+### One device or two
+
+The list is saved in the browser of the device it was entered on.
+
+- **One device** (a laptop or tablet at the door that later goes on the TV): nothing to do.
+- **Two devices** (a phone at the door, a laptop on the TV): on check-in, open **Move the list to another device**, tap **Share link**, and open that link on the TV laptop. It only adds stickers the TV doesn't have yet, so you can send it again after late arrivals. **Copy numbers** with **Add numbers from another device** does the same by copy and paste.
+
+All art, cries and fonts are served with the site; nothing comes from a third-party service. The draw screen preloads the pictures and cries for everyone in the pool, so a Wi-Fi drop during the party won't interrupt a draw.
 
 ## Editing event details
 

@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Who's That Pokémon? | Raffle Draw</title>
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#0d4ba8">
+  <meta name="build" content="20261017032643">
+  <script>
+    // If this page came from a stale cache, jump to the latest build.
+    (function () {
+      try {
+        var build = document.querySelector('meta[name="build"]').content;
+        fetch("../version.txt?t=" + Date.now(), { cache: "no-store" })
+          .then(function (r) { return r.ok ? r.text() : ""; })
+          .then(function (latest) {
+            latest = latest.trim();
+            if (!/^\d+$/.test(latest) || latest === build) return;
+            if (new URLSearchParams(location.search).get("v") === latest) return; // avoid loops
+            location.replace(location.pathname + "?" + "v=" + latest + location.hash);
+          })
+          .catch(function () {});
+      } catch (e) {}
+    })();
+  </script>
+  <link rel="icon" href="../favicon.ico" sizes="any">
+  <link rel="apple-touch-icon" href="../assets/favicon-180.png">
+  <link rel="preload" href="../assets/fonts/luckiest-guy-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="raffle.css?v=20261017032643">
+</head>
+<body class="draw">
+  <main class="stage" id="stage" data-phase="idle">
+    <div class="sky" aria-hidden="true"><div class="rays"></div></div>
+
+    <!-- Between draws -->
+    <section class="idle" id="idle" aria-labelledby="idleTitle">
+      <span class="pokeball spin" aria-hidden="true"></span>
+      <h1 class="logo-text" id="idleTitle"><span>Who's That</span> <span>Pokémon?</span></h1>
+      <p class="idle-sub">Baby Shower Raffle</p>
+      <p class="idle-pool" id="poolText"></p>
+      <ol class="past" id="past" aria-label="Winners so far"></ol>
+    </section>
+
+    <!-- The show -->
+    <figure class="mon" id="mon" aria-hidden="true"><img id="monImg" alt=""></figure>
+    <h2 class="logo-text wtp" id="wtp"><span>Who's That</span> <span>Pokémon?</span></h2>
+    <h2 class="logo-text its" id="its"><span>It's</span> <span id="itsName"></span></h2>
+    <p class="winner" id="winner" aria-live="polite"></p>
+    <p class="test-badge" id="testBadge">Test run · not recorded</p>
+
+    <div class="flash" id="flash" aria-hidden="true"></div>
+    <div class="wipe" id="wipe" aria-hidden="true"><span class="pokeball"></span></div>
+
+    <nav class="controls" id="controls" aria-label="Draw controls">
+      <button type="button" class="cbtn cbtn-main" data-show="idle" data-act="draw">Draw! <kbd>Space</kbd></button>
+      <button type="button" class="cbtn" data-show="idle" data-act="test">Test run <kbd>T</kbd></button>
+      <button type="button" class="cbtn cbtn-main" data-show="ask" data-act="reveal">Reveal! <kbd>Space</kbd></button>
+      <button type="button" class="cbtn cbtn-main" data-show="reveal" data-act="done">Done <kbd>Space</kbd></button>
+      <button type="button" class="cbtn" data-show="reveal" data-act="noshow" id="noshowBtn">Not here? Redraw <kbd>R</kbd></button>
+    </nav>
+
+    <div class="hud" id="hud">
+      <a class="hbtn" href="index.html" title="Check-in">Check-in</a>
+      <button type="button" class="hbtn" id="settingsBtn" title="Sound settings">🔊 Sound</button>
+      <button type="button" class="hbtn" id="fsBtn" title="Full screen (F)">⛶ Full screen</button>
+    </div>
+  </main>
+
+  <dialog class="sheet" id="settings" aria-labelledby="settingsTitle">
+    <form method="dialog">
+      <h2 id="settingsTitle">Sound</h2>
+      <label class="check"><input type="checkbox" id="voiceOn"> Announcer says “Who's that Pokémon?” and “It's …!”</label>
+      <label for="voiceSelect">Announcer voice</label>
+      <div class="row">
+        <select id="voiceSelect"></select>
+        <button type="button" class="btn" id="voiceTest">▶ Test</button>
+      </div>
+      <p class="note" id="clipNote"></p>
+      <p class="note">Pick the voice that sounds most excited; the TV's speakers and volume matter more than you'd think. Do a test run before guests arrive.</p>
+      <div class="row end"><button class="btn btn-light" value="close">Close</button></div>
+    </form>
+  </dialog>
+
+  <script src="pokedex.js?v=20261017032643"></script>
+  <script src="raffle-config.js?v=20261017032643"></script>
+  <script src="common.js?v=20261017032643"></script>
+  <script src="draw.js?v=20261017032643"></script>
+</body>
+</html>

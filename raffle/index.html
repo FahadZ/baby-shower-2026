@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Raffle Check-in | Who's That Pokémon?</title>
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#b3102b">
+  <meta name="build" content="20261017032643">
+  <script>
+    // If this page came from a stale cache, jump to the latest build.
+    (function () {
+      try {
+        var build = document.querySelector('meta[name="build"]').content;
+        fetch("../version.txt?t=" + Date.now(), { cache: "no-store" })
+          .then(function (r) { return r.ok ? r.text() : ""; })
+          .then(function (latest) {
+            latest = latest.trim();
+            if (!/^\d+$/.test(latest) || latest === build) return;
+            if (new URLSearchParams(location.search).get("v") === latest) return; // avoid loops
+            location.replace(location.pathname + "?" + "v=" + latest + location.hash);
+          })
+          .catch(function () {});
+      } catch (e) {}
+    })();
+  </script>
+  <link rel="icon" href="../favicon.ico" sizes="any">
+  <link rel="apple-touch-icon" href="../assets/favicon-180.png">
+  <link rel="preload" href="../assets/fonts/luckiest-guy-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="raffle.css?v=20261017032643">
+</head>
+<body class="checkin">
+  <header class="dex-top">
+    <div class="brand">
+      <span class="pokeball" aria-hidden="true"></span>
+      <div>
+        <h1 class="logo-text">Who's That Pokémon?</h1>
+        <p>Raffle check-in</p>
+      </div>
+    </div>
+    <a class="btn btn-light" href="draw.html">Draw screen ▶</a>
+  </header>
+
+  <p class="banner" id="storageWarning" hidden>
+    This browser can't save the list (private mode?). Don't refresh, or use a normal window.
+  </p>
+
+  <main class="dex">
+    <section class="entry" aria-labelledby="entryTitle">
+      <h2 id="entryTitle" class="sr-only">Enter a sticker number</h2>
+      <div class="lcd" id="lcd">
+        <div class="readout" aria-hidden="true"><span class="hash">#</span><span id="digits" class="digits"></span><span class="caret"></span></div>
+        <div class="preview" id="preview">
+          <img id="previewImg" alt="" hidden>
+          <p id="previewText" class="preview-text">Type the number on the guest's sticker</p>
+        </div>
+      </div>
+
+      <p id="status" class="status" role="status" aria-live="polite"></p>
+
+      <div class="keypad" id="keypad" role="group" aria-label="Number pad">
+        <button type="button" data-key="1">1</button>
+        <button type="button" data-key="2">2</button>
+        <button type="button" data-key="3">3</button>
+        <button type="button" data-key="4">4</button>
+        <button type="button" data-key="5">5</button>
+        <button type="button" data-key="6">6</button>
+        <button type="button" data-key="7">7</button>
+        <button type="button" data-key="8">8</button>
+        <button type="button" data-key="9">9</button>
+        <button type="button" data-key="back" class="key-alt" aria-label="Delete last digit">⌫</button>
+        <button type="button" data-key="0">0</button>
+        <button type="button" data-key="enter" class="key-add" id="addKey">Add</button>
+      </div>
+      <p class="hint">On a keyboard: type the number, press <kbd>Enter</kbd>.</p>
+    </section>
+
+    <section class="entries" aria-labelledby="countTitle">
+      <div class="entries-head">
+        <h2 id="countTitle"><span id="count">0</span> <span id="countWord">guests</span> checked in</h2>
+        <button type="button" class="btn btn-small" id="undo" disabled>Undo last</button>
+      </div>
+      <p class="sub" id="poolLine"></p>
+      <ol class="chips" id="list"></ol>
+      <p class="empty" id="empty">No stickers yet. When a guest picks one, type its number above.</p>
+    </section>
+
+    <details class="tools">
+      <summary>Move the list to another device · settings · reset</summary>
+
+      <div class="tool">
+        <h3>Send the list to the draw screen</h3>
+        <p>Using a different device for the draw (like a laptop on the TV)? Send it this link and open it there. Send it again any time; it only adds new stickers.</p>
+        <div class="row">
+          <button type="button" class="btn" id="shareBtn">Share link</button>
+          <button type="button" class="btn btn-light" id="copyNumsBtn">Copy numbers</button>
+        </div>
+        <input type="text" class="share-url" id="shareUrl" readonly aria-label="Share link" hidden>
+      </div>
+
+      <div class="tool">
+        <h3>Add numbers from another device</h3>
+        <label for="importText">Paste or type sticker numbers (any format, e.g. <code>7, 25, 95</code>)</label>
+        <textarea id="importText" rows="2" inputmode="numeric"></textarea>
+        <button type="button" class="btn" id="importBtn">Add these</button>
+      </div>
+
+      <div class="tool">
+        <h3>Settings</h3>
+        <label class="check"><input type="checkbox" id="cryToggle"> Play the Pokémon's cry when a guest is added</label>
+      </div>
+
+      <div class="tool danger">
+        <h3>Start over</h3>
+        <p>Clears every sticker and winner on this device.</p>
+        <button type="button" class="btn btn-danger" id="resetBtn">Clear everything</button>
+      </div>
+    </details>
+  </main>
+
+  <script src="pokedex.js?v=20261017032643"></script>
+  <script src="raffle-config.js?v=20261017032643"></script>
+  <script src="common.js?v=20261017032643"></script>
+  <script src="checkin.js?v=20261017032643"></script>
+</body>
+</html>
